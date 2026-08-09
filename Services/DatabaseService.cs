@@ -22,8 +22,8 @@ public sealed class DatabaseService
         _settings = _settingsService.Load();
 
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var directory = Path.Combine(appData, "FFPOS");
-        _databasePath = Path.Combine(directory, "ffpos.sqlite3");
+        var directory = Path.Combine(appData, "TIJORAT PRO");
+        _databasePath = Path.Combine(directory, "pos.sqlite3");
 
         var builder = new DbContextOptionsBuilder<AppDbContext>();
         if (IsMySql)
@@ -384,6 +384,7 @@ public sealed class DatabaseService
         var hasPassword = false;
         var hasPincode = false;
 
+        await context.Database.OpenConnectionAsync(cancellationToken);
         await using (var command = connection.CreateCommand())
         {
             command.CommandText = "PRAGMA table_info(users);";
@@ -401,6 +402,7 @@ public sealed class DatabaseService
                 }
             }
         }
+        await context.Database.CloseConnectionAsync();
 
         if (!hasPassword && !hasPincode)
         {

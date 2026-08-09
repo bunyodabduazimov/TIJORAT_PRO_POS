@@ -6,9 +6,12 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using FFPOS.Controls;
+using FFPOS.Data;
 using FFPOS.Models;
 using FFPOS.Services;
+using Microsoft.EntityFrameworkCore;
 using MySqlConnector;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 namespace FFPOS.Views;
 
@@ -44,7 +47,7 @@ public partial class SettingsWindow : Window
         StoreNameBox.Text = string.IsNullOrWhiteSpace(_settings.AppName) ? "TIJORAT PRO POS" : _settings.AppName;
         StorePhoneBox.Text = string.IsNullOrWhiteSpace(_settings.AppPhone) ? "-" : _settings.AppPhone;
         AppDateBox.Text = string.IsNullOrWhiteSpace(_settings.AppDate) ? "-" : _settings.AppDate;
-        AppStatusTextBox.Text = _settings.IsActivated ? "РђРєС‚РёРІРµРЅ" : "РћС‚РєР»СЋС‡РµРЅ";
+        AppStatusTextBox.Text = _settings.IsActivated ? "Активен" : "Отключен";
 
         SetCheck(IsTouchScreenBox, _settings.IsTouchScreen);
         SetCheck(TotalSummaBox, _settings.TotalSumma);
@@ -103,9 +106,28 @@ public partial class SettingsWindow : Window
             return;
         }
 
+        if (_settings.DatabaseType == 2)
+        {
+            var result = TestMySqlConnection(
+                _settings.MySqlHost,
+                _settings.MySqlPort.ToString(),
+                _settings.MySqlDatabase,
+                _settings.MySqlUsername,
+                _settings.MySqlPassword);
+
+            if (!result.Success)
+            {
+                AppDialogWindow.ShowError(
+                    "Не удалось подключиться к MySQL. Настройки не сохранены, чтобы программа могла запускаться.\n\n" + result.ErrorMessage,
+                    "Ошибка подключения",
+                    this);
+                return;
+            }
+        }
+
         _settingsService.Save(_settings);
         UpdateSummary();
-        AppDialogWindow.ShowSuccess("РќР°СЃС‚СЂРѕР№РєРё СѓСЃРїРµС€РЅРѕ СЃРѕС…СЂР°РЅРµРЅС‹", "РЎРѕС…СЂР°РЅРµРЅРѕ", this);
+        AppDialogWindow.ShowSuccess("Настройки успешно сохранены", "Сохранено", this);
         Close();
     }
 
@@ -115,7 +137,7 @@ public partial class SettingsWindow : Window
 
         if (!TryGetInt(PageWidthBox.Text, out var pageWidth))
         {
-            error = "РџСЂРѕРІРµСЂСЊС‚Рµ С‡РёСЃР»РѕРІС‹Рµ РїРѕР»СЏ";
+            error = "Проверьте числовые поля";
             return false;
         }
 
@@ -126,25 +148,25 @@ public partial class SettingsWindow : Window
 
         if (syncTimeInmin < 5 || syncTimeInmin > 1440)
         {
-            error = "РРЅС‚РµСЂРІР°Р» СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РѕС‚ 5 РґРѕ 1440 РјРёРЅСѓС‚";
+            error = "Интервал синхронизации должен быть от 5 до 1440 минут";
             return false;
         }
 
         if (syncDay < 0 || syncDay > 30)
         {
-            error = "РЎРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ Р·Р° РґРЅРµР№ РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РѕС‚ 0 РґРѕ 30";
+            error = "Синхронизация за дней должна быть от 0 до 30";
             return false;
         }
 
         if (maxDiscount < 0 || maxDiscount > 100)
         {
-            error = "РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ СЃРєРёРґРєР° РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РѕС‚ 0 РґРѕ 100";
+            error = "Максимальная скидка должна быть от 0 до 100";
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(BaseUrlBox.Text))
         {
-            error = "BaseUrl РѕР±СЏР·Р°С‚РµР»РµРЅ";
+            error = "BaseUrl обязателен";
             return false;
         }
 
@@ -155,13 +177,13 @@ public partial class SettingsWindow : Window
                 string.IsNullOrWhiteSpace(MySqlDatabaseBox.Text) ||
                 string.IsNullOrWhiteSpace(MySqlUsernameBox.Text))
             {
-                error = "Р—Р°РїРѕР»РЅРёС‚Рµ РїР°СЂР°РјРµС‚СЂС‹ MySQL";
+                error = "Заполните параметры MySQL";
                 return false;
             }
 
             if (!TryGetInt(MySqlPortBox.Text, out var mysqlPort) || mysqlPort < 1 || mysqlPort > 65535)
             {
-                error = "РџРѕСЂС‚ MySQL РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РѕС‚ 1 РґРѕ 65535";
+                error = "Порт MySQL должен быть от 1 до 65535";
                 return false;
             }
         }
@@ -212,10 +234,10 @@ public partial class SettingsWindow : Window
     private void ReloadClicked(object sender, RoutedEventArgs e)
     {
         var confirmed = AppDialogWindow.Confirm(
-            "РЎР±СЂРѕСЃРёС‚СЊ РІСЃРµ РЅР°СЃС‚СЂРѕР№РєРё? РџСЂРѕРіСЂР°РјРјР° РІРµСЂРЅРµС‚СЃСЏ Рє РїРµСЂРІРѕРјСѓ Р·Р°РїСѓСЃРєСѓ Рё РїРѕРїСЂРѕСЃРёС‚ СЃРЅРѕРІР° РїРѕРґС‚РІРµСЂРґРёС‚СЊ РЅРѕРјРµСЂ С‚РµР»РµС„РѕРЅР°.",
-            "РЎР±СЂРѕСЃ РЅР°СЃС‚СЂРѕРµРє",
-            "РЎР±СЂРѕСЃРёС‚СЊ",
-            "РћС‚РјРµРЅР°",
+            "Сбросить все настройки? Программа вернется к первому запуску и снова попросит подтвердить номер телефона.",
+            "Сброс настроек",
+            "Сбросить",
+            "Отмена",
             this);
 
         if (!confirmed)
@@ -225,7 +247,7 @@ public partial class SettingsWindow : Window
 
         _settingsService.Reset();
         WasReset = true;
-        AppDialogWindow.ShowSuccess("РќР°СЃС‚СЂРѕР№РєРё СЃР±СЂРѕС€РµРЅС‹. Р’С‹РїРѕР»РЅСЏРµС‚СЃСЏ РїРѕРІС‚РѕСЂРЅР°СЏ Р°РєС‚РёРІР°С†РёСЏ.", "РЎР±СЂРѕС€РµРЅРѕ", this);
+        AppDialogWindow.ShowSuccess("Настройки сброшены. Откроется повторная активация.", "Сброшено", this);
         DialogResult = false;
         Close();
     }
@@ -244,7 +266,7 @@ public partial class SettingsWindow : Window
     {
         if (!ValidateMySqlFields(out var errorMessage))
         {
-            AppDialogWindow.ShowError(errorMessage, "РћС€РёР±РєР° РїСЂРѕРІРµСЂРєРё", this);
+            AppDialogWindow.ShowError(errorMessage, "Ошибка проверки", this);
             return;
         }
 
@@ -261,13 +283,13 @@ public partial class SettingsWindow : Window
             if (result.Success)
             {
                 AppDialogWindow.ShowSuccess(
-                    $"РџРѕРґРєР»СЋС‡РµРЅРёРµ РІС‹РїРѕР»РЅРµРЅРѕ СѓСЃРїРµС€РЅРѕ.\nР”СЂР°Р№РІРµСЂ: {result.DriverName}",
-                    "MySQL РїРѕРґРєР»СЋС‡РµРЅРёРµ",
+                    $"Подключение выполнено успешно.\nБаза данных и таблицы готовы.\nДрайвер: {result.DriverName}",
+                    "MySQL подключение",
                     this);
                 return;
             }
 
-            AppDialogWindow.ShowError(result.ErrorMessage, "РћС€РёР±РєР° РїРѕРґРєР»СЋС‡РµРЅРёСЏ", this);
+            AppDialogWindow.ShowError(result.ErrorMessage, "Ошибка подключения", this);
         }
         finally
         {
@@ -291,14 +313,14 @@ public partial class SettingsWindow : Window
     private void UpdateSummary()
     {
         HeaderSubtitle.Text = !string.IsNullOrWhiteSpace(_settings.AppName)
-            ? $"{_settings.AppName} вЂў {(_settings.IsActivated ? "РђРєС‚РёРІРµРЅ" : "РћС‚РєР»СЋС‡РµРЅ")}"
-            : "Р’СЃРµ РїР°СЂР°РјРµС‚СЂС‹ POS РІ РѕРґРЅРѕРј РјРµСЃС‚Рµ";
+            ? $"{_settings.AppName} • {(_settings.IsActivated ? "Активен" : "Отключен")}"
+            : "Все параметры POS в одном месте";
     }
 
     private void UpdateFiscalVisibility()
     {
         var active = FiscalModuleToggle.IsChecked;
-        FiscalStatusText.Text = active ? "РђРєС‚РёРІРµРЅ" : "РћС‚РєР»СЋС‡РµРЅ";
+        FiscalStatusText.Text = active ? "Активен" : "Отключен";
         FiscalStatusText.Foreground = active
             ? new SolidColorBrush(Color.FromRgb(22, 163, 74))
             : new SolidColorBrush(Color.FromRgb(249, 31, 37));
@@ -320,13 +342,13 @@ public partial class SettingsWindow : Window
             string.IsNullOrWhiteSpace(MySqlDatabaseBox.Text) ||
             string.IsNullOrWhiteSpace(MySqlUsernameBox.Text))
         {
-            error = "Р—Р°РїРѕР»РЅРёС‚Рµ РѕР±СЏР·Р°С‚РµР»СЊРЅС‹Рµ РїРѕР»СЏ РїРѕРґРєР»СЋС‡РµРЅРёСЏ MySQL.";
+            error = "Заполните обязательные поля подключения MySQL.";
             return false;
         }
 
         if (!TryGetInt(MySqlPortBox.Text, out var port) || port < 1 || port > 65535)
         {
-            error = "РџРѕСЂС‚ MySQL РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РѕС‚ 1 РґРѕ 65535.";
+            error = "Порт MySQL должен быть от 1 до 65535.";
             return false;
         }
 
@@ -346,7 +368,6 @@ public partial class SettingsWindow : Window
             {
                 Server = host,
                 Port = uint.TryParse(port, out var parsedPort) ? parsedPort : 3306u,
-                Database = database,
                 UserID = username,
                 ConnectionTimeout = 5,
                 SslMode = MySqlSslMode.None
@@ -357,12 +378,32 @@ public partial class SettingsWindow : Window
                 builder.Password = password;
             }
 
+            using var serverConnection = new MySqlConnection(builder.ConnectionString);
+            serverConnection.Open();
+
+            using (var command = serverConnection.CreateCommand())
+            {
+                command.CommandText = $"CREATE DATABASE IF NOT EXISTS `{EscapeMySqlIdentifier(database)}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;";
+                command.ExecuteNonQuery();
+            }
+
+            builder.Database = database;
+
             using var connection = new MySqlConnection(builder.ConnectionString);
             connection.Open();
 
-            using var command = connection.CreateCommand();
-            command.CommandText = "SELECT 1;";
-            _ = command.ExecuteScalar();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT 1;";
+                _ = command.ExecuteScalar();
+            }
+
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseMySql(builder.ConnectionString, new MySqlServerVersion(new Version(8, 0, 36)))
+                .Options;
+
+            using var context = new AppDbContext(options);
+            context.Database.EnsureCreated();
 
             return (true, "MySqlConnector", string.Empty);
         }
@@ -370,6 +411,11 @@ public partial class SettingsWindow : Window
         {
             return (false, "MySqlConnector", ex.Message);
         }
+    }
+
+    private static string EscapeMySqlIdentifier(string value)
+    {
+        return value.Replace("`", "``", StringComparison.Ordinal);
     }
     private void LoadStores()
     {

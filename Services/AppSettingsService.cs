@@ -22,8 +22,7 @@ public class AppSettingsService
     public AppSettingsService()
     {
         var directory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "FFPOS");
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "TIJORAT PRO");
 
         Directory.CreateDirectory(directory);
         _settingsPath = Path.Combine(directory, "settings.json");

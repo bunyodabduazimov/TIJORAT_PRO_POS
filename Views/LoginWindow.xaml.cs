@@ -14,7 +14,6 @@ public partial class LoginWindow : Window
 {
     private const double CompactLayoutWidth = 900;
     private AppActivationSettings _settings;
-    private readonly DatabaseService _databaseService = new();
     private IReadOnlyList<User> _users = Array.Empty<User>();
     private bool _isPasswordVisible;
     private bool _isSyncingPassword;
@@ -391,19 +390,32 @@ public partial class LoginWindow : Window
 
     private async Task LoadUsersAsync()
     {
-        _users = await _databaseService.GetUsersAsync();
+        try
+        {
+            var databaseService = new DatabaseService();
+            _users = await databaseService.GetUsersAsync();
+        }
+        catch (Exception ex)
+        {
+            _users = Array.Empty<User>();
+            ErrorText.Text = "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043e\u0442\u043a\u0440\u044b\u0442\u044c \u0431\u0430\u0437\u0443 \u0434\u0430\u043d\u043d\u044b\u0445. \u041f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u043f\u043e\u0434\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435 \u0432 \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430\u0445.";
+            ErrorText.ToolTip = ex.Message;
+        }
+
         var loginUsers = _users
             .Select(user => new LoginUserOption
             {
                 Id = user.Id,
-                DisplayName = string.IsNullOrWhiteSpace(user.Name) ? (user.Username ?? $"Пользователь {user.Id}") : user.Name,
+                DisplayName = string.IsNullOrWhiteSpace(user.Name) ? (user.Username ?? $"\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c {user.Id}") : user.Name,
                 Username = user.Username ?? string.Empty
             })
             .ToList();
 
         var selectedLogin = GetLogin();
         LoginBox.ItemsSource = loginUsers;
-        ErrorText.Text = loginUsers.Count == 0 ? "Пользователи не найдены. Выполните синхронизацию." : string.Empty;
+        ErrorText.Text = loginUsers.Count == 0 && string.IsNullOrWhiteSpace(ErrorText.Text)
+            ? "\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0438 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u044b. \u0412\u044b\u043f\u043e\u043b\u043d\u0438\u0442\u0435 \u0441\u0438\u043d\u0445\u0440\u043e\u043d\u0438\u0437\u0430\u0446\u0438\u044e."
+            : ErrorText.Text;
 
         if (!string.IsNullOrWhiteSpace(selectedLogin))
         {

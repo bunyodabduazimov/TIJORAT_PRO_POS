@@ -15,8 +15,11 @@ public partial class App : Application
         var settingsService = new AppSettingsService();
         settingsService.EnsureCreated();
         var settings = settingsService.Load();
-        var databaseService = new DatabaseService();
-        databaseService.InitializeAsync().GetAwaiter().GetResult();
+        if (!TryInitializeDatabase(settingsService, settings))
+        {
+            Shutdown();
+            return;
+        }
 
         if (!settings.IsActivated)
         {
@@ -52,5 +55,44 @@ public partial class App : Application
             3 => new FastFoodWindow(),
             _ => new MainWindow()
         };
+    }
+
+    private static bool TryInitializeDatabase(AppSettingsService settingsService, AppActivationSettings settings)
+    {
+        try
+        {
+            var databaseService = new DatabaseService();
+            databaseService.InitializeAsync().GetAwaiter().GetResult();
+            return true;
+        }
+        catch (Exception) when (settings.DatabaseType == 2)
+        {
+            settings.DatabaseType = 1;
+            settingsService.Save(settings);
+
+            try
+            {
+                var databaseService = new DatabaseService();
+                databaseService.InitializeAsync().GetAwaiter().GetResult();
+                AppDialogWindow.ShowError(
+                    "Не удалось подключиться к MySQL. Программа временно переключена на локальную базу SQLite3. Проверьте параметры подключения в настройках.",
+                    "База данных недоступна");
+                return true;
+            }
+            catch (Exception fallbackEx)
+            {
+                AppDialogWindow.ShowError(
+                    $"Не удалось открыть локальную базу данных.\n{fallbackEx.Message}",
+                    "Ошибка базы данных");
+                return false;
+            }
+        }
+        catch (Exception ex)
+        {
+            AppDialogWindow.ShowError(
+                $"Не удалось открыть базу данных.\n{ex.Message}",
+                "Ошибка базы данных");
+            return false;
+        }
     }
 }

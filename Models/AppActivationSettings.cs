@@ -78,7 +78,7 @@ public class AppActivationSettings
         AppPhone = app.Phone;
         AppDate = app.DateTo;
         FiscalPrint = app.Fiscat == 1;
-        IsActivated = string.Equals(app.Status, "Активен", StringComparison.OrdinalIgnoreCase) ||
+        IsActivated = string.Equals(app.Status, "\u0410\u043a\u0442\u0438\u0432\u0435\u043d", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(app.Status, "active", StringComparison.OrdinalIgnoreCase) ||
             !string.IsNullOrWhiteSpace(app.AppId);
     }
