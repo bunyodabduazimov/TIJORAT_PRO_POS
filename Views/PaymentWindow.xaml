@@ -5,14 +5,15 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:controls="clr-namespace:FFPOS.Controls"
         Title="Оплата"
-        Width="720"
-        Height="760"
-        MinWidth="660"
-        MinHeight="680"
+        Width="980"
+        Height="640"
+        MinWidth="860"
+        MinHeight="560"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResizeWithGrip"
         WindowStyle="None"
-        Background="#F7F8FA"
+        Background="Transparent"
+        AllowsTransparency="True"
         FontFamily="Inter, Segoe UI">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="0"
@@ -21,16 +22,17 @@
                             ResizeBorderThickness="8"
                             UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>
-    <Window.Resources>
-        <DropShadowEffect x:Key="WindowShadow" BlurRadius="30" ShadowDepth="4" Opacity="0.16" Color="#0B1220" />
 
-        <Style x:Key="PaymentButtonStyle" TargetType="{x:Type Button}">
-            <Setter Property="Height" Value="58" />
+    <Window.Resources>
+        <DropShadowEffect x:Key="WindowShadow" BlurRadius="28" ShadowDepth="4" Opacity="0.16" Color="#0B1220" />
+
+        <Style x:Key="BaseButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Height" Value="48" />
             <Setter Property="Background" Value="White" />
             <Setter Property="Foreground" Value="#102033" />
-            <Setter Property="BorderBrush" Value="#DEE4EC" />
+            <Setter Property="BorderBrush" Value="#DDE5EE" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontSize" Value="16" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -57,12 +59,12 @@
             </Style.Triggers>
         </Style>
 
-        <Style x:Key="RedButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource PaymentButtonStyle}">
-            <Setter Property="Height" Value="70" />
+        <Style x:Key="PrimaryButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource BaseButtonStyle}">
+            <Setter Property="Height" Value="58" />
             <Setter Property="Background" Value="#FF2B22" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="FontSize" Value="24" />
+            <Setter Property="FontSize" Value="20" />
             <Setter Property="FontWeight" Value="Bold" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
@@ -74,100 +76,155 @@
             </Style.Triggers>
         </Style>
 
-        <Style x:Key="KeyButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource PaymentButtonStyle}">
-            <Setter Property="Height" Value="70" />
+        <Style x:Key="KeyButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource BaseButtonStyle}">
+            <Setter Property="Height" Value="72" />
             <Setter Property="Margin" Value="6" />
-            <Setter Property="FontSize" Value="26" />
+            <Setter Property="FontSize" Value="30" />
             <Setter Property="FontWeight" Value="Bold" />
         </Style>
     </Window.Resources>
 
-    <Border Margin="18"
+    <Border Margin="12"
             Background="White"
-            BorderBrush="#DEE4EC"
+            BorderBrush="#DDE5EE"
             BorderThickness="1"
             CornerRadius="14"
             Effect="{StaticResource WindowShadow}">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="82" />
+                <RowDefinition Height="58" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="98" />
+                <RowDefinition Height="82" />
             </Grid.RowDefinitions>
 
-            <Border BorderBrush="#E8EDF3" BorderThickness="0,0,0,1" Padding="28,0" MouseLeftButtonDown="HeaderMouseLeftButtonDown">
+            <Border BorderBrush="#E8EDF3" BorderThickness="0,0,0,1" Padding="18,0" MouseLeftButtonDown="HeaderMouseLeftButtonDown">
                 <Grid>
-                    <TextBlock Text="Оплата" FontSize="24" FontWeight="Bold" Foreground="#111827" VerticalAlignment="Center" Margin="0,0,140,0" />
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <materialDesign:PackIcon Kind="CashRegister" Width="22" Height="22" Foreground="#111827" Margin="0,0,10,0" />
+                        <TextBlock Text="Оплата" FontSize="20" FontWeight="Bold" Foreground="#111827" VerticalAlignment="Center" />
+                    </StackPanel>
                     <controls:WindowControlButtons HorizontalAlignment="Right" VerticalAlignment="Center" />
                 </Grid>
             </Border>
 
-            <Grid Grid.Row="1" Margin="28,22,28,10">
+            <Grid Grid.Row="1" Margin="20,16,20,8">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="310" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="1.2*" MinWidth="430" />
+                    <ColumnDefinition Width="360" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel>
-                    <Border Background="#F7F8FA" CornerRadius="10" Padding="18,14" BorderBrush="#E8EDF3" BorderThickness="1">
-                        <Grid>
-                            <TextBlock Text="К оплате" FontSize="18" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" />
-                            <TextBlock x:Name="TotalText" FontSize="34" FontWeight="ExtraBold" Foreground="#FF2B22" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                        </Grid>
-                    </Border>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-                    <Grid Margin="0,16,0,0">
+                    <Grid>
                         <Grid.RowDefinitions>
-                            <RowDefinition />
-                            <RowDefinition />
-                            <RowDefinition />
+                            <RowDefinition Height="58" />
+                            <RowDefinition Height="58" />
+                            <RowDefinition Height="58" />
+                            <RowDefinition Height="58" />
                         </Grid.RowDefinitions>
-                        <Button x:Name="CashButton" Content="Наличные" Style="{StaticResource PaymentButtonStyle}" Click="PaymentTypeClicked" />
-                        <Button x:Name="CardButton" Grid.Row="1" Content="Карта" Style="{StaticResource PaymentButtonStyle}" Margin="0,10,0,0" Click="PaymentTypeClicked" />
-                        <Button x:Name="MixedButton" Grid.Row="2" Content="Смешанная" Style="{StaticResource PaymentButtonStyle}" Margin="0,10,0,0" Click="PaymentTypeClicked" />
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="138" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="Итого:" FontSize="18" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" />
+                        <Border Grid.Column="1" Background="#F8FAFC" BorderBrush="#DDE5EE" BorderThickness="1" CornerRadius="8" Padding="14,0">
+                            <TextBlock x:Name="TotalText" FontSize="24" FontWeight="ExtraBold" Foreground="#111827" VerticalAlignment="Center" />
+                        </Border>
+
+                        <TextBlock Grid.Row="1" Text="Тип оплаты:" FontSize="18" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" />
+                        <UniformGrid Grid.Row="1" Grid.Column="1" Columns="3">
+                            <Button x:Name="CashButton" Content="Наличные" Style="{StaticResource BaseButtonStyle}" Margin="0,0,8,0" Click="PaymentTypeClicked" />
+                            <Button x:Name="CardButton" Content="Карта" Style="{StaticResource BaseButtonStyle}" Margin="0,0,8,0" Click="PaymentTypeClicked" />
+                            <Button x:Name="MixedButton" Content="Смешанная" Style="{StaticResource BaseButtonStyle}" Click="PaymentTypeClicked" />
+                        </UniformGrid>
+
+                        <TextBlock Grid.Row="2" Text="К оплате:" FontSize="18" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" />
+                        <Border Grid.Row="2" Grid.Column="1" Background="#FFF7F6" BorderBrush="#FFB8B3" BorderThickness="1" CornerRadius="8" Padding="14,0">
+                            <TextBlock x:Name="PayableText" FontSize="24" FontWeight="ExtraBold" Foreground="#FF2B22" VerticalAlignment="Center" />
+                        </Border>
+
+                        <TextBlock Grid.Row="3" Text="Примечание:" FontSize="18" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" />
+                        <Border Grid.Row="3" Grid.Column="1" Background="#F8FAFC" BorderBrush="#DDE5EE" BorderThickness="1" CornerRadius="8" Padding="14,0">
+                            <TextBlock Text="-" FontSize="16" Foreground="#98A2B3" VerticalAlignment="Center" />
+                        </Border>
                     </Grid>
 
-                    <Button x:Name="CashAmountButton" Margin="0,18,0,0" Padding="0" Style="{StaticResource PaymentButtonStyle}" Height="82" Click="CashAmountClicked">
-                        <Border x:Name="CashAmountPanel" Background="Transparent" CornerRadius="8" Padding="18,0">
-                            <Grid>
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="Наличные" FontSize="16" FontWeight="SemiBold" Foreground="#667085" />
-                                    <TextBlock x:Name="CashAmountText" Text="0 c" FontSize="28" FontWeight="ExtraBold" Foreground="#111827" />
-                                </StackPanel>
-                                <materialDesign:PackIcon Kind="Cash" Width="30" Height="30" Foreground="#2EBD62" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                            </Grid>
-                        </Border>
-                    </Button>
-
-                    <Button x:Name="CardAmountButton" Margin="0,12,0,0" Padding="0" Style="{StaticResource PaymentButtonStyle}" Height="82" Click="CardAmountClicked">
-                        <Border x:Name="CardAmountPanel" Background="Transparent" CornerRadius="8" Padding="18,0">
-                            <Grid>
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="Карта" FontSize="16" FontWeight="SemiBold" Foreground="#667085" />
-                                    <TextBlock x:Name="CardAmountText" Text="0 c" FontSize="28" FontWeight="ExtraBold" Foreground="#111827" />
-                                </StackPanel>
-                                <materialDesign:PackIcon Kind="CreditCardOutline" Width="30" Height="30" Foreground="#2478E8" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                            </Grid>
-                        </Border>
-                    </Button>
-
-                    <Border Margin="0,18,0,0" Background="#07101B" CornerRadius="10" Padding="18,13">
+                    <Border Grid.Row="1" Margin="0,14,0,0" Background="#F8FAFC" BorderBrush="#DDE5EE" BorderThickness="1" CornerRadius="10" Padding="14">
                         <Grid>
-                            <StackPanel>
-                                <TextBlock x:Name="RemainderLabel" Text="Осталось" Foreground="#C9D3DF" FontSize="16" />
-                                <TextBlock x:Name="RemainderText" Text="0 c" Foreground="White" FontSize="30" FontWeight="ExtraBold" />
-                            </StackPanel>
-                            <StackPanel HorizontalAlignment="Right">
-                                <TextBlock Text="Сдача" Foreground="#C9D3DF" FontSize="16" HorizontalAlignment="Right" />
-                                <TextBlock x:Name="ChangeText" Text="0 c" Foreground="#2EBD62" FontSize="30" FontWeight="ExtraBold" HorizontalAlignment="Right" />
-                            </StackPanel>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="64" />
+                                <RowDefinition Height="64" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Платежи" FontSize="16" FontWeight="Bold" Foreground="#344054" Margin="0,0,0,8" />
+
+                            <Button x:Name="CashAmountButton" Grid.Row="1" Padding="0" Style="{StaticResource BaseButtonStyle}" Height="54" Click="CashAmountClicked">
+                                <Border x:Name="CashAmountPanel" Background="Transparent" CornerRadius="8" Padding="14,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="150" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <materialDesign:PackIcon Kind="Cash" Width="24" Height="24" Foreground="#2EBD62" Margin="0,0,10,0" />
+                                            <TextBlock Text="Наличные" FontSize="17" FontWeight="SemiBold" Foreground="#111827" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <TextBlock x:Name="CashAmountText" Grid.Column="1" Text="0 c" FontSize="22" FontWeight="ExtraBold" Foreground="#111827" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </Button>
+
+                            <Button x:Name="CardAmountButton" Grid.Row="2" Padding="0" Style="{StaticResource BaseButtonStyle}" Height="54" Click="CardAmountClicked">
+                                <Border x:Name="CardAmountPanel" Background="Transparent" CornerRadius="8" Padding="14,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="150" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <materialDesign:PackIcon Kind="CreditCardOutline" Width="24" Height="24" Foreground="#2478E8" Margin="0,0,10,0" />
+                                            <TextBlock Text="Карта" FontSize="17" FontWeight="SemiBold" Foreground="#111827" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <TextBlock x:Name="CardAmountText" Grid.Column="1" Text="0 c" FontSize="22" FontWeight="ExtraBold" Foreground="#111827" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </Button>
+
+                            <Grid Grid.Row="3" Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Сумма оплаты" FontSize="16" FontWeight="Bold" Foreground="#344054" />
+                                    <TextBlock x:Name="ReceivedText" Text="0 c" FontSize="24" FontWeight="ExtraBold" Foreground="#111827" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                                    <TextBlock x:Name="RemainderLabel" Text="Остаток" FontSize="16" FontWeight="Bold" Foreground="#344054" HorizontalAlignment="Right" />
+                                    <TextBlock x:Name="RemainderText" Text="0 c" FontSize="24" FontWeight="ExtraBold" Foreground="#FF2B22" HorizontalAlignment="Right" />
+                                    <TextBlock Text="Сдача" FontSize="14" Foreground="#667085" HorizontalAlignment="Right" Margin="0,4,0,0" />
+                                    <TextBlock x:Name="ChangeText" Text="0 c" FontSize="18" FontWeight="Bold" Foreground="#23A455" HorizontalAlignment="Right" />
+                                </StackPanel>
+                            </Grid>
                         </Grid>
                     </Border>
-                </StackPanel>
+                </Grid>
 
-                <StackPanel Grid.Column="1" Margin="22,0,0,0">
-                    <TextBlock x:Name="KeyboardTitle" Text="Введите сумму" FontSize="19" FontWeight="Bold" Foreground="#111827" Margin="6,0,0,10" />
-                    <Grid>
+                <Grid Grid.Column="1" Margin="22,0,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock x:Name="KeyboardTitle" Text="Введите сумму" FontSize="18" FontWeight="Bold" Foreground="#111827" Margin="6,0,0,8" />
+                    <Grid Grid.Row="1">
                         <Grid.RowDefinitions>
                             <RowDefinition />
                             <RowDefinition />
@@ -189,23 +246,43 @@
                         <Button Content="7" Tag="7" Grid.Row="2" Grid.Column="0" Style="{StaticResource KeyButtonStyle}" Click="NumberClicked" />
                         <Button Content="8" Tag="8" Grid.Row="2" Grid.Column="1" Style="{StaticResource KeyButtonStyle}" Click="NumberClicked" />
                         <Button Content="9" Tag="9" Grid.Row="2" Grid.Column="2" Style="{StaticResource KeyButtonStyle}" Click="NumberClicked" />
-                        <Button Content="C" Grid.Row="3" Grid.Column="0" Style="{StaticResource KeyButtonStyle}" Click="ClearClicked" />
+                        <Button Content="." Tag="." Grid.Row="3" Grid.Column="0" Style="{StaticResource KeyButtonStyle}" Click="NumberClicked" />
                         <Button Content="0" Tag="0" Grid.Row="3" Grid.Column="1" Style="{StaticResource KeyButtonStyle}" Click="NumberClicked" />
                         <Button Grid.Row="3" Grid.Column="2" Style="{StaticResource KeyButtonStyle}" Click="BackspaceClicked">
-                            <materialDesign:PackIcon Kind="BackspaceOutline" Width="28" Height="28" />
+                            <materialDesign:PackIcon Kind="BackspaceOutline" Width="34" Height="34" Foreground="#FF2B22" />
                         </Button>
                     </Grid>
-                    <Button Content="Точно" Style="{StaticResource PaymentButtonStyle}" Height="58" Margin="6,12,6,0" Click="ExactAmountClicked" />
-                </StackPanel>
+
+                    <StackPanel Grid.Row="2" Margin="6,8,6,0">
+                        <TextBlock Text="Быстрые суммы" FontSize="15" FontWeight="Bold" Foreground="#475467" Margin="0,0,0,6" />
+                        <UniformGrid Columns="4">
+                            <Button x:Name="QuickAmount1Button" Style="{StaticResource BaseButtonStyle}" Margin="0,0,8,0" Click="QuickAmountClicked" />
+                            <Button x:Name="QuickAmount2Button" Style="{StaticResource BaseButtonStyle}" Margin="0,0,8,0" Click="QuickAmountClicked" />
+                            <Button x:Name="QuickAmount3Button" Style="{StaticResource BaseButtonStyle}" Margin="0,0,8,0" Click="QuickAmountClicked" />
+                            <Button Content="Точно" Style="{StaticResource BaseButtonStyle}" Click="ExactAmountClicked" />
+                        </UniformGrid>
+                        <Button Content="C" Style="{StaticResource BaseButtonStyle}" Height="42" Margin="0,8,0,0" Foreground="#FF2B22" Click="ClearClicked" />
+                    </StackPanel>
+                </Grid>
             </Grid>
 
-            <Grid Grid.Row="2" Margin="28,10,28,24">
+            <Grid Grid.Row="2" Margin="20,10,20,16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <Button Content="Отмена" Style="{StaticResource PaymentButtonStyle}" Margin="0,0,8,0" Click="CancelClicked" />
-                <Button x:Name="ConfirmButton" Grid.Column="1" Content="Оплатить" Style="{StaticResource RedButtonStyle}" Margin="8,0,0,0" Click="ConfirmClicked" />
+                <Button Style="{StaticResource BaseButtonStyle}" Height="56" Margin="0,0,8,0" Click="HoldClicked">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="PauseCircleOutline" Width="22" Height="22" Margin="0,0,10,0" />
+                        <TextBlock Text="Отложить" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button x:Name="ConfirmButton" Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" Click="ConfirmClicked">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="CashRegister" Width="24" Height="24" Margin="0,0,10,0" />
+                        <TextBlock x:Name="ConfirmButtonText" Text="Оплатить" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
             </Grid>
         </Grid>
     </Border>

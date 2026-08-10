@@ -77,6 +77,7 @@ public class AppActivationSettings
         AppName = app.Name;
         AppPhone = app.Phone;
         AppDate = app.DateTo;
+        PublicUrl = string.IsNullOrWhiteSpace(app.PublicUrl) ? PublicUrl : app.PublicUrl;
         FiscalPrint = app.Fiscat == 1;
         IsActivated = string.Equals(app.Status, "\u0410\u043a\u0442\u0438\u0432\u0435\u043d", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(app.Status, "active", StringComparison.OrdinalIgnoreCase) ||
@@ -93,4 +94,5 @@ public class AppInfo
     public string Status { get; set; } = string.Empty;
     public int Fiscat { get; set; }
     public string AppId { get; set; } = string.Empty;
+    public string PublicUrl { get; set; } = string.Empty;
 }

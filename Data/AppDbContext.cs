@@ -104,12 +104,26 @@ public class AppDbContext : DbContext
     private static void ConfigureOrders(ModelBuilder modelBuilder)
     {
         var entity = modelBuilder.Entity<Order>();
-        entity.ToTable("orders");
+        entity.ToTable("sales");
         entity.HasKey(x => x.Number);
-        entity.Property(x => x.Number).HasColumnName("number").ValueGeneratedNever();
-        entity.Property(x => x.OrderType).HasColumnName("order_type");
+        entity.Property(x => x.Number).HasColumnName("id").ValueGeneratedNever();
+        entity.Property(x => x.StoreId).HasColumnName("store_id");
+        entity.Property(x => x.StockId).HasColumnName("stock_id");
+        entity.Property(x => x.UserId).HasColumnName("user_id");
+        entity.Property(x => x.CashId).HasColumnName("cash_id");
+        entity.Property(x => x.PriceId).HasColumnName("price_id");
+        entity.Property(x => x.PeopleId).HasColumnName("people_id");
+        entity.Property(x => x.Summa).HasColumnName("summa");
         entity.Property(x => x.Discount).HasColumnName("discount");
+        entity.Property(x => x.BonusSum).HasColumnName("bonussum");
+        entity.Property(x => x.SummaPay).HasColumnName("summapay");
+        entity.Property(x => x.Date).HasColumnName("date");
+        entity.Property(x => x.OrderType).HasColumnName("type");
         entity.Property(x => x.Status).HasColumnName("status");
+        entity.Property(x => x.SyncStatus).HasColumnName("sync_status");
+        entity.Property(x => x.ServerId).HasColumnName("server_id");
+        entity.Property(x => x.SyncedAt).HasColumnName("synced_at");
+        entity.Property(x => x.SyncError).HasColumnName("sync_error");
         entity.Ignore(x => x.Subtotal);
         entity.Ignore(x => x.Total);
         entity.Ignore(x => x.DisplayName);
@@ -125,13 +139,15 @@ public class AppDbContext : DbContext
     private static void ConfigureOrderItems(ModelBuilder modelBuilder)
     {
         var entity = modelBuilder.Entity<OrderItem>();
-        entity.ToTable("order_items");
+        entity.ToTable("sale_data");
         entity.HasKey(x => x.Id);
         entity.Property(x => x.Id).HasColumnName("id").ValueGeneratedOnAdd();
-        entity.Property(x => x.OrderNumber).HasColumnName("order_number");
+        entity.Property(x => x.OrderNumber).HasColumnName("sale_id");
         entity.Property(x => x.ProductId).HasColumnName("product_id");
         entity.Property(x => x.Quantity).HasColumnName("quantity");
         entity.Property(x => x.Price).HasColumnName("price");
+        entity.Property(x => x.Discount).HasColumnName("discount");
+        entity.Property(x => x.Bonus).HasColumnName("bonus");
         entity.Property(x => x.Note).HasColumnName("note");
         entity.Ignore(x => x.Total);
         entity.Ignore(x => x.Description);

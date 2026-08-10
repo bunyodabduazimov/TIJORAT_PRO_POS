@@ -275,6 +275,13 @@ public class SalesViewModel : INotifyPropertyChanged
             _databaseService.InitializeAsync().GetAwaiter().GetResult();
 
             Categories.Clear();
+            Categories.Add(new Category
+            {
+                Id = 0,
+                Name = "\u0412\u0441\u0435 \u0442\u043e\u0432\u0430\u0440\u044b",
+                IconPath = "/Assets/Images/default.png",
+                IconGlyph = "\uE8EF"
+            });
             foreach (var category in _databaseService.GetCategoriesAsync().GetAwaiter().GetResult())
             {
                 Categories.Add(category);
@@ -297,13 +304,6 @@ public class SalesViewModel : INotifyPropertyChanged
                 CurrentOrder = CreateOrder(saveToDatabase: false);
             }
 
-            Categories.Add(new Category
-            {
-                Id = 0,
-                Name = "Все товары",
-                IconPath = "/Assets/Images/default.png",
-                IconGlyph = "\uE8EF"
-            });
             SelectedCategory = Categories.FirstOrDefault(category => category.Id == 0) ?? Categories.FirstOrDefault();
         }
         finally
@@ -330,11 +330,24 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void OpenProfile()
     {
+        var settingsService = new AppSettingsService();
+        var previousAppType = settingsService.Load().AppType;
         var window = new SettingsWindow
         {
             Owner = Application.Current?.MainWindow
         };
         window.ShowDialog();
+
+        if (!window.WasSaved)
+        {
+            return;
+        }
+
+        var settings = settingsService.Load();
+        if (settings.AppType != previousAppType)
+        {
+            App.SwitchMainWindow(settings);
+        }
     }
 
     private void EditDiscount()
@@ -474,7 +487,15 @@ public class SalesViewModel : INotifyPropertyChanged
             Owner = Application.Current?.MainWindow
         };
 
-        if (window.ShowDialog() == true)
+        var paymentResult = window.ShowDialog();
+
+        if (window.HoldRequested)
+        {
+            HoldOrder();
+            return;
+        }
+
+        if (paymentResult == true)
         {
             SelectedPaymentType = window.PaymentType;
             _databaseService.MarkOrderPaidAsync(CurrentOrder).GetAwaiter().GetResult();

@@ -23,6 +23,8 @@ public partial class SettingsWindow : Window
     private AppActivationSettings _settings = new();
 
     public bool WasReset { get; private set; }
+    public bool WasSaved { get; private set; }
+    public AppActivationSettings SavedSettings => _settings;
 
     public SettingsWindow()
     {
@@ -126,6 +128,7 @@ public partial class SettingsWindow : Window
         }
 
         _settingsService.Save(_settings);
+        WasSaved = true;
         UpdateSummary();
         AppDialogWindow.ShowSuccess("Настройки успешно сохранены", "Сохранено", this);
         Close();
@@ -404,6 +407,7 @@ public partial class SettingsWindow : Window
 
             using var context = new AppDbContext(options);
             context.Database.EnsureCreated();
+            EnsureMySqlPosTables(connection);
 
             return (true, "MySqlConnector", string.Empty);
         }
@@ -416,6 +420,190 @@ public partial class SettingsWindow : Window
     private static string EscapeMySqlIdentifier(string value)
     {
         return value.Replace("`", "``", StringComparison.Ordinal);
+    }
+
+    private static void EnsureMySqlPosTables(MySqlConnection connection)
+    {
+        ExecuteMySqlSchema(connection, """
+            CREATE TABLE IF NOT EXISTS stores (
+                id INT NOT NULL PRIMARY KEY,
+                name TEXT NULL,
+                agel_name TEXT NULL,
+                location TEXT NULL,
+                phone TEXT NULL,
+                email TEXT NULL,
+                site TEXT NULL,
+                description TEXT NULL,
+                settings TEXT NULL,
+                status INT NULL DEFAULT 1
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+            """);
+
+        ExecuteMySqlSchema(connection, """
+            CREATE TABLE IF NOT EXISTS stoks (
+                id INT NOT NULL PRIMARY KEY,
+                name TEXT NULL,
+                status INT NULL DEFAULT 1
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+            """);
+
+        ExecuteMySqlSchema(connection, """
+            CREATE TABLE IF NOT EXISTS cashes (
+                id INT NOT NULL PRIMARY KEY,
+                name TEXT NULL,
+                status INT NULL DEFAULT 1
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+            """);
+
+        ExecuteMySqlSchema(connection, """
+            CREATE TABLE IF NOT EXISTS users (
+                id INT NOT NULL PRIMARY KEY,
+                store_id INT NULL,
+                cash_id INT NULL,
+                stock_id INT NULL,
+                name TEXT NULL,
+                username TEXT NULL,
+                pincode TEXT NULL,
+                settings TEXT NULL,
+                status INT NULL DEFAULT 1
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+            """);
+
+        ExecuteMySqlSchema(connection, """
+            CREATE TABLE IF NOT EXISTS peoples (
+                id INT NOT NULL PRIMARY KEY,
+                name TEXT NULL,
+                phone TEXT NULL,
+                balance DECIMAL(18,2) NULL DEFAULT 0,
+                status INT NULL DEFAULT 1
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+            """);
+
+        ExecuteMySqlSchema(connection, """
+            CREATE TABLE IF NOT EXISTS categories (
+                id INT NOT NULL PRIMARY KEY,
+                parent_id INT NULL DEFAULT 0,
+                name TEXT NULL,
+                image TEXT NULL,
+                icon_path TEXT NULL,
+                sort_order INT NULL DEFAULT 0,
+                status INT NULL DEFAULT 1,
+                is_active INT NULL DEFAULT 1,
+                updated_at TEXT NULL
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+            """);
+
+        ExecuteMySqlSchema(connection, """
+            CREATE TABLE IF NOT EXISTS products (
+                id INT NOT NULL PRIMARY KEY,
+                category_id INT NULL DEFAULT 0,
+                name TEXT NOT NULL,
+                price DECIMAL(18,2) NOT NULL DEFAULT 0,
+                image TEXT NULL,
+                image_path TEXT NULL,
+                sku TEXT NULL,
+                barcode TEXT NULL,
+                pos_view INT NOT NULL DEFAULT 0,
+                status INT NOT NULL DEFAULT 1,
+                unit_id INT NULL DEFAULT 0,
+                unit TEXT NULL,
+                category TEXT NULL,
+                quantity DECIMAL(18,3) NULL DEFAULT 0,
+                package DECIMAL(18,3) NOT NULL DEFAULT 1,
+                sort_order INT NULL DEFAULT 0,
+                is_active INT NULL DEFAULT 1,
+                updated_at TEXT NULL
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+            """);
+
+        ExecuteMySqlSchema(connection, """
+            CREATE TABLE IF NOT EXISTS prices (
+                id INT NOT NULL PRIMARY KEY,
+                name TEXT NULL,
+                status INT NULL DEFAULT 1
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+            """);
+
+        ExecuteMySqlSchema(connection, """
+            CREATE TABLE IF NOT EXISTS price_data (
+                id INT NOT NULL PRIMARY KEY,
+                price_id INT NOT NULL,
+                product_id INT NOT NULL,
+                price DECIMAL(18,2) NOT NULL DEFAULT 0,
+                bonus DECIMAL(18,2) NOT NULL DEFAULT 0,
+                discount DECIMAL(18,2) NOT NULL DEFAULT 0,
+                INDEX ix_price_data_price_id (price_id),
+                INDEX ix_price_data_product_id (product_id)
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+            """);
+
+        ExecuteMySqlSchema(connection, """
+            CREATE TABLE IF NOT EXISTS dds (
+                id INT NOT NULL PRIMARY KEY,
+                store_id INT NOT NULL,
+                user_id INT NOT NULL,
+                cash_id INT NOT NULL,
+                people_id INT NOT NULL,
+                summa DECIMAL(18,2) NOT NULL,
+                event_time BIGINT NOT NULL,
+                description TEXT NULL,
+                date TEXT NOT NULL,
+                status INT NOT NULL
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+            """);
+
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = """
+                CREATE TABLE IF NOT EXISTS sales (
+                    id INT NOT NULL PRIMARY KEY,
+                    store_id INT NOT NULL DEFAULT 1,
+                    stock_id INT NOT NULL DEFAULT 1,
+                    user_id INT NOT NULL DEFAULT 1,
+                    cash_id INT NOT NULL DEFAULT 1,
+                    price_id INT NOT NULL DEFAULT 1,
+                    people_id INT NOT NULL DEFAULT 1,
+                    summa DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    discount DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    bonussum DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    summapay DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    date DATETIME NOT NULL,
+                    type VARCHAR(50) NOT NULL DEFAULT 'open',
+                    status VARCHAR(30) NOT NULL DEFAULT 'open',
+                    sync_status INT NOT NULL DEFAULT 0,
+                    server_id INT NULL,
+                    synced_at DATETIME NULL,
+                    sync_error TEXT NULL
+                ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+                """;
+            command.ExecuteNonQuery();
+        }
+
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = """
+                CREATE TABLE IF NOT EXISTS sale_data (
+                    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    sale_id INT NOT NULL,
+                    product_id INT NOT NULL,
+                    quantity DECIMAL(18,3) NOT NULL DEFAULT 0,
+                    price DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    discount DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    bonus DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    note TEXT NULL,
+                    INDEX ix_sale_data_sale_id (sale_id),
+                    CONSTRAINT fk_sale_data_sales_sale_id FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE
+                ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+                """;
+            command.ExecuteNonQuery();
+        }
+    }
+
+    private static void ExecuteMySqlSchema(MySqlConnection connection, string sql)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.ExecuteNonQuery();
     }
     private void LoadStores()
     {

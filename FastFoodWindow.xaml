@@ -11,6 +11,6 @@
         ResizeMode="NoResize"
         Background="#F6F7F9">
     <Grid>
-        <views:SalesView/>
+        <views:SalesFastFoodView/>
     </Grid>
 </Window>

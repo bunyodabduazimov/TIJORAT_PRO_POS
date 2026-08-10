@@ -17,7 +17,21 @@ public class Order : INotifyPropertyChanged
     }
 
     public int Number { get; set; }
+    public int StoreId { get; set; } = 1;
+    public int StockId { get; set; } = 1;
+    public int UserId { get; set; } = 1;
+    public int CashId { get; set; } = 1;
+    public int PriceId { get; set; } = 1;
+    public int PeopleId { get; set; } = 1;
+    public decimal Summa { get; set; }
+    public decimal BonusSum { get; set; }
+    public decimal SummaPay { get; set; }
+    public DateTime Date { get; set; } = DateTime.Now;
     public string Status { get; set; } = "open";
+    public int SyncStatus { get; set; }
+    public int? ServerId { get; set; }
+    public DateTime? SyncedAt { get; set; }
+    public string? SyncError { get; set; }
     public ObservableCollection<OrderItem> Items { get; } = new();
 
     public string OrderType

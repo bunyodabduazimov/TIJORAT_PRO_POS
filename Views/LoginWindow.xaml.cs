@@ -214,6 +214,12 @@ public partial class LoginWindow : Window
         };
         settingsWindow.ShowDialog();
 
+        var settingsService = new AppSettingsService();
+        _settings = settingsService.Load();
+        AppNameText.Text = string.IsNullOrWhiteSpace(_settings.AppName)
+            ? string.Empty
+            : $"{_settings.AppName} В· {(_settings.IsActivated ? "РђРєС‚РёРІРµРЅ" : "РћС‚РєР»СЋС‡РµРЅ")}";
+
         if (settingsWindow.WasReset)
         {
             RunActivationAfterReset();

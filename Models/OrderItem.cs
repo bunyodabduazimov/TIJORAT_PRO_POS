@@ -13,6 +13,8 @@ public class OrderItem : INotifyPropertyChanged
     public Product Product { get; set; } = new();
     public string? Note { get; set; }
     public decimal Price { get; set; }
+    public decimal Discount { get; set; }
+    public decimal Bonus { get; set; }
 
     public int Quantity
     {

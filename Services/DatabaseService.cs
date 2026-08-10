@@ -49,6 +49,7 @@ public sealed class DatabaseService
 
         await using var context = CreateContext();
         await context.Database.EnsureCreatedAsync(cancellationToken);
+        await EnsureSalesTablesAsync(context, cancellationToken);
 
         if (!IsMySql)
         {
@@ -89,7 +90,7 @@ public sealed class DatabaseService
         await using var context = CreateContext();
         return await context.Products
             .AsNoTracking()
-            .Where(product => product.IsActive == 1)
+            .Where(product => product.Status == 1)
             .OrderBy(product => product.SortOrder)
             .ThenBy(product => product.Id)
             .ToListAsync(cancellationToken);
@@ -168,6 +169,18 @@ public sealed class DatabaseService
             trackedOrder.OrderType = order.OrderType;
             trackedOrder.Status = string.IsNullOrWhiteSpace(order.Status) ? "open" : order.Status;
             trackedOrder.Discount = order.Discount;
+            trackedOrder.StoreId = order.StoreId > 0 ? order.StoreId : _settings.StoreId;
+            trackedOrder.StockId = order.StockId > 0 ? order.StockId : _settings.StockId;
+            trackedOrder.UserId = order.UserId > 0 ? order.UserId : 1;
+            trackedOrder.CashId = order.CashId > 0 ? order.CashId : 1;
+            trackedOrder.PriceId = order.PriceId > 0 ? order.PriceId : _settings.PriceId;
+            trackedOrder.PeopleId = order.PeopleId > 0 ? order.PeopleId : _settings.PeopleId;
+            trackedOrder.Summa = order.Subtotal;
+            trackedOrder.BonusSum = order.BonusSum;
+            trackedOrder.SummaPay = order.Total;
+            trackedOrder.Date = order.Date == default ? DateTime.Now : order.Date;
+            trackedOrder.SyncStatus = 0;
+            trackedOrder.SyncError = null;
 
             if (existing is not null)
             {
@@ -192,7 +205,9 @@ public sealed class DatabaseService
                     Product = sourceItem.Product,
                     Quantity = sourceItem.Quantity,
                     Note = sourceItem.Note,
-                    Price = sourceItem.Price > 0 ? sourceItem.Price : sourceItem.Product.Price
+                    Price = sourceItem.Price > 0 ? sourceItem.Price : sourceItem.Product.Price,
+                    Discount = sourceItem.Discount,
+                    Bonus = sourceItem.Bonus
                 });
             }
 
@@ -217,6 +232,10 @@ public sealed class DatabaseService
             }
 
             tracked.Status = "paid";
+            tracked.Summa = order.Subtotal;
+            tracked.SummaPay = order.Total;
+            tracked.Discount = order.Discount;
+            tracked.SyncStatus = 0;
             await context.SaveChangesAsync(cancellationToken);
         }
         finally
@@ -269,7 +288,6 @@ public sealed class DatabaseService
                 : product.ImagePath;
             product.Package = product.Package < 1 ? 1 : product.Package;
             product.PosView = product.PosView == 1 ? 1 : 0;
-            product.IsActive = product.Status == 1 && product.PosView == 1 ? 1 : 0;
             product.SortOrder = product.SortOrder == 0 ? product.Id : product.SortOrder;
         }
 
@@ -329,6 +347,92 @@ public sealed class DatabaseService
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    private async Task EnsureSalesTablesAsync(AppDbContext context, CancellationToken cancellationToken)
+    {
+        if (IsMySql)
+        {
+            await context.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS sales (
+                    id INT NOT NULL PRIMARY KEY,
+                    store_id INT NOT NULL DEFAULT 1,
+                    stock_id INT NOT NULL DEFAULT 1,
+                    user_id INT NOT NULL DEFAULT 1,
+                    cash_id INT NOT NULL DEFAULT 1,
+                    price_id INT NOT NULL DEFAULT 1,
+                    people_id INT NOT NULL DEFAULT 1,
+                    summa DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    discount DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    bonussum DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    summapay DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    date DATETIME NOT NULL,
+                    type VARCHAR(50) NOT NULL DEFAULT 'open',
+                    status VARCHAR(30) NOT NULL DEFAULT 'open',
+                    sync_status INT NOT NULL DEFAULT 0,
+                    server_id INT NULL,
+                    synced_at DATETIME NULL,
+                    sync_error TEXT NULL
+                ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+                """, cancellationToken);
+
+            await context.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS sale_data (
+                    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    sale_id INT NOT NULL,
+                    product_id INT NOT NULL,
+                    quantity DECIMAL(18,3) NOT NULL DEFAULT 0,
+                    price DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    discount DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    bonus DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    note TEXT NULL,
+                    INDEX ix_sale_data_sale_id (sale_id),
+                    CONSTRAINT fk_sale_data_sales_sale_id FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE
+                ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+                """, cancellationToken);
+            return;
+        }
+
+        await context.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE IF NOT EXISTS sales (
+                id INTEGER NOT NULL PRIMARY KEY,
+                store_id INTEGER NOT NULL DEFAULT 1,
+                stock_id INTEGER NOT NULL DEFAULT 1,
+                user_id INTEGER NOT NULL DEFAULT 1,
+                cash_id INTEGER NOT NULL DEFAULT 1,
+                price_id INTEGER NOT NULL DEFAULT 1,
+                people_id INTEGER NOT NULL DEFAULT 1,
+                summa REAL NOT NULL DEFAULT 0,
+                discount REAL NOT NULL DEFAULT 0,
+                bonussum REAL NOT NULL DEFAULT 0,
+                summapay REAL NOT NULL DEFAULT 0,
+                date TEXT NOT NULL,
+                type TEXT NOT NULL DEFAULT 'open',
+                status TEXT NOT NULL DEFAULT 'open',
+                sync_status INTEGER NOT NULL DEFAULT 0,
+                server_id INTEGER NULL,
+                synced_at TEXT NULL,
+                sync_error TEXT NULL
+            );
+            """, cancellationToken);
+
+        await context.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE IF NOT EXISTS sale_data (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                sale_id INTEGER NOT NULL,
+                product_id INTEGER NOT NULL,
+                quantity REAL NOT NULL DEFAULT 0,
+                price REAL NOT NULL DEFAULT 0,
+                discount REAL NOT NULL DEFAULT 0,
+                bonus REAL NOT NULL DEFAULT 0,
+                note TEXT NULL,
+                FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE
+            );
+            """, cancellationToken);
+
+        await context.Database.ExecuteSqlRawAsync("""
+            CREATE INDEX IF NOT EXISTS ix_sale_data_sale_id ON sale_data(sale_id);
+            """, cancellationToken);
+    }
+
     private async Task UpsertEntitiesAsync<TEntity>(
         IEnumerable<TEntity> items,
         string keyPropertyName,
@@ -349,9 +453,10 @@ public sealed class DatabaseService
             var set = context.Set<TEntity>();
             var keys = list.Select(keySelector).Distinct().ToArray();
 
-            var existing = await set
+            var existingList = await set
                 .Where(entity => keys.Contains(EF.Property<int>(entity, keyPropertyName)))
-                .ToDictionaryAsync(entity => EF.Property<int>(entity, keyPropertyName), cancellationToken);
+                .ToListAsync(cancellationToken);
+            var existing = existingList.ToDictionary(keySelector);
 
             foreach (var item in list)
             {

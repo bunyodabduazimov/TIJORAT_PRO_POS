@@ -92,6 +92,9 @@ public class AuthAppDto
     [JsonPropertyName("app_id")]
     public string AppId { get; set; } = string.Empty;
 
+    [JsonPropertyName("public_url")]
+    public string PublicUrl { get; set; } = string.Empty;
+
     public AppInfo ToAppInfo()
     {
         return new AppInfo
@@ -102,7 +105,8 @@ public class AuthAppDto
             DateTo = DateTo,
             Status = Status,
             Fiscat = Fiscat,
-            AppId = AppId
+            AppId = AppId,
+            PublicUrl = PublicUrl
         };
     }
 }

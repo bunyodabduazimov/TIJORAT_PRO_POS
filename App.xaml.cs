@@ -41,20 +41,44 @@ public partial class App : Application
             return;
         }
 
+        settings = settingsService.Load();
         var mainWindow = CreateMainWindow(settings);
         MainWindow = mainWindow;
         ShutdownMode = ShutdownMode.OnMainWindowClose;
         mainWindow.Show();
     }
 
-    private static Window CreateMainWindow(AppActivationSettings settings)
+    public static Window CreateMainWindow(AppActivationSettings settings)
     {
-        return settings.AppType switch
+        var appType = settings.AppType is >= 1 and <= 3 ? settings.AppType : 1;
+        return appType switch
         {
             2 => new PharmacyWindow(),
             3 => new FastFoodWindow(),
             _ => new MainWindow()
         };
+    }
+
+    public static void SwitchMainWindow(AppActivationSettings settings)
+    {
+        if (Current is not App app)
+        {
+            return;
+        }
+
+        var previousWindow = app.MainWindow;
+        var nextWindow = CreateMainWindow(settings);
+
+        app.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        app.MainWindow = nextWindow;
+        nextWindow.Show();
+
+        if (previousWindow is not null && previousWindow != nextWindow)
+        {
+            previousWindow.Close();
+        }
+
+        app.ShutdownMode = ShutdownMode.OnMainWindowClose;
     }
 
     private static bool TryInitializeDatabase(AppSettingsService settingsService, AppActivationSettings settings)
