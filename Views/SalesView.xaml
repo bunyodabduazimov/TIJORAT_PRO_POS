@@ -83,16 +83,20 @@
         <Style x:Key="TopIconButtonStyle" TargetType="{x:Type Button}">
             <Setter Property="Width" Value="44" />
             <Setter Property="Height" Value="40" />
-            <Setter Property="Background" Value="#111C2B" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#FFFFFF" />
+            <Setter Property="BorderBrush" Value="#D9E2EC" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="#111827" />
             <Setter Property="FontSize" Value="23" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8">
                             <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
                         </Border>
                     </ControlTemplate>
@@ -100,10 +104,11 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#172438" />
+                    <Setter Property="Background" Value="#F8FAFC" />
+                    <Setter Property="BorderBrush" Value="#CBD5E1" />
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="#22324A" />
+                    <Setter Property="Background" Value="#EEF2F7" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -113,7 +118,7 @@
             <Setter Property="MinWidth" Value="80" />
             <Setter Property="Padding" Value="10,0" />
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="#344054" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="FontSize" Value="15" />
             <Setter Property="FontWeight" Value="Medium" />
@@ -130,10 +135,11 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#172438" />
+                    <Setter Property="Background" Value="#FFFFFF" />
+                    <Setter Property="Foreground" Value="#111827" />
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="#22324A" />
+                    <Setter Property="Background" Value="#EEF2F7" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -281,6 +287,19 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+        <Style x:Key="AppHeaderStyle" TargetType="{x:Type Border}">
+            <Setter Property="Background" Value="#F8FAFC" />
+            <Setter Property="BorderBrush" Value="#D9E2EC" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+        </Style>
+
+        <Style x:Key="AppFooterStyle" TargetType="{x:Type Border}">
+            <Setter Property="Background" Value="#F8FAFC" />
+            <Setter Property="BorderBrush" Value="#D9E2EC" />
+            <Setter Property="BorderThickness" Value="0,1,0,0" />
+            <Setter Property="Effect" Value="{StaticResource SoftShadow}" />
+        </Style>
     </UserControl.Resources>
 
     <Grid>
@@ -290,7 +309,7 @@
             <RowDefinition Height="60" />
         </Grid.RowDefinitions>
 
-        <Border Background="#07101B" MouseLeftButtonDown="HeaderMouseLeftButtonDown">
+        <Border Style="{StaticResource AppHeaderStyle}" MouseLeftButtonDown="HeaderMouseLeftButtonDown">
             <Grid Margin="18,0,16,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1.1*" MinWidth="200" />
@@ -302,10 +321,10 @@
                     <Button Command="{Binding ToggleSidebarCommand}" Style="{StaticResource TopIconButtonStyle}">
                         <materialDesign:PackIcon Kind="Menu" Width="28" Height="28" />
                     </Button>
-                    <TextBlock Margin="24,0,0,0" FontSize="23" FontWeight="Bold" VerticalAlignment="Center"><Run Text="TIJORAT" Foreground="White" /><Run Text="."/><Run Text="PRO" Foreground="#FF332B" /></TextBlock>
+                    <TextBlock Margin="24,0,0,0" FontSize="23" FontWeight="Bold" VerticalAlignment="Center"><Run Text="TIJORAT" Foreground="#111827" /><Run Text="." Foreground="#111827"/><Run Text="PRO" Foreground="#FF332B" /></TextBlock>
                 </StackPanel>
 
-                <Border Grid.Column="1" Background="#111C2B" CornerRadius="10" Effect="{StaticResource SoftShadow}" VerticalAlignment="Center" Height="46">
+                <Border Grid.Column="1" Background="#F2F4F7" BorderBrush="#D9E2EC" BorderThickness="1" CornerRadius="10" VerticalAlignment="Center" Height="46">
                     <UniformGrid Columns="2" VerticalAlignment="Center" Margin="5,0">
                         <Button Command="{Binding NavigateCommand}" CommandParameter="Касса" Style="{StaticResource NavButtonStyle}" Background="White" Foreground="#FF2B22">
                             <StackPanel Orientation="Horizontal">
@@ -324,17 +343,17 @@
 
                 <Grid Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <Button x:Name="ProfileButton" Grid.Column="1" Click="ProfileButton_OnClick" Style="{StaticResource ProfileButtonStyle}">
-                        <Border Height="44" CornerRadius="10" BorderBrush="#152236" BorderThickness="1" Background="ForestGreen" Padding="10 0">
+                        <Border Height="44" CornerRadius="10" BorderBrush="#D9E2EC" BorderThickness="1" Background="#FFFFFF" Padding="10 0">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="30" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="30" />
                                 </Grid.ColumnDefinitions>
-                                <materialDesign:PackIcon Kind="AccountOutline" Width="27" Height="27" Foreground="White" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="1" Text="{Binding CashierName}" Foreground="White" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                <materialDesign:PackIcon Kind="AccountOutline" Width="27" Height="27" Foreground="#23A455" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding CashierName}" Foreground="#111827" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                    <materialDesign:PackIcon Kind="ChevronDown" Width="18" Height="18" Foreground="White" HorizontalAlignment="Center" />
+                                    <materialDesign:PackIcon Kind="ChevronDown" Width="18" Height="18" Foreground="#344054" HorizontalAlignment="Center" />
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -764,7 +783,7 @@
             </Grid>
         </Grid>
 
-        <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="#D9E2EC" BorderThickness="0,1,0,0" Effect="{StaticResource SoftShadow}">
+        <Border Grid.Row="2" Style="{StaticResource AppFooterStyle}">
             <Grid Margin="18,0,22,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="170" />
