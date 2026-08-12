@@ -1,4 +1,4 @@
-<Window x:Class="FFPOS.Views.SettingsWindow"
+﻿<Window x:Class="FFPOS.Views.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
@@ -440,7 +440,7 @@
                                             <controls:SettingTextField x:Name="MySqlPortBox" Grid.Column="2" Header="Порт" IconKind="Dialpad" IsNumeric="True" />
                                             <controls:SettingTextField x:Name="MySqlDatabaseBox" Grid.Row="2" Header="База данных" IconKind="Database" />
                                             <controls:SettingTextField x:Name="MySqlUsernameBox" Grid.Row="2" Grid.Column="2" Header="Пользователь" IconKind="AccountOutline" />
-                                            <controls:SettingTextField x:Name="MySqlPasswordBox" Grid.Row="4" Header="Пароль" IconKind="LockOutline" />
+                                            <controls:SettingTextField x:Name="MySqlPasswordBox" Grid.Row="4" Header="Пароль" IconKind="LockOutline"  IsPassword="True"/>
 
                                             <Grid Grid.Row="4" Grid.Column="2">
                                                 <Button x:Name="TestMySqlButton"
@@ -653,7 +653,7 @@
                                                IconKind="ShieldKeyOutline"
                                                FloatingHeader="True"
                                                FieldHeight="52"
-                                               VerticalAlignment="Center" />
+                                               VerticalAlignment="Center"  IsPassword="True"/>
 
                     <TextBlock x:Name="ErrorText"
                                Grid.Column="1"

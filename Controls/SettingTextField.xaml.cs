@@ -13,7 +13,7 @@ public partial class SettingTextField : UserControl
 
     public static readonly DependencyProperty TextProperty = DependencyProperty.Register(
         nameof(Text), typeof(string), typeof(SettingTextField),
-        new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+        new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnTextChanged));
 
     public static readonly DependencyProperty IconKindProperty = DependencyProperty.Register(
         nameof(IconKind), typeof(PackIconKind), typeof(SettingTextField), new PropertyMetadata(PackIconKind.CogOutline));
@@ -23,6 +23,9 @@ public partial class SettingTextField : UserControl
 
     public static readonly DependencyProperty IsReadOnlyProperty = DependencyProperty.Register(
         nameof(IsReadOnly), typeof(bool), typeof(SettingTextField), new PropertyMetadata(false));
+
+    public static readonly DependencyProperty IsPasswordProperty = DependencyProperty.Register(
+        nameof(IsPassword), typeof(bool), typeof(SettingTextField), new PropertyMetadata(false, OnIsPasswordChanged));
 
     public static readonly DependencyProperty FloatingHeaderProperty = DependencyProperty.Register(
         nameof(FloatingHeader), typeof(bool), typeof(SettingTextField), new PropertyMetadata(false, OnFloatingHeaderChanged));
@@ -35,6 +38,7 @@ public partial class SettingTextField : UserControl
         InitializeComponent();
         UpdateHeaderMode();
         UpdateFieldHeight();
+        UpdateInputMode();
     }
 
     public string Header
@@ -65,6 +69,12 @@ public partial class SettingTextField : UserControl
     {
         get => (bool)GetValue(IsReadOnlyProperty);
         set => SetValue(IsReadOnlyProperty, value);
+    }
+
+    public bool IsPassword
+    {
+        get => (bool)GetValue(IsPasswordProperty);
+        set => SetValue(IsPasswordProperty, value);
     }
 
     public bool FloatingHeader
@@ -100,6 +110,48 @@ public partial class SettingTextField : UserControl
     {
         FieldRow.Height = new GridLength(FieldHeight);
         InputBox.Height = FieldHeight;
+        PasswordInputBox.Height = FieldHeight;
+    }
+
+    private static void OnIsPasswordChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        ((SettingTextField)d).UpdateInputMode();
+    }
+
+    private void UpdateInputMode()
+    {
+        InputBox.Visibility = IsPassword ? Visibility.Collapsed : Visibility.Visible;
+        PasswordInputBox.Visibility = IsPassword ? Visibility.Visible : Visibility.Collapsed;
+        PasswordInputBox.IsEnabled = !IsReadOnly;
+
+        if (IsPassword && PasswordInputBox.Password != Text)
+        {
+            PasswordInputBox.Password = Text ?? string.Empty;
+        }
+    }
+
+    private static void OnTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var field = (SettingTextField)d;
+
+        if (!field.IsPassword)
+        {
+            return;
+        }
+
+        var text = e.NewValue as string ?? string.Empty;
+        if (field.PasswordInputBox.Password != text)
+        {
+            field.PasswordInputBox.Password = text;
+        }
+    }
+
+    private void PasswordInputBoxPasswordChanged(object sender, RoutedEventArgs e)
+    {
+        if (Text != PasswordInputBox.Password)
+        {
+            Text = PasswordInputBox.Password;
+        }
     }
 
     private void InputBoxPreviewTextInput(object sender, TextCompositionEventArgs e)

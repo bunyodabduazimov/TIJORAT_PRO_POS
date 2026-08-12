@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -11,16 +11,21 @@ namespace FFPOS.ViewModels;
 
 public class SalesViewModel : INotifyPropertyChanged
 {
+    private const int CardProductPageSize = 200;
+    private const int TableProductPageSize = 100;
+
     private readonly DatabaseService _databaseService = new();
     private readonly List<Product> _allProducts = new();
     private Category? _selectedCategory;
     private Order? _currentOrder;
     private string _searchText = string.Empty;
-    private string _selectedOrderType = "В зале";
-    private string _activeSection = "Касса";
-    private string _selectedPaymentType = "Наличные";
+    private string _selectedOrderType = "Р’ Р·Р°Р»Рµ";
+    private string _activeSection = "РљР°СЃСЃР°";
+    private string _selectedPaymentType = "РќР°Р»РёС‡РЅС‹Рµ";
     private bool _isSidebarOpen = true;
     private bool _isTableView;
+    private int _productPage = 1;
+    private int _productTotalCount;
     private int _nextOrderNumber = 106;
     private string _currentTime = DateTime.Now.ToString("HH:mm");
     private string _currentDate = DateTime.Now.ToString("dd.MM.yyyy");
@@ -29,6 +34,19 @@ public class SalesViewModel : INotifyPropertyChanged
     public ObservableCollection<Category> Categories { get; } = new();
     public ObservableCollection<Product> Products { get; } = new();
     public ObservableCollection<Order> OpenOrders { get; } = new();
+
+    public event EventHandler<OrderItem>? OrderItemTouched;
+
+    public string CashierName
+    {
+        get
+        {
+            var user = App.CurrentUser;
+            return string.IsNullOrWhiteSpace(user?.Name)
+                ? (string.IsNullOrWhiteSpace(user?.Username) ? "Кассир" : user.Username!)
+                : user.Name!;
+        }
+    }
 
     public Order? CurrentOrder
     {
@@ -41,7 +59,7 @@ public class SalesViewModel : INotifyPropertyChanged
             }
 
             _currentOrder = value;
-            SelectedOrderType = value?.OrderType ?? "В зале";
+            SelectedOrderType = value?.OrderType ?? "Р’ Р·Р°Р»Рµ";
             foreach (var order in OpenOrders)
             {
                 order.IsSelected = order == value;
@@ -63,6 +81,7 @@ public class SalesViewModel : INotifyPropertyChanged
             }
 
             _selectedCategory = value;
+            _productPage = 1;
             foreach (var category in Categories)
             {
                 category.IsSelected = category == value;
@@ -84,6 +103,7 @@ public class SalesViewModel : INotifyPropertyChanged
             }
 
             _searchText = value;
+            _productPage = 1;
             OnPropertyChanged();
             FilterProducts();
         }
@@ -176,21 +196,28 @@ public class SalesViewModel : INotifyPropertyChanged
             }
 
             _isTableView = value;
+            _productPage = 1;
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsCardView));
             OnPropertyChanged(nameof(ProductViewIcon));
+            FilterProducts();
         }
     }
 
     public bool IsCardView => !IsTableView;
-    public bool IsDineInSelected => SelectedOrderType == "В зале";
-    public bool IsTakeAwaySelected => SelectedOrderType == "С собой";
-    public bool IsDeliverySelected => SelectedOrderType == "Доставка";
-    public bool IsCashierSection => ActiveSection == "Касса";
-    public bool IsOrdersSection => ActiveSection == "Заказы";
-    public bool IsKitchenSection => ActiveSection == "Кухня";
-    public bool IsReportsSection => ActiveSection == "Отчёты";
+    public bool IsDineInSelected => SelectedOrderType == "Р’ Р·Р°Р»Рµ";
+    public bool IsTakeAwaySelected => SelectedOrderType == "РЎ СЃРѕР±РѕР№";
+    public bool IsDeliverySelected => SelectedOrderType == "Р”РѕСЃС‚Р°РІРєР°";
+    public bool IsCashierSection => ActiveSection == "РљР°СЃСЃР°";
+    public bool IsOrdersSection => ActiveSection == "Р—Р°РєР°Р·С‹";
+    public bool IsKitchenSection => ActiveSection == "РљСѓС…РЅСЏ";
+    public bool IsReportsSection => ActiveSection == "РћС‚С‡С‘С‚С‹";
     public string ProductViewIcon => IsTableView ? "ViewGridOutline" : "FormatListBulleted";
+    public int ProductPage => _productPage;
+    public int ProductPageSize => IsTableView ? TableProductPageSize : CardProductPageSize;
+    public int ProductTotalPages => Math.Max(1, (int)Math.Ceiling(_productTotalCount / (double)ProductPageSize));
+    public string ProductPageText => $"{ProductPage} / {ProductTotalPages} вЂў {_productTotalCount}";
+    public bool IsProductPagerVisible => _productTotalCount > ProductPageSize;
 
     public string CurrentTime
     {
@@ -235,6 +262,8 @@ public class SalesViewModel : INotifyPropertyChanged
     public ICommand ShowCustomerCommand { get; }
     public ICommand ShowReceiptCommand { get; }
     public ICommand ShowOrderActionsCommand { get; }
+    public ICommand PreviousProductPageCommand { get; }
+    public ICommand NextProductPageCommand { get; }
 
     public SalesViewModel()
     {
@@ -248,19 +277,22 @@ public class SalesViewModel : INotifyPropertyChanged
         ClearOrderCommand = new RelayCommand(ClearOrder);
         HoldOrderCommand = new RelayCommand(HoldOrder);
         PayCommand = new RelayCommand(Pay);
-        SelectOrderTypeCommand = new RelayCommand<string>(type => SelectedOrderType = type ?? "В зале");
+        SelectOrderTypeCommand = new RelayCommand<string>(type => SelectedOrderType = type ?? "Р’ Р·Р°Р»Рµ");
         ToggleSidebarCommand = new RelayCommand(() => IsSidebarOpen = !IsSidebarOpen);
         NavigateCommand = new RelayCommand<string>(Navigate);
-        OpenProfileCommand = new RelayCommand(OpenProfile);
-        OpenSettingsCommand = new RelayCommand(OpenProfile);
-        LogoutCommand = new RelayCommand(() => AppDialogWindow.ShowInfo("Выход из смены выполнен."));
-        SelectPaymentTypeCommand = new RelayCommand<string>(type => SelectedPaymentType = type ?? "Наличные");
+        OpenProfileCommand = new RelayCommand(OpenUserSettings);
+        OpenSettingsCommand = new RelayCommand(OpenUserSettings);
+        LogoutCommand = new RelayCommand(Logout);
+        SelectPaymentTypeCommand = new RelayCommand<string>(type => SelectedPaymentType = type ?? "РќР°Р»РёС‡РЅС‹Рµ");
         ToggleProductViewCommand = new RelayCommand(() => IsTableView = !IsTableView);
-        AddNoteCommand = new RelayCommand(() => AppDialogWindow.ShowInfo("Примечание добавлено к текущему чеку."));
+        AddNoteCommand = new RelayCommand(() => AppDialogWindow.ShowInfo("РџСЂРёРјРµС‡Р°РЅРёРµ РґРѕР±Р°РІР»РµРЅРѕ Рє С‚РµРєСѓС‰РµРјСѓ С‡РµРєСѓ."));
         EditDiscountCommand = new RelayCommand(EditDiscount);
-        ShowCustomerCommand = new RelayCommand(() => AppDialogWindow.ShowInfo("Карточка клиента для текущего чека."));
-        ShowReceiptCommand = new RelayCommand(() => AppDialogWindow.ShowInfo("Печать/просмотр пречека."));
-        ShowOrderActionsCommand = new RelayCommand(() => AppDialogWindow.ShowInfo("Дополнительные действия по чеку."));
+        ShowCustomerCommand = new RelayCommand(() => AppDialogWindow.ShowInfo("РљР°СЂС‚РѕС‡РєР° РєР»РёРµРЅС‚Р° РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С‡РµРєР°."));
+        ShowReceiptCommand = new RelayCommand(() => AppDialogWindow.ShowInfo("РџРµС‡Р°С‚СЊ/РїСЂРѕСЃРјРѕС‚СЂ РїСЂРµС‡РµРєР°."));
+        ShowOrderActionsCommand = new RelayCommand(() => AppDialogWindow.ShowInfo("Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РґРµР№СЃС‚РІРёСЏ РїРѕ С‡РµРєСѓ."));
+
+        PreviousProductPageCommand = new RelayCommand(() => ChangeProductPage(-1));
+        NextProductPageCommand = new RelayCommand(() => ChangeProductPage(1));
 
         LoadInitialData();
         FilterProducts();
@@ -322,9 +354,9 @@ public class SalesViewModel : INotifyPropertyChanged
         }
 
         ActiveSection = section;
-        if (section != "Касса")
+        if (section != "РљР°СЃСЃР°")
         {
-            AppDialogWindow.ShowInfo($"Раздел \"{section}\" открыт.");
+            AppDialogWindow.ShowInfo($"Р Р°Р·РґРµР» \"{section}\" РѕС‚РєСЂС‹С‚.");
         }
     }
 
@@ -348,6 +380,36 @@ public class SalesViewModel : INotifyPropertyChanged
         {
             App.SwitchMainWindow(settings);
         }
+    }
+
+    private void OpenUserSettings()
+    {
+        var user = App.CurrentUser;
+        if (user is null)
+        {
+            AppDialogWindow.ShowError("Пользователь не выбран. Войдите в программу заново.", "Настройки пользователя");
+            return;
+        }
+
+        var window = new UserSettingsWindow(user)
+        {
+            Owner = Application.Current?.MainWindow
+        };
+        window.ShowDialog();
+    }
+
+    private void Logout()
+    {
+        if (!AppDialogWindow.Confirm(
+                "Выйти из текущей смены и вернуться на экран авторизации?",
+                "Выход",
+                "Выйти",
+                "Отмена"))
+        {
+            return;
+        }
+
+        App.ShowLoginWindow();
     }
 
     private void EditDiscount()
@@ -382,16 +444,19 @@ public class SalesViewModel : INotifyPropertyChanged
         if (existing is not null)
         {
             existing.Quantity++;
+            TouchOrderItem(existing);
         }
         else
         {
-            CurrentOrder.Items.Add(new OrderItem
+            var item = new OrderItem
             {
                 Product = product,
                 ProductId = product.Id,
                 Quantity = 1,
                 Price = product.Price
-            });
+            };
+            CurrentOrder.Items.Add(item);
+            TouchOrderItem(item);
         }
 
         CurrentOrder.RefreshTotals();
@@ -450,7 +515,7 @@ public class SalesViewModel : INotifyPropertyChanged
             return;
         }
 
-        if (AppDialogWindow.Confirm("Очистить текущий чек?"))
+        if (AppDialogWindow.Confirm("РћС‡РёСЃС‚РёС‚СЊ С‚РµРєСѓС‰РёР№ С‡РµРє?"))
         {
             CurrentOrder.Items.Clear();
             CurrentOrder.RefreshTotals();
@@ -472,7 +537,7 @@ public class SalesViewModel : INotifyPropertyChanged
         }
 
         SaveCurrentOrder();
-        AppDialogWindow.ShowInfo($"{CurrentOrder.DisplayName} отложен.");
+        AppDialogWindow.ShowInfo($"{CurrentOrder.DisplayName} РѕС‚Р»РѕР¶РµРЅ.");
     }
 
     private void Pay()
@@ -482,7 +547,7 @@ public class SalesViewModel : INotifyPropertyChanged
             return;
         }
 
-        var window = new PaymentWindow(CurrentOrder.Total, SelectedPaymentType)
+        var window = new PaymentWindow(CurrentOrder.Subtotal, SelectedPaymentType, CurrentOrder.Discount)
         {
             Owner = Application.Current?.MainWindow
         };
@@ -498,6 +563,10 @@ public class SalesViewModel : INotifyPropertyChanged
         if (paymentResult == true)
         {
             SelectedPaymentType = window.PaymentType;
+            CurrentOrder.Discount = window.DiscountAmount;
+            CurrentOrder.PeopleId = window.PeopleId;
+            CurrentOrder.RefreshTotals();
+            SaveCurrentOrder();
             _databaseService.MarkOrderPaidAsync(CurrentOrder).GetAwaiter().GetResult();
             OpenOrders.Remove(CurrentOrder);
             CurrentOrder = OpenOrders.FirstOrDefault() ?? CreateOrder();
@@ -545,7 +614,7 @@ public class SalesViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            AppDialogWindow.ShowError($"Не удалось сохранить чек в базе данных.\n{ex.Message}");
+            AppDialogWindow.ShowError($"РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ С‡РµРє РІ Р±Р°Р·Рµ РґР°РЅРЅС‹С….\n{ex.Message}");
         }
     }
 
@@ -554,23 +623,61 @@ public class SalesViewModel : INotifyPropertyChanged
         Products.Clear();
         var query = SearchText.Trim();
         var filtered = _allProducts.Where(product =>
+            (!IsCardView || product.PosView == 1) &&
             (SelectedCategory is null || SelectedCategory.Id == 0 || product.CategoryId == SelectedCategory.Id) &&
-            (string.IsNullOrWhiteSpace(query) || product.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase)));
+            (string.IsNullOrWhiteSpace(query) ||
+                product.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
+                (!string.IsNullOrWhiteSpace(product.Barcode) && product.Barcode.Contains(query, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(product.Sku) && product.Sku.Contains(query, StringComparison.OrdinalIgnoreCase))));
 
-        foreach (var product in filtered)
+        _productTotalCount = filtered.Count();
+        var totalPages = ProductTotalPages;
+        if (_productPage > totalPages)
+        {
+            _productPage = totalPages;
+        }
+
+        var pageSize = ProductPageSize;
+        foreach (var product in filtered.Skip((_productPage - 1) * pageSize).Take(pageSize))
         {
             Products.Add(product);
         }
+
+        OnPropertyChanged(nameof(ProductPage));
+        OnPropertyChanged(nameof(ProductTotalPages));
+        OnPropertyChanged(nameof(ProductPageText));
+        OnPropertyChanged(nameof(IsProductPagerVisible));
     }
 
     private void RefreshProductQuantities()
     {
+        var selectedQuantities = CurrentOrder?.Items
+            .GroupBy(item => item.Product.Id)
+            .ToDictionary(group => group.Key, group => group.Sum(item => item.Quantity)) ?? new Dictionary<int, int>();
+
         foreach (var product in _allProducts)
         {
-            product.SelectedQuantity = CurrentOrder?.Items
-                .Where(item => item.Product.Id == product.Id)
-                .Sum(item => item.Quantity) ?? 0;
+            product.SelectedQuantity = selectedQuantities.TryGetValue(product.Id, out var quantity)
+                ? quantity
+                : 0;
         }
+    }
+
+    private void TouchOrderItem(OrderItem item)
+    {
+        OrderItemTouched?.Invoke(this, item);
+    }
+
+    private void ChangeProductPage(int delta)
+    {
+        var nextPage = Math.Clamp(_productPage + delta, 1, ProductTotalPages);
+        if (nextPage == _productPage)
+        {
+            return;
+        }
+
+        _productPage = nextPage;
+        FilterProducts();
     }
 
     private void StartClock()
@@ -631,3 +738,4 @@ public class RelayCommand<T> : ICommand
         remove => CommandManager.RequerySuggested -= value;
     }
 }
+

@@ -8,7 +8,10 @@
         WindowState="Maximized"
         MinWidth="1280"
         MinHeight="720"
-        Background="#F6F7F9" Height="560" Width="1141">
+        Background="#F6F7F9"
+        Width="1280"
+        Height="800"
+        >
     <Grid>
         <views:SalesView/>
     </Grid>

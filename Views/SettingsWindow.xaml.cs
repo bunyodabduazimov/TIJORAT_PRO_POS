@@ -474,6 +474,7 @@ public partial class SettingsWindow : Window
                 id INT NOT NULL PRIMARY KEY,
                 name TEXT NULL,
                 phone TEXT NULL,
+                address TEXT NULL,
                 balance DECIMAL(18,2) NULL DEFAULT 0,
                 status INT NULL DEFAULT 1
             ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

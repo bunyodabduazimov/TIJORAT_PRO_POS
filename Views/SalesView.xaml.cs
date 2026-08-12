@@ -2,6 +2,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
+using FFPOS.Controls;
+using FFPOS.Models;
 using FFPOS.ViewModels;
 
 namespace FFPOS.Views;
@@ -11,7 +14,43 @@ public partial class SalesView : UserControl
     public SalesView()
     {
         InitializeComponent();
-        DataContext = new SalesViewModel();
+        var viewModel = new SalesViewModel();
+        viewModel.OrderItemTouched += OnOrderItemTouched;
+        DataContext = viewModel;
+    }
+
+    private void OnOrderItemTouched(object? sender, OrderItem item)
+    {
+        Dispatcher.BeginInvoke(() => ScrollToOrderItem(item), DispatcherPriority.Loaded);
+    }
+
+    private void ScrollToOrderItem(OrderItem item)
+    {
+        ReceiptItemsControl.UpdateLayout();
+
+        var container = ReceiptItemsControl.ItemContainerGenerator.ContainerFromItem(item) as DependencyObject;
+        if (container is null)
+        {
+            ReceiptItemsScrollViewer.ScrollToEnd();
+            ReceiptItemsControl.UpdateLayout();
+            container = ReceiptItemsControl.ItemContainerGenerator.ContainerFromItem(item) as DependencyObject;
+        }
+
+        if (container is null)
+        {
+            return;
+        }
+
+        container.Dispatcher.BeginInvoke(() =>
+        {
+            if (FindVisualChild<OrderItemRow>(container) is not { } row)
+            {
+                return;
+            }
+
+            row.BringIntoView();
+            row.FlashHighlight();
+        }, DispatcherPriority.Loaded);
     }
 
     private void ProfileButton_OnClick(object sender, System.Windows.RoutedEventArgs e)
@@ -39,7 +78,7 @@ public partial class SalesView : UserControl
 
         if (window.WindowState == WindowState.Maximized)
         {
-            window.WindowState = WindowState.Normal;
+            return;
         }
 
         window.DragMove();
@@ -58,5 +97,26 @@ public partial class SalesView : UserControl
         }
 
         return false;
+    }
+
+    private static T? FindVisualChild<T>(DependencyObject source)
+        where T : DependencyObject
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(source); i++)
+        {
+            var child = VisualTreeHelper.GetChild(source, i);
+            if (child is T result)
+            {
+                return result;
+            }
+
+            var nested = FindVisualChild<T>(child);
+            if (nested is not null)
+            {
+                return nested;
+            }
+        }
+
+        return null;
     }
 }

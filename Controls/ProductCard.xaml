@@ -49,18 +49,6 @@
             VerticalContentAlignment="Stretch">
         <Border Style="{StaticResource CardBorderStyle}">
             <Grid ClipToBounds="True">
-                <Ellipse Width="86"
-                         Height="15"
-                         Fill="#33000000"
-                         HorizontalAlignment="Center"
-                         VerticalAlignment="Center"
-                         Margin="0,72,0,0"
-                         Panel.ZIndex="0">
-                    <Ellipse.Effect>
-                        <BlurEffect Radius="9" />
-                    </Ellipse.Effect>
-                </Ellipse>
-
                 <Image x:Name="ProductImage"
                        Source="{Binding Product.ImagePath, ElementName=Root}"
                        Stretch="Uniform"

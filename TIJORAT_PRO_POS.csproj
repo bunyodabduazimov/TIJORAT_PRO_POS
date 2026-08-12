@@ -7,7 +7,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>logo.ico</ApplicationIcon>
-    <AssemblyTitle>TIJORAT_PRO_POR</AssemblyTitle>
+    <AssemblyTitle>TIJORAT_PRO_POS</AssemblyTitle>
+    <PackageId>TIJORAT_PRO_POS</PackageId>
+    <Title>TIJORAT_PRO_POS</Title>
+    <Authors>TIJORAT PRO</Authors>
+    <Product>TIJORAT_PRO_POS</Product>
+    <Description>TIJORAT_PRO_POS</Description>
+    <AssemblyName>TIJORAT_PRO_POS</AssemblyName>
+    <RootNamespace>TIJORAT_PRO_POS</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

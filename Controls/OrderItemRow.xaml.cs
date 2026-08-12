@@ -1,6 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 using FFPOS.Models;
 
 namespace FFPOS.Controls;
@@ -46,5 +48,21 @@ public partial class OrderItemRow : UserControl
     public OrderItemRow()
     {
         InitializeComponent();
+    }
+
+    public void FlashHighlight()
+    {
+        var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF0EF"));
+        RowBorder.Background = brush;
+
+        var animation = new ColorAnimation
+        {
+            From = (Color)ColorConverter.ConvertFromString("#FFF0EF"),
+            To = Colors.White,
+            Duration = TimeSpan.FromMilliseconds(900),
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        brush.BeginAnimation(SolidColorBrush.ColorProperty, animation);
     }
 }

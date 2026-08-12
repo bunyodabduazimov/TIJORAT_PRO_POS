@@ -6,7 +6,7 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="FFPOS.Views.SalesView"
              Background="#F7F8FA"
-             FontFamily="Inter, Segoe UI" d:DesignHeight="612" d:DesignWidth="1055.707">
+             FontFamily="Inter, Segoe UI" d:DesignHeight="680.402" d:DesignWidth="1089.262">
     <UserControl.Resources>
         <DropShadowEffect x:Key="SoftShadow" BlurRadius="16" ShadowDepth="2" Opacity="0.09" Color="#0B1220" />
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
@@ -82,7 +82,7 @@
 
         <Style x:Key="TopIconButtonStyle" TargetType="{x:Type Button}">
             <Setter Property="Width" Value="44" />
-            <Setter Property="Height" Value="44" />
+            <Setter Property="Height" Value="40" />
             <Setter Property="Background" Value="#111C2B" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Foreground" Value="White" />
@@ -109,8 +109,8 @@
         </Style>
 
         <Style x:Key="NavButtonStyle" TargetType="{x:Type Button}">
-            <Setter Property="Height" Value="46" />
-            <Setter Property="MinWidth" Value="104" />
+            <Setter Property="Height" Value="40" />
+            <Setter Property="MinWidth" Value="80" />
             <Setter Property="Padding" Value="10,0" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="White" />
@@ -151,7 +151,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
                         <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
@@ -183,7 +183,7 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="8">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
@@ -276,10 +276,9 @@
         <Border Background="#07101B" MouseLeftButtonDown="HeaderMouseLeftButtonDown">
             <Grid Margin="18,0,16,0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.1*" MinWidth="210" />
-                    <ColumnDefinition Width="1.8*" MinWidth="360" MaxWidth="640" />
-                    <ColumnDefinition Width="1.25*" MinWidth="330" />
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="1.1*" MinWidth="200" />
+                    <ColumnDefinition Width="2*" MinWidth="300" MaxWidth="400" />
+                    <ColumnDefinition Width="1.1*" MinWidth="200" />
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -289,8 +288,8 @@
                     <TextBlock Margin="24,0,0,0" FontSize="23" FontWeight="Bold" VerticalAlignment="Center"><Run Text="TIJORAT" Foreground="White" /><Run Text="."/><Run Text="PRO" Foreground="#FF332B" /></TextBlock>
                 </StackPanel>
 
-                <Border Grid.Column="1" Background="#111C2B" CornerRadius="10" Effect="{StaticResource SoftShadow}" VerticalAlignment="Center" Height="50" Margin="8,0">
-                    <UniformGrid Columns="3" VerticalAlignment="Center" Margin="6,0">
+                <Border Grid.Column="1" Background="#111C2B" CornerRadius="10" Effect="{StaticResource SoftShadow}" VerticalAlignment="Center" Height="46">
+                    <UniformGrid Columns="2" VerticalAlignment="Center" Margin="5,0">
                         <Button Command="{Binding NavigateCommand}" CommandParameter="Касса" Style="{StaticResource NavButtonStyle}" Background="White" Foreground="#FF2B22">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="CashRegister" Width="20" Height="20" Margin="0,0,14,0" />
@@ -303,40 +302,22 @@
                                 <TextBlock Text="Заказы" />
                             </StackPanel>
                         </Button>
-                        <Button Command="{Binding NavigateCommand}" CommandParameter="Кухня" Style="{StaticResource NavButtonStyle}" Margin="8,0,0,0">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="SilverwareForkKnife" Width="20" Height="20" Margin="0,0,14,0" />
-                                <TextBlock Text="Кухня" />
-                            </StackPanel>
-                        </Button>
                     </UniformGrid>
                 </Border>
 
                 <Grid Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="96" />
-                        <ColumnDefinition Width="236" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0" Margin="0,0,14,0" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding CurrentTime}" Foreground="White" FontSize="21" FontWeight="Black" HorizontalAlignment="Right" />
-                        <TextBlock Text="{Binding CurrentDate}" Foreground="White" FontSize="14" HorizontalAlignment="Right" />
-                    </StackPanel>
                     <Button x:Name="ProfileButton" Grid.Column="1" Click="ProfileButton_OnClick" Style="{StaticResource ProfileButtonStyle}">
-                        <Border Height="56" CornerRadius="12" BorderBrush="#152236" BorderThickness="1" Background="#07101B" Padding="16,0">
+                        <Border Height="44" CornerRadius="10" BorderBrush="#152236" BorderThickness="1" Background="ForestGreen" Padding="10 0">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="36" />
+                                    <ColumnDefinition Width="30" />
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="26" />
+                                    <ColumnDefinition Width="30" />
                                 </Grid.ColumnDefinitions>
-                                <materialDesign:PackIcon Kind="AccountOutline" Width="28" Height="28" Foreground="White" VerticalAlignment="Center" />
-                                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                    <TextBlock Text="Кассир" Foreground="#D6DDE7" FontSize="14" />
-                                    <TextBlock Text="Саидов Б." Foreground="White" FontSize="16" FontWeight="Bold" />
-                                </StackPanel>
+                                <materialDesign:PackIcon Kind="AccountOutline" Width="27" Height="27" Foreground="White" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding CashierName}" Foreground="White" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                     <materialDesign:PackIcon Kind="ChevronDown" Width="18" Height="18" Foreground="White" HorizontalAlignment="Center" />
-                                    <Ellipse Width="8" Height="8" Fill="#23C55E" Margin="0,10,0,0" HorizontalAlignment="Center" />
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -347,7 +328,7 @@
                            StaysOpen="False"
                            AllowsTransparency="True"
                            PopupAnimation="Fade">
-                        <Border Width="260"
+                        <Border
                                 Margin="0,8,0,0"
                                 Background="White"
                                 BorderBrush="#DDE3EB"
@@ -356,12 +337,6 @@
                                 Padding="8"
                                 Effect="{StaticResource SoftShadow}">
                             <StackPanel>
-                                <Button Command="{Binding OpenProfileCommand}" Style="{StaticResource ProfileMenuButtonStyle}">
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                                        <materialDesign:PackIcon Kind="AccountCircleOutline" Width="20" Height="20" Margin="0,0,12,0" />
-                                        <TextBlock Text="Профиль" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
                                 <Button Command="{Binding OpenSettingsCommand}" Style="{StaticResource ProfileMenuButtonStyle}">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                         <materialDesign:PackIcon Kind="CogOutline" Width="20" Height="20" Margin="0,0,12,0" />
@@ -379,7 +354,6 @@
                         </Border>
                     </Popup>
                 </Grid>
-                <controls:WindowControlButtons Grid.Column="3" HorizontalAlignment="Right" VerticalAlignment="Center" />
             </Grid>
         </Border>
 
@@ -441,7 +415,7 @@
                                          FontSize="18"
                                          Foreground="#111827"
                                          Padding="0,10,10,0"/>
-                                <TextBlock Text="Поиск товара по названию или штрихкоду"
+                                <TextBlock Text="Поиск товара"
                                            Foreground="#667085"
                                            FontSize="18"
                                            VerticalAlignment="Center"
@@ -471,7 +445,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="0" />
                     <RowDefinition Height="*" />
-                    <RowDefinition Height="20" />
+                    <RowDefinition Height="35" />
                 </Grid.RowDefinitions>
 
                 <Grid>
@@ -552,22 +526,22 @@
                         Visibility="{Binding IsTableView, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Grid>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="40" />
+                            <RowDefinition Height="34" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
                         <Border Background="#F8FAFC" BorderBrush="#E8EDF3" BorderThickness="0,0,0,1">
                             <Grid Margin="18,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="60" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="90" />
-                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="60" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Фото" FontSize="15" FontWeight="Medium" Foreground="#475467" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="1" Text="Товар" FontSize="15" FontWeight="Medium" Foreground="#475467" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="2" Text="Кол-во" FontSize="15" FontWeight="Medium" Foreground="#475467" VerticalAlignment="Center" HorizontalAlignment="Center" />
-                                <TextBlock Grid.Column="3" Text="Цена" FontSize="15" FontWeight="Medium" Foreground="#475467" VerticalAlignment="Center" />
+                                <TextBlock Text="Фото" FontSize="13" FontWeight="Medium" Foreground="#475467" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Товар" FontSize="13" FontWeight="Medium" Foreground="#475467" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" Text="Остаток" FontSize="13" FontWeight="Medium" Foreground="#475467" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="3" Text="Цена" FontSize="13" FontWeight="Medium" Foreground="#475467" VerticalAlignment="Center" />
                             </Grid>
                         </Border>
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -583,7 +557,7 @@
                                                 Cursor="Hand">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="Button">
-                                                    <Border x:Name="RowBorder" Background="White" BorderBrush="#E8EDF3" BorderThickness="0,0,0,1" Padding="18,0">
+                                                    <Border x:Name="RowBorder" Background="White" BorderBrush="#E8EDF3" BorderThickness="0,0,0,1" Padding="14,0">
                                                         <ContentPresenter />
                                                     </Border>
                                                     <ControlTemplate.Triggers>
@@ -596,32 +570,39 @@
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Button.Template>
-                                            <Grid Height="70">
+                                            <Grid Height="52">
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="70" />
+                                                    <ColumnDefinition Width="60" />
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="90" />
                                                     <ColumnDefinition Width="90" />
-                                                    <ColumnDefinition Width="70" />
+                                                    <ColumnDefinition Width="60" />
                                                 </Grid.ColumnDefinitions>
-                                                <Image Source="{Binding ImagePath}" Width="56" Height="56" Stretch="Uniform" HorizontalAlignment="Left" VerticalAlignment="Center" />
-                                                <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="16" FontWeight="SemiBold" Foreground="#111827" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                                <Border Grid.Column="2" Width="40" Height="30" Background="#FF2B22" CornerRadius="15" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                    <Border.Style>
-                                                        <Style TargetType="{x:Type Border}">
-                                                            <Setter Property="Visibility" Value="Visible" />
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding HasSelectedQuantity}" Value="False">
-                                                                    <Setter Property="Visibility" Value="Hidden" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Border.Style>
-                                                    <TextBlock Text="{Binding SelectedQuantity}" Foreground="White" FontSize="15" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                </Border>
-                                                <TextBlock Grid.Column="3" Text="{Binding Price, StringFormat={}{0:0} c}" FontSize="16" FontWeight="Bold" Foreground="#111827" VerticalAlignment="Center" />
-                                                <Border Grid.Column="4" Width="48" Height="40" Background="White" BorderBrush="#DEE4EC" BorderThickness="1" CornerRadius="8" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                    <TextBlock Text="+" FontSize="20" Foreground="#102033" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0" />
+                                                <Image Source="{Binding ImagePath}" Width="42" Height="38" Stretch="Uniform" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="Medium" Foreground="#111827" TextTrimming="CharacterEllipsis" />
+                                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                        <TextBlock Text="Арт: " FontSize="11" Foreground="#98A2B3" />
+                                                        <TextBlock Text="{Binding Sku, TargetNullValue=-}" FontSize="11" Foreground="#667085" TextTrimming="CharacterEllipsis" MaxWidth="120" />
+                                                        <TextBlock Text="  ШК: " FontSize="11" Foreground="#98A2B3" Margin="8,0,0,0" />
+                                                        <TextBlock Text="{Binding Barcode, TargetNullValue=-}" FontSize="11" Foreground="#667085" TextTrimming="CharacterEllipsis" MaxWidth="160" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="{Binding Quantity, StringFormat={}{0:0.##}}" FontSize="13" FontWeight="Medium" Foreground="#475467" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="3" Text="{Binding Price, StringFormat={}{0:0} c}" FontSize="14" FontWeight="SemiBold" Foreground="#111827" VerticalAlignment="Center" />
+                                                <Border Grid.Column="4" Width="42" Height="34" Background="White" BorderBrush="#DEE4EC" BorderThickness="1" CornerRadius="7" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <TextBlock FontSize="15" Foreground="#102033" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="{x:Type TextBlock}">
+                                                                <Setter Property="Text" Value="+" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding HasSelectedQuantity}" Value="True">
+                                                                        <Setter Property="Text" Value="{Binding SelectedQuantity}" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </Border>
                                             </Grid>
                                         </Button>
@@ -633,27 +614,35 @@
                 </Border>
 
 
-                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Ellipse Width="10" Height="10" Fill="#CBD2DC" Margin="6,0" />
-                    <Ellipse Width="10" Height="10" Fill="#FF2B22" Margin="6,0" />
-                    <Ellipse Width="10" Height="10" Fill="#CBD2DC" Margin="6,0" />
-                    <Ellipse Width="10" Height="10" Fill="#CBD2DC" Margin="6,0" />
-                    <Ellipse Width="10" Height="10" Fill="#CBD2DC" Margin="6,0" />
-                </StackPanel>
+                <Grid Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding IsProductPagerVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button Command="{Binding PreviousProductPageCommand}" Style="{StaticResource TinyIconButtonStyle}" Width="32" Height="26">
+                        <materialDesign:PackIcon Kind="ChevronLeft" Width="18" Height="18" />
+                    </Button>
+                    <TextBlock Grid.Column="1" Text="{Binding ProductPageText}" FontSize="13" FontWeight="SemiBold" Foreground="#667085" VerticalAlignment="Center" Margin="12,0" />
+                    <Button Grid.Column="2" Command="{Binding NextProductPageCommand}" Style="{StaticResource TinyIconButtonStyle}" Width="32" Height="26">
+                        <materialDesign:PackIcon Kind="ChevronRight" Width="18" Height="18" />
+                    </Button>
+                </Grid>
             </Grid>
 
             <Grid Grid.Column="2" Margin="10">
                 <Border Grid.Row="1" Background="White" BorderBrush="#DEE4EC" BorderThickness="1" CornerRadius="8" Margin="0,4,0,0">
                     <Grid>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="64" />
+                            <RowDefinition Height="58" />
+                            <RowDefinition Height="32" />
                             <RowDefinition />
-                            <RowDefinition Height="110" />
+                            <RowDefinition Height="75" />
                         </Grid.RowDefinitions>
 
                         <Border BorderBrush="#E8EDF3" BorderThickness="0,0,0,1" Padding="16,0,16,0">
                             <Grid>
-                                <TextBlock Text="{Binding CurrentOrder.DisplayName}" FontSize="17" FontWeight="Bold" Foreground="#111827" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,184,0" />
+                                <TextBlock Text="{Binding CurrentOrder.DisplayName}" FontSize="16" FontWeight="SemiBold" Foreground="#111827" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,184,0" />
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                                     <Button Command="{Binding AddNoteCommand}" Style="{StaticResource TinyIconButtonStyle}">
                                         <materialDesign:PackIcon Kind="PencilOutline" Width="22" Height="22" />
@@ -708,8 +697,25 @@
                             </Grid>
                         </Border>
 
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="14,0,14,0" Margin="0,2,0,115" Grid.RowSpan="2">
-                            <ItemsControl ItemsSource="{Binding CurrentOrder.Items}">
+                        <Border Grid.Row="1" Background="#F8FAFC" BorderBrush="#E8EDF3" BorderThickness="0,0,0,1" Padding="14,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="98" />
+                                    <ColumnDefinition Width="58" />
+                                    <ColumnDefinition Width="62" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Фото" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Товар" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" Text="Кол-во" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                <TextBlock Grid.Column="3" Text="Цена" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                                <TextBlock Grid.Column="4" Text="Сумма" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                            </Grid>
+                        </Border>
+
+                        <ScrollViewer x:Name="ReceiptItemsScrollViewer" Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="14,0,14,0" Margin="0,0,0,85" Grid.RowSpan="2">
+                            <ItemsControl x:Name="ReceiptItemsControl" ItemsSource="{Binding CurrentOrder.Items}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <controls:OrderItemRow Item="{Binding}"
@@ -721,31 +727,18 @@
                             </ItemsControl>
                         </ScrollViewer>
 
-                        <StackPanel Grid.Row="2" VerticalAlignment="Top" Margin="16,0">
-                            <Button Command="{Binding EditDiscountCommand}" Style="{StaticResource SecondaryButtonStyle}" Height="46" Padding="0" HorizontalContentAlignment="Stretch">
+                        <StackPanel Grid.Row="3" VerticalAlignment="Top" Margin="16,0">
+                            <Button Command="{Binding PayCommand}" Style="{StaticResource PrimaryButtonStyle}" Height="64" Margin="0,0,0,0" HorizontalContentAlignment="Stretch">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="16,0,0,0">
-                                        <materialDesign:PackIcon Kind="PercentOutline" Width="21" Height="21" Foreground="#344054" Margin="0,0,9,0" />
-                                        <TextBlock Text="Скидка" FontSize="18" FontWeight="Bold" Foreground="#344054" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="14,0,0,0">
+                                        <materialDesign:PackIcon Kind="CashRegister" Width="20" Height="20" Foreground="White" Margin="0,0,8,0" />
+                                        <TextBlock Text="Оплатить" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                                     </StackPanel>
-                                    <TextBlock Grid.Column="1" Text="{Binding CurrentOrder.Discount, StringFormat={}{0:0} c}" FontSize="22" FontWeight="ExtraBold" Foreground="#111827" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="14,0,16,0" />
-                                </Grid>
-                            </Button>
-                            <Button Command="{Binding PayCommand}" Style="{StaticResource PrimaryButtonStyle}" Height="52" Margin="0,7,0,0" HorizontalContentAlignment="Stretch">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="16,0,0,0">
-                                        <materialDesign:PackIcon Kind="CashRegister" Width="22" Height="22" Foreground="White" Margin="0,0,9,0" />
-                                        <TextBlock Text="Оплатить" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                    </StackPanel>
-                                    <TextBlock Grid.Column="1" Text="{Binding CurrentOrder.Total, StringFormat={}{0:0} c}" FontSize="25" FontWeight="ExtraBold" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="14,0,16,0" />
+                                    <TextBlock Grid.Column="1" Text="{Binding CurrentOrder.Total, StringFormat={}{0:0} c}" FontSize="22" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="14,0,16,0" />
                                 </Grid>
                             </Button>
                         </StackPanel>
@@ -767,10 +760,10 @@
                         <ColumnDefinition Width="1" />
                         <ColumnDefinition Width="54" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Чеки" FontSize="18" FontWeight="Black" Foreground="#111827" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    <Border Grid.Column="1" Width="1" Height="38" Background="#E6EBF1" />
-                    <Border Grid.Column="2" Width="38" Height="38" CornerRadius="19" Background="#F2F4F7">
-                        <TextBlock Text="{Binding OpenOrders.Count}" Foreground="#111827" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <TextBlock Text="Чеки" FontSize="16" FontWeight="Bold" Foreground="#111827" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <Border Grid.Column="1" Width="1" Height="34" Background="#E6EBF1" />
+                    <Border Grid.Column="2" Width="34" Height="34" CornerRadius="17" Background="#F2F4F7">
+                        <TextBlock Text="{Binding OpenOrders.Count}" Foreground="#111827" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                 </Grid>
                 <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
@@ -785,31 +778,31 @@
                                 <Button Command="{Binding DataContext.SelectOrderCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
                                         CommandParameter="{Binding}"
                                         Style="{StaticResource SecondaryButtonStyle}"
-                                        Height="46"
-                                        Width="190"
-                                        Padding="14,0"
-                                        Margin="0,7,10,7">
-                                    <Grid Width="162">
+                                        Height="40"
+                                        Width="180"
+                                        Padding="12,0"
+                                        Margin="0,8,8,8">
+                                    <Grid Width="154">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="30" />
                                             <ColumnDefinition Width="56" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{Binding DisplayName}" FontSize="15" FontWeight="Bold" Foreground="#111827" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                        <Border Grid.Column="1" Width="22" Height="22" CornerRadius="5" Background="#FB970E" VerticalAlignment="Center">
-                                            <TextBlock Text="Ⅱ" Foreground="White" FontSize="12" FontWeight="Black" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding DisplayName}" FontSize="14" FontWeight="SemiBold" Foreground="#111827" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                        <Border Grid.Column="1" Width="20" Height="20" CornerRadius="5" Background="#FB970E" VerticalAlignment="Center">
+                                            <TextBlock Text="Ⅱ" Foreground="White" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </Border>
-                                        <TextBlock Grid.Column="2" Text="{Binding Total, StringFormat={}{0:0} c}" FontSize="15" FontWeight="Bold" Foreground="#475467" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Total, StringFormat={}{0:0} c}" FontSize="14" FontWeight="SemiBold" Foreground="#475467" HorizontalAlignment="Right" VerticalAlignment="Center" />
                                     </Grid>
                                 </Button>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>
-                <Button Grid.Column="2" Command="{Binding CreateNewOrderCommand}" Style="{StaticResource SecondaryButtonStyle}" Width="220" Height="46" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button Grid.Column="2" Command="{Binding CreateNewOrderCommand}" Style="{StaticResource SecondaryButtonStyle}" Width="210" Height="40" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="+" FontSize="26" Foreground="#344054" Margin="0,-4,14,0" />
-                        <TextBlock Text="Новый чек" FontSize="18" Foreground="#344054" VerticalAlignment="Center" />
+                        <TextBlock Text="+" FontSize="23" Foreground="#344054" Margin="0,-4,12,0" />
+                        <TextBlock Text="Новый чек" FontSize="16" Foreground="#344054" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
             </Grid>

@@ -7,6 +7,8 @@ namespace FFPOS;
 
 public partial class App : Application
 {
+    public static User? CurrentUser { get; private set; }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -40,6 +42,8 @@ public partial class App : Application
             Shutdown();
             return;
         }
+
+        CurrentUser = loginWindow.AuthenticatedUser;
 
         settings = settingsService.Load();
         var mainWindow = CreateMainWindow(settings);
@@ -79,6 +83,41 @@ public partial class App : Application
         }
 
         app.ShutdownMode = ShutdownMode.OnMainWindowClose;
+    }
+
+    public static void ShowLoginWindow()
+    {
+        if (Current is not App app)
+        {
+            return;
+        }
+
+        var settingsService = new AppSettingsService();
+        var settings = settingsService.Load();
+        var previousWindow = app.MainWindow;
+        var loginWindow = new LoginWindow(settings);
+
+        app.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        app.MainWindow = loginWindow;
+
+        if (previousWindow is not null && previousWindow != loginWindow)
+        {
+            previousWindow.Close();
+        }
+
+        if (loginWindow.ShowDialog() == true)
+        {
+            CurrentUser = loginWindow.AuthenticatedUser;
+            settings = settingsService.Load();
+            var nextWindow = CreateMainWindow(settings);
+            app.MainWindow = nextWindow;
+            nextWindow.Show();
+
+            app.ShutdownMode = ShutdownMode.OnMainWindowClose;
+            return;
+        }
+
+        app.Shutdown();
     }
 
     private static bool TryInitializeDatabase(AppSettingsService settingsService, AppActivationSettings settings)

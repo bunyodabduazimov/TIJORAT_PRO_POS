@@ -50,6 +50,7 @@ public sealed class DatabaseService
         await using var context = CreateContext();
         await context.Database.EnsureCreatedAsync(cancellationToken);
         await EnsureSalesTablesAsync(context, cancellationToken);
+        await EnsurePeopleColumnsAsync(context, cancellationToken);
 
         if (!IsMySql)
         {
@@ -106,6 +107,82 @@ public sealed class DatabaseService
             .ThenBy(user => user.Username)
             .ThenBy(user => user.Id)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Stock>> GetStocksAsync(CancellationToken cancellationToken = default)
+    {
+        await using var context = CreateContext();
+        return await context.Stoks
+            .AsNoTracking()
+            .Where(stock => stock.Status == 1)
+            .OrderBy(stock => stock.Name)
+            .ThenBy(stock => stock.Id)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Cash>> GetCashesAsync(CancellationToken cancellationToken = default)
+    {
+        await using var context = CreateContext();
+        return await context.Cashes
+            .AsNoTracking()
+            .Where(cash => cash.Status == 1)
+            .OrderBy(cash => cash.Name)
+            .ThenBy(cash => cash.Id)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<People>> GetPeoplesAsync(CancellationToken cancellationToken = default)
+    {
+        await using var context = CreateContext();
+        return await context.Peoples
+            .AsNoTracking()
+            .Where(people => people.Status == 1)
+            .OrderBy(people => people.Id == 1 ? 0 : 1)
+            .ThenBy(people => people.Name)
+            .ThenBy(people => people.Id)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<People> AddPeopleAsync(People people, CancellationToken cancellationToken = default)
+    {
+        await WriteLock.WaitAsync(cancellationToken);
+        try
+        {
+            await using var context = CreateContext();
+            var nextId = (await context.Peoples.AsNoTracking().Select(item => (int?)item.Id).MaxAsync(cancellationToken) ?? 0) + 1;
+            people.Id = people.Id > 0 ? people.Id : nextId;
+            people.Status = people.Status == 0 ? 1 : people.Status;
+            context.Peoples.Add(people);
+            await context.SaveChangesAsync(cancellationToken);
+            return people;
+        }
+        finally
+        {
+            WriteLock.Release();
+        }
+    }
+
+    public async Task SaveUserSettingsAsync(User user, string settingsJson, CancellationToken cancellationToken = default)
+    {
+        await WriteLock.WaitAsync(cancellationToken);
+        try
+        {
+            await using var context = CreateContext();
+            var tracked = await context.Users.FirstOrDefaultAsync(existing => existing.Id == user.Id, cancellationToken);
+            if (tracked is null)
+            {
+                return;
+            }
+
+            tracked.StockId = user.StockId;
+            tracked.CashId = user.CashId;
+            tracked.Settings = settingsJson;
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        finally
+        {
+            WriteLock.Release();
+        }
     }
 
     public async Task<IReadOnlyList<Order>> GetOpenOrdersAsync(
@@ -431,6 +508,64 @@ public sealed class DatabaseService
         await context.Database.ExecuteSqlRawAsync("""
             CREATE INDEX IF NOT EXISTS ix_sale_data_sale_id ON sale_data(sale_id);
             """, cancellationToken);
+    }
+
+    private async Task EnsurePeopleColumnsAsync(AppDbContext context, CancellationToken cancellationToken)
+    {
+        if (IsMySql)
+        {
+            var dbConnection = context.Database.GetDbConnection();
+            await context.Database.OpenConnectionAsync(cancellationToken);
+            try
+            {
+                await using var command = dbConnection.CreateCommand();
+                command.CommandText = """
+                    SELECT COUNT(*)
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE()
+                      AND TABLE_NAME = 'peoples'
+                      AND COLUMN_NAME = 'address';
+                    """;
+                var exists = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken)) > 0;
+                if (!exists)
+                {
+                    await context.Database.ExecuteSqlRawAsync("ALTER TABLE peoples ADD COLUMN address TEXT NULL;", cancellationToken);
+                }
+            }
+            finally
+            {
+                await context.Database.CloseConnectionAsync();
+            }
+            return;
+        }
+
+        if (context.Database.GetDbConnection() is not SqliteConnection connection)
+        {
+            return;
+        }
+
+        var hasAddress = false;
+        await context.Database.OpenConnectionAsync(cancellationToken);
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "PRAGMA table_info(peoples);";
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var columnName = reader.GetString(1);
+                if (string.Equals(columnName, "address", StringComparison.OrdinalIgnoreCase))
+                {
+                    hasAddress = true;
+                    break;
+                }
+            }
+        }
+        await context.Database.CloseConnectionAsync();
+
+        if (!hasAddress)
+        {
+            await context.Database.ExecuteSqlRawAsync("ALTER TABLE peoples ADD COLUMN address TEXT NULL;", cancellationToken);
+        }
     }
 
     private async Task UpsertEntitiesAsync<TEntity>(

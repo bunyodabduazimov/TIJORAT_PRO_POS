@@ -226,6 +226,7 @@ public class AppDbContext : DbContext
         entity.Property(x => x.Id).ValueGeneratedNever();
         entity.Property(x => x.Name).HasColumnName("name");
         entity.Property(x => x.Phone).HasColumnName("phone");
+        entity.Property(x => x.Address).HasColumnName("address");
         entity.Property(x => x.Balance).HasColumnName("balance");
         entity.Property(x => x.Status).HasColumnName("status");
     }

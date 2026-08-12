@@ -3,18 +3,18 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-             MinHeight="72"
+             MinHeight="54"
              FontFamily="Inter, Segoe UI">
     <UserControl.Resources>
         <Style x:Key="QtyButtonStyle" TargetType="Button">
-            <Setter Property="Width" Value="34" />
-            <Setter Property="Height" Value="34" />
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
             <Setter Property="Background" Value="White" />
             <Setter Property="BorderBrush" Value="#DEE4EC" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Foreground" Value="#0F172A" />
-            <Setter Property="FontSize" Value="19" />
-            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontWeight" Value="Normal" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             <Setter Property="Template">
@@ -38,40 +38,41 @@
         </Style>
     </UserControl.Resources>
 
-    <Border BorderBrush="#E8EDF3" BorderThickness="0,0,0,1" Padding="0,7">
+    <Border x:Name="RowBorder"
+            Background="White"
+            BorderBrush="#E8EDF3"
+            BorderThickness="0,0,0,1"
+            Padding="0,5">
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="76" />
+                <ColumnDefinition Width="56" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="118" />
-                <ColumnDefinition Width="78" />
+                <ColumnDefinition Width="98" />
+                <ColumnDefinition Width="58" />
+                <ColumnDefinition Width="62" />
             </Grid.ColumnDefinitions>
 
             <Image Source="{Binding Item.Product.ImagePath, ElementName=Root}"
-                   Width="64"
-                   Height="54"
+                   Width="44"
+                   Height="36"
                    Stretch="Uniform"
                    HorizontalAlignment="Left"
                    VerticalAlignment="Center" />
 
             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                 <TextBlock Text="{Binding Item.Product.Name, ElementName=Root}"
-                           FontSize="16"
-                           FontWeight="Bold"
+                           FontSize="14"
+                           FontWeight="Medium"
                            Foreground="#111827"
                            TextTrimming="CharacterEllipsis" />
-                <TextBlock Text="{Binding Item.Description, ElementName=Root}"
-                           FontSize="13"
-                           Foreground="#475467"
-                           Margin="0,1,0,0" />
-                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                     <materialDesign:PackIcon Kind="PencilOutline"
-                                             Width="14"
-                                             Height="14"
+                                             Width="12"
+                                             Height="12"
                                              Foreground="#2563EB"
                                              VerticalAlignment="Center" />
                     <TextBlock Text="{Binding Item.Note, ElementName=Root, TargetNullValue=''}"
-                               FontSize="13"
+                               FontSize="12"
                                Foreground="#475467"
                                Margin="6,0,0,0"
                                VerticalAlignment="Center" />
@@ -90,9 +91,9 @@
 
             <Grid Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="36" />
-                    <ColumnDefinition Width="38" />
-                    <ColumnDefinition Width="36" />
+                    <ColumnDefinition Width="32" />
+                    <ColumnDefinition Width="34" />
+                    <ColumnDefinition Width="32" />
                 </Grid.ColumnDefinitions>
                 <Button Content="-"
                         Command="{Binding DecreaseCommand, ElementName=Root}"
@@ -100,8 +101,8 @@
                         Style="{StaticResource QtyButtonStyle}" />
                 <TextBlock Grid.Column="1"
                            Text="{Binding Item.Quantity, ElementName=Root}"
-                           FontSize="17"
-                           FontWeight="Bold"
+                           FontSize="15"
+                           FontWeight="SemiBold"
                            Foreground="#111827"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center" />
@@ -113,9 +114,17 @@
             </Grid>
 
             <TextBlock Grid.Column="3"
+                       Text="{Binding Item.Price, ElementName=Root, StringFormat={}{0:0} c}"
+                       FontSize="13"
+                       FontWeight="Medium"
+                       Foreground="#111827"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Center" />
+
+            <TextBlock Grid.Column="4"
                        Text="{Binding Item.Total, ElementName=Root, StringFormat={}{0:0} c}"
-                       FontSize="16"
-                       FontWeight="Bold"
+                       FontSize="14"
+                       FontWeight="SemiBold"
                        Foreground="#030712"
                        HorizontalAlignment="Right"
                        VerticalAlignment="Center" />

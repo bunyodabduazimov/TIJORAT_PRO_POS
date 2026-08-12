@@ -39,7 +39,7 @@ public partial class SalesFastFoodView : UserControl
 
         if (window.WindowState == WindowState.Maximized)
         {
-            window.WindowState = WindowState.Normal;
+            return;
         }
 
         window.DragMove();
