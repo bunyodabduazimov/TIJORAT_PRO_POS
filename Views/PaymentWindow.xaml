@@ -6,9 +6,9 @@
         xmlns:controls="clr-namespace:FFPOS.Controls"
         Title="Оплата"
         Width="980"
-        Height="700"
-        MinWidth="860"
-        MinHeight="560"
+        Height="720"
+        MinWidth="980"
+        MinHeight="700"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResizeWithGrip"
         WindowStyle="None"
@@ -83,6 +83,72 @@
             <Setter Property="FontWeight" Value="Bold" />
         </Style>
 
+        <Style x:Key="OrderTypePayButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource BaseButtonStyle}">
+            <Setter Property="Height" Value="42" />
+            <Setter Property="Margin" Value="4,0" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.92" />
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Opacity" Value="0.82" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ReceiptCheckStyle" TargetType="{x:Type CheckBox}">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Foreground" Value="#344054" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type CheckBox}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="28" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="Box"
+                                    Width="22"
+                                    Height="22"
+                                    CornerRadius="5"
+                                    BorderBrush="#DDE5EE"
+                                    BorderThickness="1.5"
+                                    Background="White"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center">
+                                <materialDesign:PackIcon x:Name="CheckIcon"
+                                                         Kind="CheckBold"
+                                                         Width="16"
+                                                         Height="16"
+                                                         Foreground="White"
+                                                         HorizontalAlignment="Center"
+                                                         VerticalAlignment="Center"
+                                                         Visibility="Collapsed" />
+                            </Border>
+                            <ContentPresenter Grid.Column="1" VerticalAlignment="Center" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Box" Property="Background" Value="#FF2B22" />
+                                <Setter TargetName="Box" Property="BorderBrush" Value="#FF2B22" />
+                                <Setter TargetName="CheckIcon" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="BorderBrush" Value="#FF2B22" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="PaymentInputStyle" TargetType="{x:Type TextBox}">
             <Setter Property="Height" Value="46" />
             <Setter Property="Padding" Value="12,0" />
@@ -93,6 +159,7 @@
             <Setter Property="FontSize" Value="22" />
             <Setter Property="FontWeight" Value="Medium" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -168,7 +235,8 @@
                                                 <ContentPresenter Margin="12,0,40,0"
                                                                   HorizontalAlignment="Left"
                                                                   VerticalAlignment="Center"
-                                                                  Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType={x:Type ComboBox}}}" />
+                                                                  Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType={x:Type ComboBox}}}"
+                                                                  ContentTemplate="{Binding ItemTemplate, RelativeSource={RelativeSource AncestorType={x:Type ComboBox}}}" />
                                                 <materialDesign:PackIcon Kind="ChevronDown"
                                                                          Width="20"
                                                                          Height="20"
@@ -212,6 +280,66 @@
             </Setter>
         </Style>
 
+        <Style x:Key="PaymentScrollRepeatButtonStyle" TargetType="{x:Type RepeatButton}">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="IsTabStop" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type RepeatButton}">
+                        <Border Background="Transparent" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PaymentScrollBarStyle" TargetType="{x:Type ScrollBar}">
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Background" Value="#F8FAFC" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollBar}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                            <Track x:Name="PART_Track"
+                                   IsDirectionReversed="True"
+                                   Value="{TemplateBinding Value}"
+                                   Minimum="{TemplateBinding Minimum}"
+                                   Maximum="{TemplateBinding Maximum}"
+                                   ViewportSize="{TemplateBinding ViewportSize}">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}" Style="{StaticResource PaymentScrollRepeatButtonStyle}" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="{x:Type Thumb}">
+                                                <Border x:Name="ThumbBorder"
+                                                        Width="5"
+                                                        HorizontalAlignment="Center"
+                                                        Background="#CBD8E8"
+                                                        CornerRadius="4"
+                                                        Margin="0,4" />
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="ThumbBorder" Property="Background" Value="#B8C9DE" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsDragging" Value="True">
+                                                        <Setter TargetName="ThumbBorder" Property="Background" Value="#9EB4CF" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}" Style="{StaticResource PaymentScrollRepeatButtonStyle}" />
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="IconInputBoxStyle" TargetType="{x:Type TextBox}" BasedOn="{StaticResource PaymentInputStyle}">
             <Setter Property="FontSize" Value="18" />
             <Setter Property="Padding" Value="44,0,12,0" />
@@ -226,7 +354,7 @@
             Effect="{StaticResource WindowShadow}">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="58" />
+                <RowDefinition Height="50" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="82" />
             </Grid.RowDefinitions>
@@ -243,14 +371,16 @@
 
             <Grid Grid.Row="1" Margin="20,16,20,8">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.2*" MinWidth="430" />
-                    <ColumnDefinition Width="360" />
+                    <ColumnDefinition Width="500" MinWidth="420" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="400" MinWidth="380"/>
                 </Grid.ColumnDefinitions>
 
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
                     <Grid>
@@ -266,37 +396,8 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock Text="Итого:" FontSize="18" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" />
-                        <TextBox x:Name="TotalBox" Grid.Column="1" Style="{StaticResource PaymentInputStyle}" IsReadOnly="True" />
-
-                        <TextBlock Grid.Row="1" Text="Скидка:" FontSize="18" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" />
-                        <Grid Grid.Row="1" Grid.Column="1">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="0.8*" />
-                                <ColumnDefinition Width="8" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBox x:Name="DiscountPercentBox" Style="{StaticResource IconInputBoxStyle}" TextChanged="DiscountPercentChanged" GotFocus="DiscountPercentFocused" />
-                                <materialDesign:PackIcon Kind="PercentOutline" Width="22" Height="22" Foreground="#344054" Margin="14,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" IsHitTestVisible="False" />
-                            </Grid>
-                            <Grid Grid.Column="2">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBox x:Name="DiscountAmountBox" Style="{StaticResource IconInputBoxStyle}" TextChanged="DiscountAmountChanged" GotFocus="DiscountAmountFocused" />
-                                <materialDesign:PackIcon Kind="CashMinus" Width="22" Height="22" Foreground="#344054" Margin="14,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" IsHitTestVisible="False" />
-                            </Grid>
-                        </Grid>
-
-                        <TextBlock Grid.Row="2" Text="К оплате:" FontSize="18" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" />
-                        <TextBox x:Name="PayableBox" Grid.Row="2" Grid.Column="1" Style="{StaticResource PaymentInputStyle}" IsReadOnly="True" Background="#FFF7F6" BorderBrush="#FFB8B3" Foreground="#FF2B22" />
-
-                        <TextBlock Grid.Row="3" Text="Клиент:" FontSize="18" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" />
-                        <Button x:Name="CustomerButton" Grid.Row="3" Grid.Column="1" Style="{StaticResource BaseButtonStyle}" HorizontalContentAlignment="Stretch" Click="CustomerClicked">
+                        <TextBlock Text="Клиент:" FontSize="18" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" />
+                        <Button x:Name="CustomerButton" Grid.Column="1" Style="{StaticResource BaseButtonStyle}" HorizontalContentAlignment="Stretch" Click="CustomerClicked" Margin="10,5,10,5">
                             <Grid Margin="14,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -307,21 +408,51 @@
                             </Grid>
                         </Button>
 
+                        <TextBlock Grid.Row="1" Text="Итого:" FontSize="18" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" />
+                        <TextBox x:Name="TotalBox" Grid.Row="1" Grid.Column="1" Style="{StaticResource PaymentInputStyle}" IsReadOnly="True" Margin="10,6,10,6"/>
+
+                        <TextBlock Grid.Row="2" Text="Скидка:" FontSize="18" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" />
+                        <Grid Grid.Row="2" Grid.Column="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="1*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="DiscountPercentBox" Style="{StaticResource IconInputBoxStyle}" TextChanged="DiscountPercentChanged" GotFocus="DiscountPercentFocused" Margin="10,6,0,6" />
+                                <materialDesign:PackIcon Kind="PercentOutline" Width="22" Height="22" Foreground="#344054" Margin="16,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" IsHitTestVisible="False" />
+                            </Grid>
+                            <Grid Grid.Column="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="DiscountAmountBox" Style="{StaticResource IconInputBoxStyle}" TextChanged="DiscountAmountChanged" GotFocus="DiscountAmountFocused" Margin="0,6,0,6" HorizontalAlignment="Left" Width="167" />
+                                <materialDesign:PackIcon Kind="Cash" Width="22" Height="22" Foreground="#344054" Margin="8,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" IsHitTestVisible="False" />
+                            </Grid>
+                        </Grid>
+
+                        <TextBlock Grid.Row="3" Text="К оплате:" FontSize="18" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" />
+                        <TextBox x:Name="PayableBox" Grid.Row="3" Grid.Column="1" Style="{StaticResource PaymentInputStyle}" IsReadOnly="True" Background="#FFF7F6" BorderBrush="#FFB8B3" Foreground="#FF2B22" Margin="10,6,10,6"/>
+
                         <TextBlock Grid.Row="4" Text="Примечание:" FontSize="18" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" />
-                        <TextBox x:Name="NoteBox" Grid.Row="4" Grid.Column="1" Style="{StaticResource PaymentInputStyle}" FontSize="16" Text="-" />
+                        <TextBox x:Name="NoteBox" Grid.Row="4" Grid.Column="1" Style="{StaticResource PaymentInputStyle}" FontSize="16" Text="-" Margin="10,6,10,6" />
                     </Grid>
 
-                    <Border Grid.Row="1" Margin="0,14,0,0" Background="#F8FAFC" BorderBrush="#DDE5EE" BorderThickness="1" CornerRadius="10" Padding="10">
+                    <Border x:Name="PaymentsCard" Grid.Row="1" Margin="0,10,0,0" Background="#F8FAFC" BorderBrush="#DDE5EE" BorderThickness="1" CornerRadius="10" Padding="10">
                         <Grid>
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="25" />
+                                <RowDefinition Height="12" />
                                 <RowDefinition Height="Auto" />
-                                <RowDefinition Height="52" />
-                                <RowDefinition Height="52" />
-                                <RowDefinition Height="1" />
-                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="12" />
+                                <RowDefinition Height="55" />
                             </Grid.RowDefinitions>
 
-                            <Grid Margin="0,0,0,8">
+
+                            <Grid Grid.Row="0">
                                 <TextBlock Text="Платежи" FontSize="14" FontWeight="Bold" Foreground="#344054" VerticalAlignment="Center" />
                                 <Button x:Name="AddPaymentButton" HorizontalAlignment="Right" Style="{StaticResource BaseButtonStyle}" Height="28" Padding="10,0" BorderThickness="0" Background="Transparent" Click="AddPaymentClicked">
                                     <StackPanel Orientation="Horizontal">
@@ -331,49 +462,43 @@
                                 </Button>
                             </Grid>
 
-                            <Grid Grid.Row="1" Margin="0,0,0,6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="44" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="8" />
-                                    <ColumnDefinition Width="160" />
-                                </Grid.ColumnDefinitions>
-                                <Button Style="{StaticResource BaseButtonStyle}" Height="42" BorderBrush="#FF2B22" Foreground="#FF2B22" Click="ClearCashClicked">
-                                    <materialDesign:PackIcon Kind="DeleteOutline" Width="24" Height="24" />
-                                </Button>
-                                <ComboBox x:Name="CashAccountBox" Grid.Column="1" Style="{StaticResource PaymentComboStyle}">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Name}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                                <TextBox x:Name="CashPaymentBox" Grid.Column="3" Style="{StaticResource PaymentInputStyle}" GotFocus="CashPaymentFocused" TextChanged="PaymentAmountChanged" />
-                            </Grid>
+                            <Border Height="1" Background="#DDE5EE" Grid.Row="1"/>
 
-                            <Grid x:Name="SecondPaymentRow" Grid.Row="2" Margin="0,0,0,8" Visibility="Collapsed">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="44" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="8" />
-                                    <ColumnDefinition Width="160" />
-                                </Grid.ColumnDefinitions>
-                                <Button Style="{StaticResource BaseButtonStyle}" Height="42" BorderBrush="#FF2B22" Foreground="#FF2B22" Click="ClearCardClicked">
-                                    <materialDesign:PackIcon Kind="DeleteOutline" Width="24" Height="24" />
-                                </Button>
-                                <ComboBox x:Name="CardAccountBox" Grid.Column="1" Style="{StaticResource PaymentComboStyle}">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Name}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                                <TextBox x:Name="CardPaymentBox" Grid.Column="3" Style="{StaticResource PaymentInputStyle}" GotFocus="CardPaymentFocused" TextChanged="PaymentAmountChanged" />
-                            </Grid>
+                            <StackPanel Grid.Row="2">
+                                <ScrollViewer x:Name="PaymentRowsScrollViewer"
+                                              MaxHeight="112"
+                                              VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled">
+                                    <ScrollViewer.Resources>
+                                        <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource PaymentScrollBarStyle}" />
+                                    </ScrollViewer.Resources>
+                                    <StackPanel x:Name="PaymentRowsPanel">
+                                        <Grid x:Name="FirstPaymentRow" Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="52" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="8" />
+                                                <ColumnDefinition Width="160" />
+                                            </Grid.ColumnDefinitions>
+                                            <Button Style="{StaticResource BaseButtonStyle}" Height="42" Margin="0,0,5,0" BorderBrush="#FF2B22" Foreground="#FF2B22" Click="ClearCashClicked">
+                                                <materialDesign:PackIcon Kind="DeleteOutline" Width="24" Height="24" />
+                                            </Button>
+                                            <ComboBox x:Name="CashAccountBox" Grid.Column="1" Style="{StaticResource PaymentComboStyle}">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Name}" />
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                            <TextBox x:Name="CashPaymentBox" Grid.Column="3" Style="{StaticResource PaymentInputStyle}" GotFocus="CashPaymentFocused" TextChanged="PaymentAmountChanged" />
+                                        </Grid>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </StackPanel>
 
-                            <Border Grid.Row="3" Background="#DDE5EE" />
+                            <Border Height="1" Background="#DDE5EE" Grid.Row="3"/>
 
-                            <Grid Grid.Row="4" Margin="0,10,0,0">
+                            <Grid Grid.Row="4">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
@@ -384,22 +509,44 @@
                                 </Grid.ColumnDefinitions>
 
                                 <TextBlock Text="Сумма оплаты" FontSize="16" FontWeight="Bold" Foreground="#344054" />
-                                <TextBlock x:Name="ReceivedText" Grid.Column="1" Text="0.00 TJS" FontSize="18" FontWeight="Bold" Foreground="#344054" />
+                                <TextBlock x:Name="ReceivedText" Grid.Column="1" Text="0.00" FontSize="18" FontWeight="Bold" Foreground="#344054" HorizontalAlignment="Right" />
                                 <TextBlock Grid.Row="1" x:Name="RemainderLabel" Text="Остаток" FontSize="16" FontWeight="Bold" Foreground="#344054" Margin="0,6,0,0" />
-                                <TextBlock x:Name="RemainderText" Grid.Row="1" Grid.Column="1" Text="0.00 TJS" FontSize="18" FontWeight="Bold" Foreground="#FF2B22" Margin="0,6,0,0" />
+                                <TextBlock x:Name="RemainderText" Grid.Row="1" Grid.Column="1" Text="0.00" FontSize="18" FontWeight="Bold" Foreground="#FF2B22" Margin="0,6,0,0" HorizontalAlignment="Right" />
+
                             </Grid>
+
                         </Grid>
                     </Border>
+                    
                 </Grid>
 
-                <Grid Grid.Column="1" Margin="22,0,0,0">
+                <Grid Grid.Column="2" Margin="22,0,0,0">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
+                        <RowDefinition Height="60" />
+                        <RowDefinition Height="340" />
+                        <RowDefinition Height="95" />
+                        <RowDefinition Height="30" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock x:Name="KeyboardTitle" Text="Введите сумму" FontSize="18" FontWeight="Bold" Foreground="#111827" Margin="6,0,0,8" />
+                    <Grid x:Name="OrderTypeGrid" Grid.Row="0" Margin="2,0,2,8">
+                        <Button x:Name="DineInButton"
+                                Content="В зале"
+                                Background="#58C783"
+                                Style="{StaticResource OrderTypePayButtonStyle}"
+                                Click="OrderTypeClicked" />
+                        <Button x:Name="TakeAwayButton"
+                                Content="С собой"
+                                Background="#4B92E8"
+                                Style="{StaticResource OrderTypePayButtonStyle}"
+                                Click="OrderTypeClicked" />
+                        <Button x:Name="DeliveryButton"
+                                Content="Доставка"
+                                Background="#FF9A43"
+                                Style="{StaticResource OrderTypePayButtonStyle}"
+                                Click="OrderTypeClicked" />
+                    </Grid>
+
                     <Grid Grid.Row="1">
                         <Grid.RowDefinitions>
                             <RowDefinition />
@@ -431,14 +578,20 @@
 
                     <StackPanel Grid.Row="2" Margin="6,8,6,0">
                         <TextBlock Text="Быстрые суммы" FontSize="15" FontWeight="Bold" Foreground="#475467" Margin="0,0,0,6" />
-                        <UniformGrid Columns="4">
+                        <UniformGrid Columns="3">
                             <Button x:Name="QuickAmount1Button" Style="{StaticResource BaseButtonStyle}" Margin="0,0,8,0" Click="QuickAmountClicked" />
                             <Button x:Name="QuickAmount2Button" Style="{StaticResource BaseButtonStyle}" Margin="0,0,8,0" Click="QuickAmountClicked" />
-                            <Button x:Name="QuickAmount3Button" Style="{StaticResource BaseButtonStyle}" Margin="0,0,8,0" Click="QuickAmountClicked" />
-                            <Button Content="Точно" Style="{StaticResource BaseButtonStyle}" Click="ExactAmountClicked" />
+                            <Button x:Name="QuickAmount3Button" Style="{StaticResource BaseButtonStyle}" Click="QuickAmountClicked" />
                         </UniformGrid>
-                        <Button Content="C" Style="{StaticResource BaseButtonStyle}" Height="42" Margin="0,8,0,0" Foreground="#FF2B22" Click="ClearClicked" />
+                        <CheckBox x:Name="PrintReceiptBox"
+                                  Style="{StaticResource ReceiptCheckStyle}"
+                                  Content="Печать чека"
+                                  Margin="0,12,0,0" />
                     </StackPanel>
+
+                    <Grid Grid.Row="3">
+                      
+                    </Grid>
                 </Grid>
             </Grid>
 
@@ -447,13 +600,14 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <Button Style="{StaticResource BaseButtonStyle}" Height="56" Margin="0,0,8,0" Click="HoldClicked">
+                
+                <Button Grid.Column="0" Style="{StaticResource BaseButtonStyle}" Height="56" Margin="0,0,10,0" Click="HoldClicked">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="PauseCircleOutline" Width="22" Height="22" Margin="0,0,10,0" />
                         <TextBlock Text="Отложить" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
-                <Button x:Name="ConfirmButton" Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" Click="ConfirmClicked">
+                <Button x:Name="ConfirmButton" Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" Margin="10,0,0,0" Click="ConfirmClicked">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="CashRegister" Width="24" Height="24" Margin="0,0,10,0" />
                         <TextBlock x:Name="ConfirmButtonText" Text="Оплатить" VerticalAlignment="Center" />

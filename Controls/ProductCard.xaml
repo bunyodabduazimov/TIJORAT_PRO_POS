@@ -76,33 +76,43 @@
                            VerticalAlignment="Bottom"
                            Panel.ZIndex="2" />
 
-                <TextBlock Text="+"
-                           FontSize="20"
-                           FontWeight="SemiBold"
-                           Foreground="#C5CCD6"
-                           HorizontalAlignment="Right"
-                           VerticalAlignment="Bottom"
-                           Margin="0,0,2,-2"
-                           Panel.ZIndex="2" />
+                <Grid HorizontalAlignment="Right"
+                      VerticalAlignment="Bottom"
+                      Margin="0,0,0,-1"
+                      Panel.ZIndex="3">
+                    <TextBlock Text="+"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               Foreground="#C5CCD6"
+                               HorizontalAlignment="Right"
+                               VerticalAlignment="Bottom">
+                        <TextBlock.Style>
+                            <Style TargetType="{x:Type TextBlock}">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Product.HasSelectedQuantity, ElementName=Root}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
 
-                <Border MinWidth="23"
-                        Height="22"
-                        CornerRadius="8"
-                        Background="#FF2B22"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Top"
-                        Padding="7,0"
-                        Margin="0,-1,-1,0"
-                        Panel.ZIndex="3"
-                        Visibility="{Binding Product.HasSelectedQuantity, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <TextBlock Text="{Binding Product.SelectedQuantity, ElementName=Root}"
-                               Foreground="White"
-                               FontSize="13"
-                               FontWeight="Black"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               Margin="0,-1,0,0" />
-                </Border>
+                    <Border MinWidth="23"
+                            Height="22"
+                            CornerRadius="8"
+                            Background="#FF2B22"
+                            Padding="7,0"
+                            Visibility="{Binding Product.HasSelectedQuantity, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="{Binding Product.SelectedQuantity, ElementName=Root}"
+                                   Foreground="White"
+                                   FontSize="13"
+                                   FontWeight="Black"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Margin="0,-1,0,0" />
+                    </Border>
+                </Grid>
             </Grid>
         </Border>
     </Button>

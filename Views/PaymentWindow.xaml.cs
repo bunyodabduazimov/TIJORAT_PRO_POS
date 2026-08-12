@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -15,10 +16,14 @@ public partial class PaymentWindow : Window
     private const string MixedType = "Смешанная";
 
     private readonly DatabaseService _databaseService = new();
+    private readonly AppActivationSettings _settings;
+    private readonly UserSettings _userSettings;
     private readonly decimal _subtotal;
     private readonly List<Cash> _cashes = new();
+    private readonly List<TextBox> _extraPaymentBoxes = new();
     private bool _isRefreshing;
     private string _activeInput = "cash";
+    private TextBox? _activeExtraPaymentBox;
     private People _selectedCustomer = new()
     {
         Id = 1,
@@ -26,14 +31,18 @@ public partial class PaymentWindow : Window
         Status = 1
     };
 
-    public PaymentWindow(decimal total, string paymentType, decimal discount = 0m)
+    public PaymentWindow(decimal total, string paymentType, decimal discount = 0m, string orderType = "В зале")
     {
         InitializeComponent();
 
+        _settings = new AppSettingsService().Load();
+        _userSettings = ParseUserSettings(App.CurrentUser?.Settings);
         _subtotal = total;
         PaymentType = NormalizePaymentType(paymentType);
+        OrderType = string.IsNullOrWhiteSpace(orderType) ? "В зале" : orderType;
         DiscountAmount = Math.Clamp(discount, 0m, _subtotal);
 
+        SetupOrderTypes();
         LoadCashes();
         SetupInitialAmounts();
         SetupQuickAmounts();
@@ -41,14 +50,68 @@ public partial class PaymentWindow : Window
     }
 
     public string PaymentType { get; private set; }
+    public string OrderType { get; private set; }
     public decimal ReceivedAmount { get; private set; }
     public decimal CashAmount { get; private set; }
     public decimal CardAmount { get; private set; }
     public decimal DiscountAmount { get; private set; }
+    public bool PrintReceipt => PrintReceiptBox.IsChecked == true;
     public int PeopleId => _selectedCustomer.Id;
     public bool HoldRequested { get; private set; }
 
     private decimal TotalDue => Math.Max(0m, _subtotal - DiscountAmount);
+
+    private void SetupOrderTypes()
+    {
+        PrintReceiptBox.IsChecked = _userSettings.CheckPrint;
+
+        if (_settings.AppType != 3)
+        {
+            OrderTypeGrid.ColumnDefinitions.Clear();
+            OrderTypeGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            OrderTypeGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            DineInButton.Visibility = Visibility.Collapsed;
+            Grid.SetColumn(TakeAwayButton, 0);
+            Grid.SetColumn(DeliveryButton, 1);
+            OrderType = OrderType == "В зале" ? "С собой" : OrderType;
+        }
+        else
+        {
+            OrderTypeGrid.ColumnDefinitions.Clear();
+            OrderTypeGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            OrderTypeGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            OrderTypeGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            DineInButton.Visibility = Visibility.Visible;
+            Grid.SetColumn(DineInButton, 0);
+            Grid.SetColumn(TakeAwayButton, 1);
+            Grid.SetColumn(DeliveryButton, 2);
+        }
+
+        RefreshOrderTypeButtons();
+    }
+
+    private void OrderTypeClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.Content is string value)
+        {
+            OrderType = value;
+            RefreshOrderTypeButtons();
+        }
+    }
+
+    private void RefreshOrderTypeButtons()
+    {
+        SetOrderTypeButtonState(DineInButton, OrderType == "В зале");
+        SetOrderTypeButtonState(TakeAwayButton, OrderType == "С собой");
+        SetOrderTypeButtonState(DeliveryButton, OrderType == "Доставка");
+    }
+
+    private static void SetOrderTypeButtonState(Button button, bool isSelected)
+    {
+        button.Opacity = isSelected ? 1 : 0.72;
+        button.BorderThickness = isSelected ? new Thickness(2) : new Thickness(0);
+        button.BorderBrush = Brushes.White;
+    }
 
     private void LoadCashes()
     {
@@ -69,9 +132,7 @@ public partial class PaymentWindow : Window
         }
 
         CashAccountBox.ItemsSource = _cashes;
-        CardAccountBox.ItemsSource = _cashes;
-        CashAccountBox.SelectedIndex = 0;
-        CardAccountBox.SelectedIndex = _cashes.Count > 1 ? 1 : 0;
+        CashAccountBox.SelectedIndex = PaymentType == CardType && _cashes.Count > 1 ? 1 : 0;
     }
 
     private void SetupInitialAmounts()
@@ -80,23 +141,6 @@ public partial class PaymentWindow : Window
         PayableBox.Text = FormatMoney(TotalDue);
         CustomerText.Text = _selectedCustomer.Name ?? "Розничный покупатель";
 
-        if (PaymentType == CardType)
-        {
-            SecondPaymentRow.Visibility = Visibility.Visible;
-            CardPaymentBox.Text = FormatInput(TotalDue);
-            _activeInput = "card";
-            return;
-        }
-
-        if (PaymentType == MixedType)
-        {
-            SecondPaymentRow.Visibility = Visibility.Visible;
-            CashPaymentBox.Text = FormatInput(TotalDue);
-            _activeInput = "cash";
-            return;
-        }
-
-        SecondPaymentRow.Visibility = Visibility.Collapsed;
         CashPaymentBox.Text = FormatInput(TotalDue);
         _activeInput = "cash";
     }
@@ -117,12 +161,6 @@ public partial class PaymentWindow : Window
     {
         _activeInput = "cash";
         SelectText(CashPaymentBox);
-    }
-
-    private void CardPaymentFocused(object sender, RoutedEventArgs e)
-    {
-        _activeInput = "card";
-        SelectText(CardPaymentBox);
     }
 
     private void DiscountPercentChanged(object sender, TextChangedEventArgs e)
@@ -240,8 +278,7 @@ public partial class PaymentWindow : Window
             _activeInput = "cash";
         }
 
-        var paid = ParseAmount(CashPaymentBox.Text) +
-            (SecondPaymentRow.Visibility == Visibility.Visible ? ParseAmount(CardPaymentBox.Text) : 0m);
+        var paid = GetEnteredPaymentSum();
         var remainder = Math.Max(0m, TotalDue - paid);
         var box = GetActiveTextBox();
         if (box is null)
@@ -282,27 +319,94 @@ public partial class PaymentWindow : Window
         CashPaymentBox.Focus();
     }
 
-    private void ClearCardClicked(object sender, RoutedEventArgs e)
-    {
-        CardPaymentBox.Text = string.Empty;
-        _activeInput = "card";
-        CardPaymentBox.Focus();
-    }
-
     private void AddPaymentClicked(object sender, RoutedEventArgs e)
     {
-        SecondPaymentRow.Visibility = Visibility.Visible;
         PaymentType = MixedType;
 
-        var paid = ParseAmount(CashPaymentBox.Text) + ParseAmount(CardPaymentBox.Text);
-        if (paid < TotalDue && string.IsNullOrWhiteSpace(CardPaymentBox.Text))
-        {
-            CardPaymentBox.Text = FormatInput(TotalDue - paid);
-        }
-
-        _activeInput = "card";
-        CardPaymentBox.Focus();
+        var extraBox = AddExtraPaymentRow();
+        var remainder = Math.Max(0m, TotalDue - GetEnteredPaymentSum());
+        extraBox.Text = remainder > 0 ? FormatInput(remainder) : string.Empty;
+        _activeExtraPaymentBox = extraBox;
+        _activeInput = "extra";
+        extraBox.Focus();
+        PaymentRowsScrollViewer.ScrollToEnd();
         RefreshUi();
+    }
+
+    private TextBox AddExtraPaymentRow()
+    {
+        var row = new Grid { Margin = new Thickness(0, 0, 0, 8) };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(52) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(160) });
+
+        var removeButton = new Button
+        {
+            Height = 42,
+            Margin = new Thickness(0, 0, 5, 5),
+            BorderBrush = BrushFrom("#FF2B22"),
+            Foreground = BrushFrom("#FF2B22"),
+            Style = (Style)FindResource("BaseButtonStyle"),
+            Content = new MaterialDesignThemes.Wpf.PackIcon
+            {
+                Kind = MaterialDesignThemes.Wpf.PackIconKind.DeleteOutline,
+                Width = 24,
+                Height = 24
+            }
+        };
+
+        var comboBox = new ComboBox
+        {
+            Style = (Style)FindResource("PaymentComboStyle"),
+            ItemsSource = _cashes,
+            ItemTemplate = CashAccountBox.ItemTemplate,
+            SelectedIndex = _cashes.Count > 0 ? Math.Min(_extraPaymentBoxes.Count + 2, _cashes.Count - 1) : -1
+        };
+
+        var amountBox = new TextBox
+        {
+            Style = (Style)FindResource("PaymentInputStyle")
+        };
+        amountBox.GotFocus += ExtraPaymentFocused;
+        amountBox.TextChanged += PaymentAmountChanged;
+
+        removeButton.Click += (_, _) =>
+        {
+            _extraPaymentBoxes.Remove(amountBox);
+            PaymentRowsPanel.Children.Remove(row);
+            if (_activeExtraPaymentBox == amountBox)
+            {
+                _activeExtraPaymentBox = null;
+                _activeInput = "cash";
+            }
+
+            RefreshUi();
+        };
+
+        Grid.SetColumn(comboBox, 1);
+        Grid.SetColumn(amountBox, 3);
+        row.Children.Add(removeButton);
+        row.Children.Add(comboBox);
+        row.Children.Add(amountBox);
+        PaymentRowsPanel.Children.Add(row);
+        _extraPaymentBoxes.Add(amountBox);
+        return amountBox;
+    }
+
+    private void ExtraPaymentFocused(object sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox textBox)
+        {
+            _activeExtraPaymentBox = textBox;
+            _activeInput = "extra";
+            SelectText(textBox);
+        }
+    }
+
+    private int GetVisiblePaymentRowCount()
+    {
+        return 1 + _extraPaymentBoxes.Count;
     }
 
     private void HoldClicked(object sender, RoutedEventArgs e)
@@ -315,7 +419,7 @@ public partial class PaymentWindow : Window
     private void ConfirmClicked(object sender, RoutedEventArgs e)
     {
         CashAmount = ParseAmount(CashPaymentBox.Text);
-        CardAmount = SecondPaymentRow.Visibility == Visibility.Visible ? ParseAmount(CardPaymentBox.Text) : 0m;
+        CardAmount = GetNonCashPaymentSum();
         ReceivedAmount = CashAmount + CardAmount;
 
         if (ReceivedAmount < TotalDue)
@@ -347,7 +451,7 @@ public partial class PaymentWindow : Window
         try
         {
             CashAmount = ParseAmount(CashPaymentBox.Text);
-            CardAmount = SecondPaymentRow.Visibility == Visibility.Visible ? ParseAmount(CardPaymentBox.Text) : 0m;
+            CardAmount = GetNonCashPaymentSum();
             ReceivedAmount = CashAmount + CardAmount;
 
             if (updateDiscountFields || updateDiscountPercent)
@@ -363,9 +467,8 @@ public partial class PaymentWindow : Window
 
             TotalBox.Text = FormatMoney(_subtotal);
             PayableBox.Text = FormatMoney(TotalDue);
-            ReceivedText.Text = $"{ReceivedAmount:0.00} TJS";
-            RemainderText.Text = $"{Math.Max(0m, TotalDue - ReceivedAmount):0.00} TJS";
-            KeyboardTitle.Text = GetKeyboardTitle();
+            ReceivedText.Text = $"{ReceivedAmount:0.00}";
+            RemainderText.Text = $"{Math.Max(0m, TotalDue - ReceivedAmount):0.00}";
             ConfirmButtonText.Text = $"Оплатить {Math.Min(ReceivedAmount, TotalDue):0.##} c";
 
             RemainderLabel.Foreground = BrushFrom("#344054");
@@ -386,10 +489,20 @@ public partial class PaymentWindow : Window
 
     private void RefillSinglePaymentRemainder()
     {
-        if (SecondPaymentRow.Visibility != Visibility.Visible)
+        if (_extraPaymentBoxes.Count == 0)
         {
             CashPaymentBox.Text = FormatInput(TotalDue);
         }
+    }
+
+    private decimal GetEnteredPaymentSum()
+    {
+        return ParseAmount(CashPaymentBox.Text) + _extraPaymentBoxes.Sum(box => ParseAmount(box.Text));
+    }
+
+    private decimal GetNonCashPaymentSum()
+    {
+        return _extraPaymentBoxes.Sum(box => ParseAmount(box.Text));
     }
 
     private TextBox? GetActiveTextBox()
@@ -398,7 +511,7 @@ public partial class PaymentWindow : Window
         {
             "discountPercent" => DiscountPercentBox,
             "discountAmount" => DiscountAmountBox,
-            "card" => SecondPaymentRow.Visibility == Visibility.Visible ? CardPaymentBox : CashPaymentBox,
+            "extra" => _activeExtraPaymentBox ?? CashPaymentBox,
             _ => CashPaymentBox
         };
     }
@@ -410,6 +523,7 @@ public partial class PaymentWindow : Window
             "discountPercent" => "Введите процент скидки",
             "discountAmount" => "Введите сумму скидки",
             "card" => "Введите сумму второй оплаты",
+            "extra" => "Введите сумму оплаты",
             _ => "Введите сумму"
         };
     }
@@ -432,6 +546,26 @@ public partial class PaymentWindow : Window
             MixedType => MixedType,
             _ => CashType
         };
+    }
+
+    private UserSettings ParseUserSettings(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return new UserSettings { CheckPrint = _settings.CheckPrint };
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<UserSettings>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }) ?? new UserSettings { CheckPrint = _settings.CheckPrint };
+        }
+        catch
+        {
+            return new UserSettings { CheckPrint = _settings.CheckPrint };
+        }
     }
 
     private static void SetQuickButton(Button button, decimal amount)

@@ -110,7 +110,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type ScrollBar}">
-                        <Border Background="#F1F5F9" CornerRadius="6">
+                        <Border Background="#F8FAFC" CornerRadius="6">
                             <Track x:Name="PART_Track" IsDirectionReversed="True" Value="{TemplateBinding Value}" Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}" ViewportSize="{TemplateBinding ViewportSize}">
                                 <Track.DecreaseRepeatButton>
                                     <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}" Style="{StaticResource ListScrollBarRepeatButtonStyle}" />
@@ -119,7 +119,7 @@
                                     <Thumb>
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="{x:Type Thumb}">
-                                                <Border Background="#CBD5E1" CornerRadius="5" Margin="3,2" />
+                                                <Border Background="#CBD8E8" Width="5" HorizontalAlignment="Center" CornerRadius="4" Margin="0,4" />
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -163,39 +163,18 @@
 
                 <Grid>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="520" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="12" />
                         <ColumnDefinition Width="150" />
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="SearchBox" Style="{StaticResource CustomerInputStyle}" TextChanged="SearchChanged" />
-                    <Button Grid.Column="2" Style="{StaticResource PrimaryButtonStyle}" Click="AddCustomerClicked">
+                    <Button Grid.Column="3" Style="{StaticResource PrimaryButtonStyle}" Click="AddCustomerClicked">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="Plus" Width="20" Height="20" Margin="0,0,8,0" />
                             <TextBlock Text="Добавить" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
-                </Grid>
-
-                <Grid x:Name="AddPanel" Grid.Row="2" Visibility="Collapsed">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="10" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="10" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="10" />
-                        <ColumnDefinition Width="120" />
-                    </Grid.ColumnDefinitions>
-                    <TextBox x:Name="NewNameBox" Style="{StaticResource CustomerInputStyle}" />
-                    <TextBox x:Name="NewPhoneBox" Grid.Column="2" Style="{StaticResource CustomerInputStyle}" />
-                    <TextBox x:Name="NewAddressBox" Grid.Column="4" Style="{StaticResource CustomerInputStyle}" />
-                    <Button Grid.Column="6" Style="{StaticResource PrimaryButtonStyle}" Click="SaveNewCustomerClicked" Content="Сохранить" />
-                </Grid>
-
-                <Grid Grid.Row="2" Visibility="{Binding ElementName=AddPanel, Path=Visibility}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
                 </Grid>
 
                 <Border Grid.Row="3" BorderBrush="#DDE5EE" BorderThickness="1" CornerRadius="8" Background="#FFFFFF">
@@ -212,6 +191,10 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="120" />
                             </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" BorderBrush="#E5EBF2" BorderThickness="0,0,1,0" />
+                            <Border Grid.Column="1" BorderBrush="#E5EBF2" BorderThickness="0,0,1,0" />
+                            <Border Grid.Column="2" BorderBrush="#E5EBF2" BorderThickness="0,0,1,0" />
+                            <Border Grid.Column="3" BorderBrush="#E5EBF2" BorderThickness="0,0,1,0" />
                             <TextBlock Text="№" Margin="14,0" FontSize="13" FontWeight="Bold" Foreground="#344054" VerticalAlignment="Center" />
                             <TextBlock Grid.Column="1" Text="Название" FontSize="13" FontWeight="Bold" Foreground="#344054" VerticalAlignment="Center" />
                             <TextBlock Grid.Column="2" Text="Телефон" FontSize="13" FontWeight="Bold" Foreground="#344054" VerticalAlignment="Center" />
@@ -229,12 +212,16 @@
                                 <DataTemplate>
                                     <Grid Height="44">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="60" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="150" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="120" />
-                                        </Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="60" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="120" />
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" BorderBrush="#E5EBF2" BorderThickness="0,0,1,0" />
+                            <Border Grid.Column="1" BorderBrush="#E5EBF2" BorderThickness="0,0,1,0" />
+                            <Border Grid.Column="2" BorderBrush="#E5EBF2" BorderThickness="0,0,1,0" />
+                            <Border Grid.Column="3" BorderBrush="#E5EBF2" BorderThickness="0,0,1,0" />
                                         <TextBlock Text="{Binding Id}" Margin="14,0" FontSize="14" FontWeight="Medium" Foreground="#344054" VerticalAlignment="Center" />
                                         <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="#111827" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                                         <TextBlock Grid.Column="2" Text="{Binding Phone}" FontSize="14" Foreground="#344054" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />

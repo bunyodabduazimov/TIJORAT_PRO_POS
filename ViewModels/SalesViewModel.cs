@@ -19,9 +19,9 @@ public class SalesViewModel : INotifyPropertyChanged
     private Category? _selectedCategory;
     private Order? _currentOrder;
     private string _searchText = string.Empty;
-    private string _selectedOrderType = "Р’ Р·Р°Р»Рµ";
-    private string _activeSection = "РљР°СЃСЃР°";
-    private string _selectedPaymentType = "РќР°Р»РёС‡РЅС‹Рµ";
+    private string _selectedOrderType = "В зале";
+    private string _activeSection = "Касса";
+    private string _selectedPaymentType = "Наличные";
     private bool _isSidebarOpen = true;
     private bool _isTableView;
     private int _productPage = 1;
@@ -59,7 +59,7 @@ public class SalesViewModel : INotifyPropertyChanged
             }
 
             _currentOrder = value;
-            SelectedOrderType = value?.OrderType ?? "Р’ Р·Р°Р»Рµ";
+            SelectedOrderType = value?.OrderType ?? "В зале";
             foreach (var order in OpenOrders)
             {
                 order.IsSelected = order == value;
@@ -205,18 +205,18 @@ public class SalesViewModel : INotifyPropertyChanged
     }
 
     public bool IsCardView => !IsTableView;
-    public bool IsDineInSelected => SelectedOrderType == "Р’ Р·Р°Р»Рµ";
-    public bool IsTakeAwaySelected => SelectedOrderType == "РЎ СЃРѕР±РѕР№";
-    public bool IsDeliverySelected => SelectedOrderType == "Р”РѕСЃС‚Р°РІРєР°";
-    public bool IsCashierSection => ActiveSection == "РљР°СЃСЃР°";
-    public bool IsOrdersSection => ActiveSection == "Р—Р°РєР°Р·С‹";
-    public bool IsKitchenSection => ActiveSection == "РљСѓС…РЅСЏ";
-    public bool IsReportsSection => ActiveSection == "РћС‚С‡С‘С‚С‹";
+    public bool IsDineInSelected => SelectedOrderType == "В зале";
+    public bool IsTakeAwaySelected => SelectedOrderType == "С собой";
+    public bool IsDeliverySelected => SelectedOrderType == "Доставка";
+    public bool IsCashierSection => ActiveSection == "Касса";
+    public bool IsOrdersSection => ActiveSection == "Заказы";
+    public bool IsKitchenSection => ActiveSection == "Кухня";
+    public bool IsReportsSection => ActiveSection == "Отчёты";
     public string ProductViewIcon => IsTableView ? "ViewGridOutline" : "FormatListBulleted";
     public int ProductPage => _productPage;
     public int ProductPageSize => IsTableView ? TableProductPageSize : CardProductPageSize;
     public int ProductTotalPages => Math.Max(1, (int)Math.Ceiling(_productTotalCount / (double)ProductPageSize));
-    public string ProductPageText => $"{ProductPage} / {ProductTotalPages} вЂў {_productTotalCount}";
+    public string ProductPageText => $"{ProductPage} / {ProductTotalPages} • {_productTotalCount}";
     public bool IsProductPagerVisible => _productTotalCount > ProductPageSize;
 
     public string CurrentTime
@@ -277,19 +277,19 @@ public class SalesViewModel : INotifyPropertyChanged
         ClearOrderCommand = new RelayCommand(ClearOrder);
         HoldOrderCommand = new RelayCommand(HoldOrder);
         PayCommand = new RelayCommand(Pay);
-        SelectOrderTypeCommand = new RelayCommand<string>(type => SelectedOrderType = type ?? "Р’ Р·Р°Р»Рµ");
+        SelectOrderTypeCommand = new RelayCommand<string>(type => SelectedOrderType = type ?? "В зале");
         ToggleSidebarCommand = new RelayCommand(() => IsSidebarOpen = !IsSidebarOpen);
         NavigateCommand = new RelayCommand<string>(Navigate);
         OpenProfileCommand = new RelayCommand(OpenUserSettings);
         OpenSettingsCommand = new RelayCommand(OpenUserSettings);
         LogoutCommand = new RelayCommand(Logout);
-        SelectPaymentTypeCommand = new RelayCommand<string>(type => SelectedPaymentType = type ?? "РќР°Р»РёС‡РЅС‹Рµ");
+        SelectPaymentTypeCommand = new RelayCommand<string>(type => SelectedPaymentType = type ?? "Наличные");
         ToggleProductViewCommand = new RelayCommand(() => IsTableView = !IsTableView);
-        AddNoteCommand = new RelayCommand(() => AppDialogWindow.ShowInfo("РџСЂРёРјРµС‡Р°РЅРёРµ РґРѕР±Р°РІР»РµРЅРѕ Рє С‚РµРєСѓС‰РµРјСѓ С‡РµРєСѓ."));
+        AddNoteCommand = new RelayCommand(() => AppDialogWindow.ShowInfo("Примечание добавлено к текущему чеку."));
         EditDiscountCommand = new RelayCommand(EditDiscount);
-        ShowCustomerCommand = new RelayCommand(() => AppDialogWindow.ShowInfo("РљР°СЂС‚РѕС‡РєР° РєР»РёРµРЅС‚Р° РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С‡РµРєР°."));
-        ShowReceiptCommand = new RelayCommand(() => AppDialogWindow.ShowInfo("РџРµС‡Р°С‚СЊ/РїСЂРѕСЃРјРѕС‚СЂ РїСЂРµС‡РµРєР°."));
-        ShowOrderActionsCommand = new RelayCommand(() => AppDialogWindow.ShowInfo("Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РґРµР№СЃС‚РІРёСЏ РїРѕ С‡РµРєСѓ."));
+        ShowCustomerCommand = new RelayCommand(() => AppDialogWindow.ShowInfo("Карточка клиента для текущего чека."));
+        ShowReceiptCommand = new RelayCommand(() => AppDialogWindow.ShowInfo("Печать/просмотр пречека."));
+        ShowOrderActionsCommand = new RelayCommand(() => AppDialogWindow.ShowInfo("Дополнительные действия по чеку."));
 
         PreviousProductPageCommand = new RelayCommand(() => ChangeProductPage(-1));
         NextProductPageCommand = new RelayCommand(() => ChangeProductPage(1));
@@ -354,9 +354,9 @@ public class SalesViewModel : INotifyPropertyChanged
         }
 
         ActiveSection = section;
-        if (section != "РљР°СЃСЃР°")
+        if (section != "Касса")
         {
-            AppDialogWindow.ShowInfo($"Р Р°Р·РґРµР» \"{section}\" РѕС‚РєСЂС‹С‚.");
+            AppDialogWindow.ShowInfo($"Раздел \"{section}\" открыт.");
         }
     }
 
@@ -515,7 +515,7 @@ public class SalesViewModel : INotifyPropertyChanged
             return;
         }
 
-        if (AppDialogWindow.Confirm("РћС‡РёСЃС‚РёС‚СЊ С‚РµРєСѓС‰РёР№ С‡РµРє?"))
+        if (AppDialogWindow.Confirm("Очистить текущий чек?"))
         {
             CurrentOrder.Items.Clear();
             CurrentOrder.RefreshTotals();
@@ -537,7 +537,7 @@ public class SalesViewModel : INotifyPropertyChanged
         }
 
         SaveCurrentOrder();
-        AppDialogWindow.ShowInfo($"{CurrentOrder.DisplayName} РѕС‚Р»РѕР¶РµРЅ.");
+        AppDialogWindow.ShowInfo($"{CurrentOrder.DisplayName} отложен.");
     }
 
     private void Pay()
@@ -547,7 +547,7 @@ public class SalesViewModel : INotifyPropertyChanged
             return;
         }
 
-        var window = new PaymentWindow(CurrentOrder.Subtotal, SelectedPaymentType, CurrentOrder.Discount)
+        var window = new PaymentWindow(CurrentOrder.Subtotal, SelectedPaymentType, CurrentOrder.Discount, CurrentOrder.OrderType)
         {
             Owner = Application.Current?.MainWindow
         };
@@ -563,6 +563,7 @@ public class SalesViewModel : INotifyPropertyChanged
         if (paymentResult == true)
         {
             SelectedPaymentType = window.PaymentType;
+            SelectedOrderType = window.OrderType;
             CurrentOrder.Discount = window.DiscountAmount;
             CurrentOrder.PeopleId = window.PeopleId;
             CurrentOrder.RefreshTotals();
@@ -614,7 +615,7 @@ public class SalesViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            AppDialogWindow.ShowError($"РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ С‡РµРє РІ Р±Р°Р·Рµ РґР°РЅРЅС‹С….\n{ex.Message}");
+            AppDialogWindow.ShowError($"Не удалось сохранить чек в базе данных.\n{ex.Message}");
         }
     }
 

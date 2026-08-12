@@ -71,39 +71,20 @@ public partial class CustomerSelectWindow : Window
 
     private void AddCustomerClicked(object sender, RoutedEventArgs e)
     {
-        AddPanel.Visibility = AddPanel.Visibility == Visibility.Visible
-            ? Visibility.Collapsed
-            : Visibility.Visible;
-
-        if (AddPanel.Visibility == Visibility.Visible)
+        var window = new AddCustomerWindow
         {
-            NewNameBox.Focus();
-        }
-    }
+            Owner = this
+        };
 
-    private void SaveNewCustomerClicked(object sender, RoutedEventArgs e)
-    {
-        if (string.IsNullOrWhiteSpace(NewNameBox.Text))
+        if (window.ShowDialog() != true || window.Customer is null)
         {
-            ErrorText.Text = "Введите название клиента";
             return;
         }
 
-        var customer = _databaseService.AddPeopleAsync(new People
-        {
-            Name = NewNameBox.Text.Trim(),
-            Phone = NewPhoneBox.Text.Trim(),
-            Address = NewAddressBox.Text.Trim(),
-            Balance = 0,
-            Status = 1
-        }).GetAwaiter().GetResult();
+        var customer = _databaseService.AddPeopleAsync(window.Customer).GetAwaiter().GetResult();
 
         _allCustomers.Add(customer);
         ErrorText.Text = string.Empty;
-        NewNameBox.Text = string.Empty;
-        NewPhoneBox.Text = string.Empty;
-        NewAddressBox.Text = string.Empty;
-        AddPanel.Visibility = Visibility.Collapsed;
         ApplyFilter();
         CustomersList.SelectedItem = customer;
     }
