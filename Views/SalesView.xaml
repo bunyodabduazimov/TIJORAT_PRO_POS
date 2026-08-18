@@ -10,6 +10,7 @@
     <UserControl.Resources>
         <DropShadowEffect x:Key="SoftShadow" BlurRadius="16" ShadowDepth="2" Opacity="0.09" Color="#0B1220" />
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:BoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" Invert="True" />
         <converters:BoolToGridLengthConverter x:Key="SidebarWidthConverter" Expanded="250" Collapsed="0" />
 
         <Style x:Key="ScrollBarRepeatButtonStyle" TargetType="{x:Type RepeatButton}">
@@ -325,17 +326,53 @@
                 </StackPanel>
 
                 <Border Grid.Column="1" Background="#F2F4F7" BorderBrush="#D9E2EC" BorderThickness="1" CornerRadius="10" VerticalAlignment="Center" Height="46">
-                    <UniformGrid Columns="2" VerticalAlignment="Center" Margin="5,0">
-                        <Button Command="{Binding NavigateCommand}" CommandParameter="Касса" Style="{StaticResource NavButtonStyle}" Background="White" Foreground="#FF2B22">
+                    <UniformGrid Columns="3" VerticalAlignment="Center" Margin="5,0">
+                        <Button Command="{Binding NavigateCommand}" CommandParameter="Касса">
+                            <Button.Style>
+                                <Style TargetType="{x:Type Button}" BasedOn="{StaticResource NavButtonStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsCashierSection}" Value="True">
+                                            <Setter Property="Background" Value="White" />
+                                            <Setter Property="Foreground" Value="#FF2B22" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="CashRegister" Width="20" Height="20" Margin="0,0,14,0" />
                                 <TextBlock Text="Касса" />
                             </StackPanel>
                         </Button>
-                        <Button Command="{Binding NavigateCommand}" CommandParameter="Заказы" Style="{StaticResource NavButtonStyle}" Margin="8,0,0,0">
+                        <Button Command="{Binding NavigateCommand}" CommandParameter="Заказы" Margin="8,0,0,0">
+                            <Button.Style>
+                                <Style TargetType="{x:Type Button}" BasedOn="{StaticResource NavButtonStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsOrdersSection}" Value="True">
+                                            <Setter Property="Background" Value="White" />
+                                            <Setter Property="Foreground" Value="#FF2B22" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="ClipboardListOutline" Width="20" Height="20" Margin="0,0,14,0" />
                                 <TextBlock Text="Заказы" />
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding NavigateCommand}" CommandParameter="Платежи" Margin="8,0,0,0">
+                            <Button.Style>
+                                <Style TargetType="{x:Type Button}" BasedOn="{StaticResource NavButtonStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsPaymentsSection}" Value="True">
+                                            <Setter Property="Background" Value="White" />
+                                            <Setter Property="Foreground" Value="#FF2B22" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="CashMultiple" Width="20" Height="20" Margin="0,0,14,0" />
+                                <TextBlock Text="Платежи" />
                             </StackPanel>
                         </Button>
                     </UniformGrid>
@@ -350,7 +387,7 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="30" />
                                 </Grid.ColumnDefinitions>
-                                <materialDesign:PackIcon Kind="AccountOutline" Width="27" Height="27" Foreground="#23A455" VerticalAlignment="Center" />
+                                <materialDesign:PackIcon Kind="AccountOutline" Width="27" Height="27" Foreground="#111827" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="{Binding CashierName}" Foreground="#111827" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                     <materialDesign:PackIcon Kind="ChevronDown" Width="18" Height="18" Foreground="#344054" HorizontalAlignment="Center" />
@@ -393,7 +430,7 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="1" Visibility="{Binding IsCashierSection, Converter={StaticResource BoolToVisibilityConverter}}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="{Binding IsSidebarOpen, Converter={StaticResource SidebarWidthConverter}}" MinWidth="0" MaxWidth="260" />
                 <ColumnDefinition Width="*" MinWidth="390" />
@@ -680,16 +717,16 @@
                             <Grid>
                                 <TextBlock Text="{Binding CurrentOrder.DisplayName}" FontSize="16" FontWeight="SemiBold" Foreground="#111827" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,184,0" />
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                    <Button Command="{Binding AddNoteCommand}" Style="{StaticResource TinyIconButtonStyle}">
-                                        <materialDesign:PackIcon Kind="PencilOutline" Width="22" Height="22" />
+                                    <Button Command="{Binding AddNoteCommand}" Style="{StaticResource TinyIconButtonStyle}" ToolTip="Примечание">
+                                        <materialDesign:PackIcon Kind="NoteEditOutline" Width="22" Height="22" />
                                     </Button>
-                                    <Button Command="{Binding ShowCustomerCommand}" Style="{StaticResource TinyIconButtonStyle}" Margin="6,0,0,0">
-                                        <materialDesign:PackIcon Kind="AccountPlusOutline" Width="22" Height="22" />
+                                    <Button Command="{Binding ShowCustomerCommand}" Style="{StaticResource TinyIconButtonStyle}" Margin="6,0,0,0" ToolTip="Клиент">
+                                        <materialDesign:PackIcon Kind="AccountCheckOutline" Width="22" Height="22" />
                                     </Button>
-                                    <Button Command="{Binding ShowReceiptCommand}" Style="{StaticResource TinyIconButtonStyle}" Margin="6,0,0,0">
-                                        <materialDesign:PackIcon Kind="ReceiptTextOutline" Width="22" Height="22" />
+                                    <Button Command="{Binding ShowReceiptCommand}" Style="{StaticResource TinyIconButtonStyle}" Margin="6,0,0,0" ToolTip="Печать чека">
+                                        <materialDesign:PackIcon Kind="Printer" Width="22" Height="22" />
                                     </Button>
-                                    <Button x:Name="OrderActionsButton" Click="OrderActionsButton_OnClick" Style="{StaticResource TinyIconButtonStyle}" Margin="6,0,0,0">
+                                    <Button x:Name="OrderActionsButton" Click="OrderActionsButton_OnClick" Style="{StaticResource TinyIconButtonStyle}" Margin="6,0,0,0" ToolTip="Действия">
                                         <materialDesign:PackIcon Kind="DotsVertical" Width="22" Height="22" />
                                     </Button>
                                     <Popup x:Name="OrderActionsPopup"
@@ -709,7 +746,7 @@
                                             <StackPanel>
                                                 <Button Command="{Binding AddNoteCommand}" Style="{StaticResource ProfileMenuButtonStyle}">
                                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                                                        <materialDesign:PackIcon Kind="PencilOutline" Width="20" Height="20" Margin="0,0,12,0" />
+                                                        <materialDesign:PackIcon Kind="NoteEditOutline" Width="20" Height="20" Margin="0,0,12,0" />
                                                         <TextBlock Text="Примечание" VerticalAlignment="Center" />
                                                     </StackPanel>
                                                 </Button>
@@ -783,12 +820,526 @@
             </Grid>
         </Grid>
 
-        <Border Grid.Row="2" Style="{StaticResource AppFooterStyle}">
+        <Grid Grid.Row="1" Visibility="{Binding IsOrdersSection, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="620" />
+                <ColumnDefinition Width="0.52*" MinWidth="420" MaxWidth="560" />
+            </Grid.ColumnDefinitions>
+
+            <Border Background="#F8FAFC" BorderBrush="#E6EBF1" BorderThickness="0,0,1,0" Padding="18">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="58" />
+                        <RowDefinition Height="48" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Заказы" FontSize="24" FontWeight="Bold" Foreground="#111827" />
+                            <TextBlock Text="{Binding OrdersSummary}" FontSize="13" FontWeight="Medium" Foreground="#667085" Margin="0,4,0,0" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Command="{Binding RefreshOrdersCommand}" Style="{StaticResource SecondaryButtonStyle}" Width="132" Height="40" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Refresh" Width="18" Height="18" Margin="0,0,8,0" />
+                                <TextBlock Text="Обновить" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="420" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Background="White" BorderBrush="#DEE4EC" BorderThickness="1" CornerRadius="8" Height="40" VerticalAlignment="Center">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="48" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Kind="Magnify" Width="22" Height="22" Foreground="#667085" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Grid Grid.Column="1">
+                                    <TextBox x:Name="OrderSearchBox"
+                                             Text="{Binding OrderSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                             BorderThickness="0"
+                                             Background="Transparent"
+                                             FontSize="15"
+                                             Foreground="#111827"
+                                             Padding="0,8,10,0" />
+                                    <TextBlock Text="Поиск заказа, клиента, суммы"
+                                               Foreground="#98A2B3"
+                                               FontSize="15"
+                                               VerticalAlignment="Center"
+                                               IsHitTestVisible="False">
+                                        <TextBlock.Style>
+                                            <Style TargetType="{x:Type TextBlock}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Text, ElementName=OrderSearchBox}" Value="">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <Button Command="{Binding SetOrderFilterCommand}" CommandParameter="open" Style="{StaticResource SecondaryButtonStyle}" Width="104" Height="40" Margin="8,0,0,0">
+                                <TextBlock Text="Открытые" />
+                            </Button>
+                            <Button Command="{Binding SetOrderFilterCommand}" CommandParameter="paid" Style="{StaticResource SecondaryButtonStyle}" Width="112" Height="40" Margin="8,0,0,0">
+                                <TextBlock Text="Оплачено" />
+                            </Button>
+                            <Button Command="{Binding SetOrderFilterCommand}" CommandParameter="today" Style="{StaticResource SecondaryButtonStyle}" Width="92" Height="40" Margin="8,0,0,0">
+                                <TextBlock Text="Сегодня" />
+                            </Button>
+                            <Button Command="{Binding SetOrderFilterCommand}" CommandParameter="all" Style="{StaticResource SecondaryButtonStyle}" Width="72" Height="40" Margin="8,0,0,0">
+                                <TextBlock Text="Все" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="2" Background="White" BorderBrush="#DEE4EC" BorderThickness="1" CornerRadius="8" ClipToBounds="True" Margin="0,10,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="38" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Border Background="#F8FAFC" BorderBrush="#E8EDF3" BorderThickness="0,0,0,1">
+                                <Grid Margin="14,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="90" />
+                                        <ColumnDefinition Width="130" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="94" />
+                                        <ColumnDefinition Width="92" />
+                                        <ColumnDefinition Width="94" />
+                                        <ColumnDefinition Width="112" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Чек" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="Дата" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="2" Text="Клиент" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="3" Text="Статус" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="4" Text="Товаров" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                    <TextBlock Grid.Column="5" Text="Синх." FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                    <TextBlock Grid.Column="6" Text="Сумма" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                                </Grid>
+                            </Border>
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding Orders}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Command="{Binding DataContext.SelectOrderListItemCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="Transparent"
+                                                    BorderThickness="0"
+                                                    Padding="0"
+                                                    FocusVisualStyle="{x:Null}"
+                                                    Cursor="Hand">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="{x:Type Button}">
+                                                        <Border x:Name="OrderRowBorder" Background="White" BorderBrush="#E8EDF3" BorderThickness="0,0,0,1" Padding="14,0">
+                                                            <ContentPresenter />
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="OrderRowBorder" Property="Background" Value="#F8FAFC" />
+                                                            </Trigger>
+                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                <Setter TargetName="OrderRowBorder" Property="Background" Value="#FFF7F6" />
+                                                            </DataTrigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                                <Grid Height="54">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="90" />
+                                                        <ColumnDefinition Width="130" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="94" />
+                                                        <ColumnDefinition Width="92" />
+                                                        <ColumnDefinition Width="94" />
+                                                        <ColumnDefinition Width="112" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding NumberText}" FontSize="14" FontWeight="Bold" Foreground="#111827" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding DateText}" FontSize="13" FontWeight="Medium" Foreground="#475467" VerticalAlignment="Center" />
+                                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,14,0">
+                                                        <TextBlock Text="{Binding CustomerName}" FontSize="14" FontWeight="SemiBold" Foreground="#111827" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding Note}" FontSize="12" Foreground="#667085" TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                    <Border Grid.Column="3" Height="26" CornerRadius="13" Background="{Binding StatusBackground}" VerticalAlignment="Center" HorizontalAlignment="Left" Padding="10,0">
+                                                        <TextBlock Text="{Binding StatusText}" FontSize="12" FontWeight="Bold" Foreground="{Binding StatusBrush}" VerticalAlignment="Center" />
+                                                    </Border>
+                                                    <TextBlock Grid.Column="4" Text="{Binding ItemsCount}" FontSize="14" FontWeight="SemiBold" Foreground="#344054" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    <Border Grid.Column="5" Height="26" CornerRadius="13" Background="{Binding SyncBackground}" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="10,0">
+                                                        <TextBlock Text="{Binding SyncText}" FontSize="12" FontWeight="Bold" Foreground="{Binding SyncBrush}" VerticalAlignment="Center" />
+                                                    </Border>
+                                                    <TextBlock Grid.Column="6" Text="{Binding TotalText}" FontSize="15" FontWeight="Bold" Foreground="#111827" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                                </Grid>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1" Background="White" BorderBrush="#DEE4EC" BorderThickness="1" CornerRadius="8" Margin="12,12,12,12" Padding="16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="52" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="154" />
+                    </Grid.RowDefinitions>
+
+                    <Grid>
+                        <TextBlock Text="{Binding SelectedOrderListItem.NumberText, TargetNullValue=Выберите заказ}" FontSize="20" FontWeight="Bold" Foreground="#111827" VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <Button Command="{Binding OpenSelectedOrderCommand}" Style="{StaticResource TinyIconButtonStyle}" ToolTip="Открыть в кассе">
+                                <materialDesign:PackIcon Kind="OpenInNew" Width="21" Height="21" />
+                            </Button>
+                            <Button Command="{Binding PrintSelectedOrderCommand}" Style="{StaticResource TinyIconButtonStyle}" Margin="6,0,0,0" ToolTip="Печать">
+                                <materialDesign:PackIcon Kind="Printer" Width="21" Height="21" />
+                            </Button>
+                            <Button Command="{Binding DeleteSelectedOrderCommand}" Style="{StaticResource TinyIconButtonStyle}" Margin="6,0,0,0" ToolTip="Удалить">
+                                <materialDesign:PackIcon Kind="DeleteOutline" Width="21" Height="21" Foreground="#FF2B22" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="1" Background="#F8FAFC" BorderBrush="#E8EDF3" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,6,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Клиент" FontSize="12" FontWeight="SemiBold" Foreground="#667085" />
+                                <TextBlock Text="{Binding SelectedOrderListItem.CustomerName}" FontSize="15" FontWeight="Bold" Foreground="#111827" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="Тип" FontSize="12" FontWeight="SemiBold" Foreground="#667085" Margin="0,12,0,0" />
+                                <TextBlock Text="{Binding SelectedOrderListItem.OrderType}" FontSize="15" FontWeight="Bold" Foreground="#111827" Margin="0,4,0,0" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Дата" FontSize="12" FontWeight="SemiBold" Foreground="#667085" />
+                                <TextBlock Text="{Binding SelectedOrderListItem.DateText}" FontSize="15" FontWeight="Bold" Foreground="#111827" Margin="0,4,0,0" />
+                                <TextBlock Text="Примечание" FontSize="12" FontWeight="SemiBold" Foreground="#667085" Margin="0,12,0,0" />
+                                <TextBlock Text="{Binding SelectedOrderListItem.Note, TargetNullValue=-}" FontSize="15" FontWeight="Bold" Foreground="#111827" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="2" BorderBrush="#E8EDF3" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="34" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Border Background="#F8FAFC" BorderBrush="#E8EDF3" BorderThickness="0,0,0,1">
+                                <Grid Margin="12,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="74" />
+                                        <ColumnDefinition Width="82" />
+                                        <ColumnDefinition Width="92" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Товар" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="Кол-во" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                    <TextBlock Grid.Column="2" Text="Цена" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                                    <TextBlock Grid.Column="3" Text="Сумма" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                                </Grid>
+                            </Border>
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding SelectedOrderListItem.Order.Items}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Height="42" Margin="12,0" VerticalAlignment="Center">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="74" />
+                                                    <ColumnDefinition Width="82" />
+                                                    <ColumnDefinition Width="92" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding Product.Name}" FontSize="13" FontWeight="SemiBold" Foreground="#111827" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Grid.Column="1" Text="{Binding Quantity}" FontSize="13" FontWeight="SemiBold" Foreground="#344054" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="2" Text="{Binding Price, StringFormat={}{0:0.##} c}" FontSize="13" FontWeight="SemiBold" Foreground="#344054" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="3" Text="{Binding Total, StringFormat={}{0:0.##} c}" FontSize="13" FontWeight="Bold" Foreground="#111827" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+
+                    <Grid Grid.Row="3" Margin="0,14,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="32" />
+                            <RowDefinition Height="32" />
+                            <RowDefinition Height="32" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="{Binding SelectedOrderListItem.Subtotal, StringFormat=Итого: {0:0.00} c}" FontSize="15" FontWeight="SemiBold" Foreground="#344054" HorizontalAlignment="Right" />
+                        <TextBlock Grid.Row="1" Text="{Binding SelectedOrderListItem.Discount, StringFormat=Скидка: {0:0.00} c}" FontSize="15" FontWeight="SemiBold" Foreground="#344054" HorizontalAlignment="Right" />
+                        <TextBlock Grid.Row="2" Text="{Binding SelectedOrderListItem.Total, StringFormat=К оплате: {0:0.00} c}" FontSize="20" FontWeight="Bold" Foreground="#111827" HorizontalAlignment="Right" />
+                        <Grid Grid.Row="3" Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Command="{Binding OpenSelectedOrderCommand}" Style="{StaticResource SecondaryButtonStyle}" Height="46" Margin="0,0,6,0">
+                                <TextBlock Text="Открыть" />
+                            </Button>
+                            <Button Grid.Column="1" Command="{Binding PaySelectedOrderCommand}" Style="{StaticResource PrimaryButtonStyle}" Height="46" Margin="6,0,0,0">
+                                <TextBlock Text="Оплатить" />
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid Grid.Row="1" Visibility="{Binding IsPaymentsSection, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Border Background="#F8FAFC" Padding="18">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="64" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="420" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Background="White" BorderBrush="#DEE4EC" BorderThickness="1" CornerRadius="8" Height="40" VerticalAlignment="Center">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="48" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Kind="Magnify" Width="22" Height="22" Foreground="#667085" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Grid Grid.Column="1">
+                                    <TextBox x:Name="PaymentSearchBox"
+                                             Text="{Binding PaymentSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                             BorderThickness="0"
+                                             Background="Transparent"
+                                             FontSize="15"
+                                             Foreground="#111827"
+                                             Padding="0,8,10,0" />
+                                    <TextBlock Text="Поиск платежа"
+                                               Foreground="#98A2B3"
+                                               FontSize="15"
+                                               VerticalAlignment="Center"
+                                               IsHitTestVisible="False">
+                                        <TextBlock.Style>
+                                            <Style TargetType="{x:Type TextBlock}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Text, ElementName=PaymentSearchBox}" Value="">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <Button Grid.Column="1" Command="{Binding RefreshPaymentsCommand}" Style="{StaticResource SecondaryButtonStyle}" Width="132" Height="40" VerticalAlignment="Center" Margin="10,0,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Refresh" Width="18" Height="18" Margin="0,0,8,0" />
+                                <TextBlock Text="Обновить" />
+                            </StackPanel>
+                        </Button>
+
+                        <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
+                            <Button x:Name="PaymentActionsButton" Click="PaymentActionsButton_OnClick" Style="{StaticResource SecondaryButtonStyle}" Width="172" Height="40" ToolTip="Операции">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="PlusCircleOutline" Width="18" Height="18" Margin="0,0,8,0" />
+                                    <TextBlock Text="Операции" />
+                                    <materialDesign:PackIcon Kind="ChevronDown" Width="18" Height="18" Margin="8,0,0,0" />
+                                </StackPanel>
+                            </Button>
+                            <Popup x:Name="PaymentActionsPopup"
+                                   PlacementTarget="{Binding ElementName=PaymentActionsButton}"
+                                   Placement="Bottom"
+                                   StaysOpen="False"
+                                   AllowsTransparency="True"
+                                   PopupAnimation="Fade">
+                                <Border Width="240"
+                                        Margin="0,8,0,0"
+                                        Background="White"
+                                        BorderBrush="#DDE3EB"
+                                        BorderThickness="1"
+                                        CornerRadius="10"
+                                        Padding="8"
+                                        Effect="{StaticResource SoftShadow}">
+                                    <StackPanel>
+                                        <Button Command="{Binding AddCustomerInPaymentCommand}" Style="{StaticResource ProfileMenuButtonStyle}">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                                <materialDesign:PackIcon Kind="AccountArrowLeftOutline" Width="20" Height="20" Margin="0,0,12,0" />
+                                                <TextBlock Text="От контрагента" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Command="{Binding AddCustomerOutPaymentCommand}" Style="{StaticResource ProfileMenuButtonStyle}">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                                <materialDesign:PackIcon Kind="AccountArrowRightOutline" Width="20" Height="20" Margin="0,0,12,0" />
+                                                <TextBlock Text="Контрагенту" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Border Height="1" Background="#EEF2F6" Margin="8,6" />
+                                        <Button Command="{Binding AddCashInPaymentCommand}" Style="{StaticResource ProfileMenuButtonStyle}">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                                <materialDesign:PackIcon Kind="CashPlus" Width="20" Height="20" Margin="0,0,12,0" />
+                                                <TextBlock Text="Приходный ордер" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Command="{Binding AddCashOutPaymentCommand}" Style="{StaticResource ProfileMenuButtonStyle}">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                                <materialDesign:PackIcon Kind="CashMinus" Width="20" Height="20" Margin="0,0,12,0" />
+                                                <TextBlock Text="Расходный ордер" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+                            </Popup>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="1" Background="White" BorderBrush="#DEE4EC" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="38" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="46" />
+                            </Grid.RowDefinitions>
+                            <Border Background="#F8FAFC" BorderBrush="#E8EDF3" BorderThickness="0,0,0,1">
+                                <Grid Margin="14,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="64" />
+                                        <ColumnDefinition Width="145" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="180" />
+                                        <ColumnDefinition Width="130" />
+                                        <ColumnDefinition Width="90" />
+                                        <ColumnDefinition Width="116" />
+                                        <ColumnDefinition Width="130" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="№" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="Дата" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="2" Text="Операция" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="3" Text="Контрагент" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="4" Text="Касса" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="5" Text="Тип" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="6" Text="Сумма" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                                    <TextBlock Grid.Column="7" Text="Синхронизация" FontSize="12" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                                </Grid>
+                            </Border>
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding Payments}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Command="{Binding DataContext.SelectPaymentListItemCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="Transparent"
+                                                    BorderThickness="0"
+                                                    Padding="0"
+                                                    FocusVisualStyle="{x:Null}"
+                                                    Cursor="Hand">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="{x:Type Button}">
+                                                        <Border x:Name="PaymentRowBorder" Background="White" BorderBrush="#E8EDF3" BorderThickness="0,0,0,1" Padding="14,0">
+                                                            <ContentPresenter />
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="PaymentRowBorder" Property="Background" Value="#F8FAFC" />
+                                                            </Trigger>
+                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                <Setter TargetName="PaymentRowBorder" Property="Background" Value="#FFF7F6" />
+                                                            </DataTrigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                                <Grid Height="54">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="64" />
+                                                        <ColumnDefinition Width="145" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="180" />
+                                                        <ColumnDefinition Width="130" />
+                                                        <ColumnDefinition Width="90" />
+                                                        <ColumnDefinition Width="116" />
+                                                        <ColumnDefinition Width="130" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding NumberText}" FontSize="14" FontWeight="Bold" Foreground="#111827" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding DateText}" FontSize="13" FontWeight="Medium" Foreground="#475467" VerticalAlignment="Center" />
+                                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,14,0">
+                                                        <TextBlock Text="{Binding OperationText}" FontSize="14" FontWeight="SemiBold" Foreground="#111827" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding ArticleName}" FontSize="12" Foreground="#667085" TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="3" Text="{Binding CustomerName}" FontSize="13" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,14,0" />
+                                                    <TextBlock Grid.Column="4" Text="{Binding CashName}" FontSize="13" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,14,0" />
+                                                    <Border Grid.Column="5" Height="26" CornerRadius="13" Background="{Binding DirectionBackground}" VerticalAlignment="Center" HorizontalAlignment="Left" Padding="10,0">
+                                                        <TextBlock Text="{Binding DirectionText}" FontSize="12" FontWeight="Bold" Foreground="{Binding DirectionBrush}" VerticalAlignment="Center" />
+                                                    </Border>
+                                                    <TextBlock Grid.Column="6" Text="{Binding AmountText}" FontSize="15" FontWeight="Bold" Foreground="{Binding DirectionBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="7" Text="{Binding SyncText}" FontSize="12" FontWeight="SemiBold" Foreground="#667085" VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
+                                                </Grid>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                            <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E8EDF3" BorderThickness="0,1,0,0">
+                                <Grid Margin="14,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding PaymentsSummary}" FontSize="13" FontWeight="SemiBold" Foreground="#667085" VerticalAlignment="Center" />
+                                    <Grid Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="{Binding IsPaymentPagerVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Button Command="{Binding PreviousPaymentPageCommand}" Style="{StaticResource TinyIconButtonStyle}" Width="32" Height="26">
+                                            <materialDesign:PackIcon Kind="ChevronLeft" Width="18" Height="18" />
+                                        </Button>
+                                        <TextBlock Grid.Column="1" Text="{Binding PaymentPageText}" FontSize="13" FontWeight="SemiBold" Foreground="#667085" VerticalAlignment="Center" Margin="12,0" />
+                                        <Button Grid.Column="2" Command="{Binding NextPaymentPageCommand}" Style="{StaticResource TinyIconButtonStyle}" Width="32" Height="26">
+                                            <materialDesign:PackIcon Kind="ChevronRight" Width="18" Height="18" />
+                                        </Button>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="2" Style="{StaticResource AppFooterStyle}" Visibility="{Binding IsCashierSection, Converter={StaticResource BoolToVisibilityConverter}}">
             <Grid Margin="18,0,22,0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="170" />
+                    <ColumnDefinition Width="150" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="230" />
+                    <ColumnDefinition Width="180" />
                 </Grid.ColumnDefinitions>
                 <Grid VerticalAlignment="Center">
                     <Grid.ColumnDefinitions>
@@ -831,7 +1382,7 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>
-                <Button Grid.Column="2" Command="{Binding CreateNewOrderCommand}" Style="{StaticResource SecondaryButtonStyle}" Width="210" Height="40" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button Grid.Column="2" Command="{Binding CreateNewOrderCommand}" Style="{StaticResource SecondaryButtonStyle}" Width="180" Height="40" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="+" FontSize="23" Foreground="#344054" Margin="0,-4,12,0" />
                         <TextBlock Text="Новый чек" FontSize="16" Foreground="#344054" VerticalAlignment="Center" />

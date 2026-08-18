@@ -539,17 +539,35 @@ public partial class SettingsWindow : Window
             """);
 
         ExecuteMySqlSchema(connection, """
+            CREATE TABLE IF NOT EXISTS articles (
+                id INT NOT NULL PRIMARY KEY,
+                parent_id INT NOT NULL DEFAULT 0,
+                name TEXT NULL,
+                status INT NOT NULL DEFAULT 1,
+                `check` INT NOT NULL DEFAULT 0,
+                type VARCHAR(30) NULL
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+            """);
+
+        ExecuteMySqlSchema(connection, """
             CREATE TABLE IF NOT EXISTS dds (
                 id INT NOT NULL PRIMARY KEY,
+                doc_id INT NOT NULL DEFAULT 0,
                 store_id INT NOT NULL,
                 user_id INT NOT NULL,
                 cash_id INT NOT NULL,
                 people_id INT NOT NULL,
+                article_id INT NOT NULL DEFAULT 1,
                 summa DECIMAL(18,2) NOT NULL,
                 event_time BIGINT NOT NULL,
+                order_type VARCHAR(50) NOT NULL DEFAULT 'salepay',
                 description TEXT NULL,
                 date TEXT NOT NULL,
-                status INT NOT NULL
+                status INT NOT NULL,
+                sync_status INT NOT NULL DEFAULT 0,
+                server_id INT NULL,
+                synced_at DATETIME NULL,
+                sync_error TEXT NULL
             ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
             """);
 
@@ -569,8 +587,8 @@ public partial class SettingsWindow : Window
                     bonussum DECIMAL(18,2) NOT NULL DEFAULT 0,
                     summapay DECIMAL(18,2) NOT NULL DEFAULT 0,
                     date DATETIME NOT NULL,
-                    type VARCHAR(50) NOT NULL DEFAULT 'open',
-                    status VARCHAR(30) NOT NULL DEFAULT 'open',
+                    type VARCHAR(50) NOT NULL DEFAULT '3',
+                    status VARCHAR(30) NOT NULL DEFAULT '1',
                     sync_status INT NOT NULL DEFAULT 0,
                     server_id INT NULL,
                     synced_at DATETIME NULL,
@@ -591,7 +609,6 @@ public partial class SettingsWindow : Window
                     price DECIMAL(18,2) NOT NULL DEFAULT 0,
                     discount DECIMAL(18,2) NOT NULL DEFAULT 0,
                     bonus DECIMAL(18,2) NOT NULL DEFAULT 0,
-                    note TEXT NULL,
                     INDEX ix_sale_data_sale_id (sale_id),
                     CONSTRAINT fk_sale_data_sales_sale_id FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE
                 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

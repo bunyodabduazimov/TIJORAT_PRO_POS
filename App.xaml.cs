@@ -54,13 +54,7 @@ public partial class App : Application
 
     public static Window CreateMainWindow(AppActivationSettings settings)
     {
-        var appType = settings.AppType is >= 1 and <= 3 ? settings.AppType : 1;
-        return appType switch
-        {
-            2 => new PharmacyWindow(),
-            3 => new FastFoodWindow(),
-            _ => new MainWindow()
-        };
+        return new MainWindow(settings);
     }
 
     public static void SwitchMainWindow(AppActivationSettings settings)

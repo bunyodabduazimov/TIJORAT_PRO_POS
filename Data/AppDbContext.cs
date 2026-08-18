@@ -21,6 +21,7 @@ public class AppDbContext : DbContext
     public DbSet<PriceData> PriceData => Set<PriceData>();
     public DbSet<User> Users => Set<User>();
     public DbSet<People> Peoples => Set<People>();
+    public DbSet<Article> Articles => Set<Article>();
     public DbSet<Dds> Dds => Set<Dds>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -36,6 +37,7 @@ public class AppDbContext : DbContext
         ConfigurePriceData(modelBuilder);
         ConfigureUsers(modelBuilder);
         ConfigurePeoples(modelBuilder);
+        ConfigureArticles(modelBuilder);
         ConfigureDds(modelBuilder);
     }
 
@@ -117,9 +119,18 @@ public class AppDbContext : DbContext
         entity.Property(x => x.Discount).HasColumnName("discount");
         entity.Property(x => x.BonusSum).HasColumnName("bonussum");
         entity.Property(x => x.SummaPay).HasColumnName("summapay");
+        entity.Property(x => x.Note).HasColumnName("note");
         entity.Property(x => x.Date).HasColumnName("date");
-        entity.Property(x => x.OrderType).HasColumnName("type");
-        entity.Property(x => x.Status).HasColumnName("status");
+        entity.Property(x => x.OrderType)
+            .HasColumnName("type")
+            .HasConversion(
+                value => OrderCodes.ToOrderTypeCode(value),
+                value => OrderCodes.ToOrderTypeName(value));
+        entity.Property(x => x.Status)
+            .HasColumnName("status")
+            .HasConversion(
+                value => OrderCodes.ToStatusCode(value),
+                value => OrderCodes.ToStatusName(value));
         entity.Property(x => x.SyncStatus).HasColumnName("sync_status");
         entity.Property(x => x.ServerId).HasColumnName("server_id");
         entity.Property(x => x.SyncedAt).HasColumnName("synced_at");
@@ -148,10 +159,7 @@ public class AppDbContext : DbContext
         entity.Property(x => x.Price).HasColumnName("price");
         entity.Property(x => x.Discount).HasColumnName("discount");
         entity.Property(x => x.Bonus).HasColumnName("bonus");
-        entity.Property(x => x.Note).HasColumnName("note");
         entity.Ignore(x => x.Total);
-        entity.Ignore(x => x.Description);
-        entity.Ignore(x => x.HasNote);
     }
 
     private static void ConfigureStocks(ModelBuilder modelBuilder)
@@ -231,20 +239,40 @@ public class AppDbContext : DbContext
         entity.Property(x => x.Status).HasColumnName("status");
     }
 
+    private static void ConfigureArticles(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<Article>();
+        entity.ToTable("articles");
+        entity.HasKey(x => x.Id);
+        entity.Property(x => x.Id).ValueGeneratedNever();
+        entity.Property(x => x.ParentId).HasColumnName("parent_id");
+        entity.Property(x => x.Name).HasColumnName("name");
+        entity.Property(x => x.Status).HasColumnName("status");
+        entity.Property(x => x.Check).HasColumnName("check");
+        entity.Property(x => x.Type).HasColumnName("type");
+    }
+
     private static void ConfigureDds(ModelBuilder modelBuilder)
     {
         var entity = modelBuilder.Entity<Dds>();
         entity.ToTable("dds");
         entity.HasKey(x => x.Id);
         entity.Property(x => x.Id).ValueGeneratedNever();
+        entity.Property(x => x.DocId).HasColumnName("doc_id");
         entity.Property(x => x.StoreId).HasColumnName("store_id");
         entity.Property(x => x.UserId).HasColumnName("user_id");
         entity.Property(x => x.CashId).HasColumnName("cash_id");
         entity.Property(x => x.PeopleId).HasColumnName("people_id");
+        entity.Property(x => x.ArticleId).HasColumnName("article_id");
         entity.Property(x => x.Summa).HasColumnName("summa");
         entity.Property(x => x.EventTime).HasColumnName("event_time");
+        entity.Property(x => x.OrderType).HasColumnName("order_type");
         entity.Property(x => x.Description).HasColumnName("description");
         entity.Property(x => x.Date).HasColumnName("date");
         entity.Property(x => x.Status).HasColumnName("status");
+        entity.Property(x => x.SyncStatus).HasColumnName("sync_status");
+        entity.Property(x => x.ServerId).HasColumnName("server_id");
+        entity.Property(x => x.SyncedAt).HasColumnName("synced_at");
+        entity.Property(x => x.SyncError).HasColumnName("sync_error");
     }
 }

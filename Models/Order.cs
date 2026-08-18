@@ -7,7 +7,7 @@ namespace FFPOS.Models;
 
 public class Order : INotifyPropertyChanged
 {
-    private string _orderType = "? ????";
+    private string _orderType = "С собой";
     private decimal _discount;
     private bool _isSelected;
 
@@ -26,6 +26,7 @@ public class Order : INotifyPropertyChanged
     public decimal Summa { get; set; }
     public decimal BonusSum { get; set; }
     public decimal SummaPay { get; set; }
+    public string? Note { get; set; }
     public DateTime Date { get; set; } = DateTime.Now;
     public string Status { get; set; } = "open";
     public int SyncStatus { get; set; }
@@ -67,7 +68,7 @@ public class Order : INotifyPropertyChanged
 
     public decimal Subtotal => Items.Sum(item => item.Total);
     public decimal Total => Math.Max(0, Subtotal - Discount);
-    public string DisplayName => $"??? ?{Number}";
+    public string DisplayName => $"Чек №{Number}";
 
     public bool IsSelected
     {

@@ -63,6 +63,11 @@ public partial class SalesView : UserControl
         OrderActionsPopup.IsOpen = !OrderActionsPopup.IsOpen;
     }
 
+    private void PaymentActionsButton_OnClick(object sender, System.Windows.RoutedEventArgs e)
+    {
+        PaymentActionsPopup.IsOpen = !PaymentActionsPopup.IsOpen;
+    }
+
     private void HeaderMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.ButtonState != MouseButtonState.Pressed || IsInsideButton(e.OriginalSource as DependencyObject))

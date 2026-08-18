@@ -50,7 +50,11 @@ public sealed class DatabaseService
         await using var context = CreateContext();
         await context.Database.EnsureCreatedAsync(cancellationToken);
         await EnsureSalesTablesAsync(context, cancellationToken);
+        await EnsureSalesColumnsAsync(context, cancellationToken);
+        await NormalizeSalesCodeValuesAsync(context, cancellationToken);
         await EnsurePeopleColumnsAsync(context, cancellationToken);
+        await EnsureArticlesTableAsync(context, cancellationToken);
+        await EnsureDdsColumnsAsync(context, cancellationToken);
 
         if (!IsMySql)
         {
@@ -143,12 +147,84 @@ public sealed class DatabaseService
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Article>> GetArticlesAsync(CancellationToken cancellationToken = default)
+    {
+        await using var context = CreateContext();
+        return await context.Articles
+            .AsNoTracking()
+            .Where(article => article.Status == 1)
+            .OrderBy(article => article.ParentId)
+            .ThenBy(article => article.Name)
+            .ThenBy(article => article.Id)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Dds>> GetDdsOperationsAsync(
+        int take = 500,
+        CancellationToken cancellationToken = default)
+    {
+        await using var context = CreateContext();
+        return await context.Dds
+            .AsNoTracking()
+            .OrderByDescending(item => item.Date)
+            .ThenByDescending(item => item.Id)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<Dds> AddDdsOperationAsync(Dds operation, CancellationToken cancellationToken = default)
+    {
+        await WriteLock.WaitAsync(cancellationToken);
+        try
+        {
+            await using var context = CreateContext();
+            var nextId = (await context.Dds.AsNoTracking().Select(item => (int?)item.Id).MaxAsync(cancellationToken) ?? 0) + 1;
+            operation.Id = operation.Id > 0 ? operation.Id : nextId;
+            operation.DocId = operation.DocId > 0 ? operation.DocId : operation.Id;
+            operation.StoreId = operation.StoreId > 0 ? operation.StoreId : _settings.StoreId;
+            operation.UserId = operation.UserId > 0 ? operation.UserId : App.CurrentUser?.Id ?? 1;
+            operation.CashId = operation.CashId > 0 ? operation.CashId : App.CurrentUser?.CashId ?? 1;
+            operation.PeopleId = operation.PeopleId > 0 ? operation.PeopleId : 1;
+            operation.ArticleId = operation.ArticleId > 0 ? operation.ArticleId : 1;
+            operation.Summa = Math.Abs(operation.Summa);
+            operation.EventTime = operation.EventTime > 0 ? operation.EventTime : DateTimeOffset.Now.ToUnixTimeSeconds();
+            operation.OrderType = string.IsNullOrWhiteSpace(operation.OrderType) ? DdsOperationTypes.CashIn : operation.OrderType;
+            operation.Date = string.IsNullOrWhiteSpace(operation.Date) ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") : operation.Date;
+            operation.Status = operation.Status == 0 ? 1 : operation.Status;
+            operation.SyncStatus = 0;
+            operation.SyncError = null;
+
+            context.Dds.Add(operation);
+            await context.SaveChangesAsync(cancellationToken);
+            return operation;
+        }
+        finally
+        {
+            WriteLock.Release();
+        }
+    }
+
     public async Task<People> AddPeopleAsync(People people, CancellationToken cancellationToken = default)
     {
         await WriteLock.WaitAsync(cancellationToken);
         try
         {
             await using var context = CreateContext();
+            if (people.Id > 0)
+            {
+                var existing = await context.Peoples.FirstOrDefaultAsync(item => item.Id == people.Id, cancellationToken);
+                if (existing is not null)
+                {
+                    existing.Name = people.Name;
+                    existing.Phone = people.Phone;
+                    existing.Address = people.Address;
+                    existing.Balance = people.Balance;
+                    existing.Status = people.Status == 0 ? 1 : people.Status;
+                    await context.SaveChangesAsync(cancellationToken);
+                    return existing;
+                }
+            }
+
             var nextId = (await context.Peoples.AsNoTracking().Select(item => (int?)item.Id).MaxAsync(cancellationToken) ?? 0) + 1;
             people.Id = people.Id > 0 ? people.Id : nextId;
             people.Status = people.Status == 0 ? 1 : people.Status;
@@ -220,6 +296,43 @@ public sealed class DatabaseService
         return orders;
     }
 
+    public async Task<IReadOnlyList<Order>> GetRecentOrdersAsync(
+        IReadOnlyList<Product> products,
+        int take = 500,
+        CancellationToken cancellationToken = default)
+    {
+        await using var context = CreateContext();
+        var orders = await context.Orders
+            .AsNoTracking()
+            .Include(order => order.Items)
+            .ThenInclude(item => item.Product)
+            .OrderByDescending(order => order.Date)
+            .ThenByDescending(order => order.Number)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+
+        var productLookup = products.ToDictionary(product => product.Id);
+        foreach (var order in orders)
+        {
+            foreach (var item in order.Items)
+            {
+                if (item.Product is null && productLookup.TryGetValue(item.ProductId, out var product))
+                {
+                    item.Product = product;
+                }
+
+                if (item.Price <= 0 && item.Product is not null)
+                {
+                    item.Price = item.Product.Price;
+                }
+            }
+
+            order.RefreshTotals();
+        }
+
+        return orders;
+    }
+
     public async Task<int> GetNextOrderNumberAsync(CancellationToken cancellationToken = default)
     {
         await using var context = CreateContext();
@@ -254,7 +367,8 @@ public sealed class DatabaseService
             trackedOrder.PeopleId = order.PeopleId > 0 ? order.PeopleId : _settings.PeopleId;
             trackedOrder.Summa = order.Subtotal;
             trackedOrder.BonusSum = order.BonusSum;
-            trackedOrder.SummaPay = order.Total;
+            trackedOrder.SummaPay = order.SummaPay > 0 ? order.SummaPay : order.Total;
+            trackedOrder.Note = order.Note;
             trackedOrder.Date = order.Date == default ? DateTime.Now : order.Date;
             trackedOrder.SyncStatus = 0;
             trackedOrder.SyncError = null;
@@ -281,7 +395,6 @@ public sealed class DatabaseService
                     ProductId = sourceItem.Product.Id,
                     Product = sourceItem.Product,
                     Quantity = sourceItem.Quantity,
-                    Note = sourceItem.Note,
                     Price = sourceItem.Price > 0 ? sourceItem.Price : sourceItem.Product.Price,
                     Discount = sourceItem.Discount,
                     Bonus = sourceItem.Bonus
@@ -296,23 +409,173 @@ public sealed class DatabaseService
         }
     }
 
-    public async Task MarkOrderPaidAsync(Order order, CancellationToken cancellationToken = default)
+    public async Task MarkOrderPaidAsync(
+        Order order,
+        IEnumerable<PaymentLine>? payments = null,
+        CancellationToken cancellationToken = default)
     {
         await WriteLock.WaitAsync(cancellationToken);
         try
         {
             await using var context = CreateContext();
-            var tracked = await context.Orders.FirstOrDefaultAsync(existing => existing.Number == order.Number, cancellationToken);
+            var tracked = await context.Orders
+                .Include(existing => existing.Items)
+                .FirstOrDefaultAsync(existing => existing.Number == order.Number, cancellationToken);
             if (tracked is null)
             {
                 return;
             }
 
             tracked.Status = "paid";
+            tracked.OrderType = order.OrderType;
+            tracked.CashId = order.CashId > 0 ? order.CashId : tracked.CashId;
+            tracked.PeopleId = order.PeopleId > 0 ? order.PeopleId : tracked.PeopleId;
             tracked.Summa = order.Subtotal;
-            tracked.SummaPay = order.Total;
+            tracked.SummaPay = order.SummaPay > 0 ? order.SummaPay : order.Total;
             tracked.Discount = order.Discount;
+            tracked.Note = order.Note;
             tracked.SyncStatus = 0;
+            tracked.SyncError = null;
+            SavePaymentRows(context, tracked, payments);
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        finally
+        {
+            WriteLock.Release();
+        }
+    }
+
+    public async Task<IReadOnlyList<Order>> GetPendingSalesForSyncAsync(CancellationToken cancellationToken = default)
+    {
+        await using var context = CreateContext();
+        var orders = await context.Orders
+            .AsNoTracking()
+            .Where(order => order.Status == "paid" && order.SyncStatus != 1)
+            .Include(order => order.Items)
+            .ThenInclude(item => item.Product)
+            .OrderBy(order => order.Date)
+            .ThenBy(order => order.Number)
+            .Take(100)
+            .ToListAsync(cancellationToken);
+
+        foreach (var order in orders)
+        {
+            order.RefreshTotals();
+        }
+
+        return orders;
+    }
+
+    public async Task<IReadOnlyList<Dds>> GetPaymentsForSalesAsync(
+        IEnumerable<int> orderNumbers,
+        CancellationToken cancellationToken = default)
+    {
+        var numbers = orderNumbers.Distinct().ToArray();
+        if (numbers.Length == 0)
+        {
+            return Array.Empty<Dds>();
+        }
+
+        await using var context = CreateContext();
+        return await context.Dds
+            .AsNoTracking()
+            .Where(payment => payment.OrderType == "salepay" && numbers.Contains(payment.DocId))
+            .OrderBy(payment => payment.Id)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task MarkSaleSyncSucceededAsync(
+        int orderNumber,
+        int? serverId,
+        IReadOnlyDictionary<int, int> paymentServerIds,
+        CancellationToken cancellationToken = default)
+    {
+        await WriteLock.WaitAsync(cancellationToken);
+        try
+        {
+            await using var context = CreateContext();
+            var order = await context.Orders.FirstOrDefaultAsync(item => item.Number == orderNumber, cancellationToken);
+            if (order is not null)
+            {
+                order.SyncStatus = 1;
+                order.ServerId = serverId ?? order.ServerId;
+                order.SyncedAt = DateTime.Now;
+                order.SyncError = null;
+            }
+
+            var payments = await context.Dds
+                .Where(payment => payment.OrderType == "salepay" && payment.DocId == orderNumber)
+                .ToListAsync(cancellationToken);
+            foreach (var payment in payments)
+            {
+                payment.SyncStatus = 1;
+                if (paymentServerIds.TryGetValue(payment.Id, out var paymentServerId))
+                {
+                    payment.ServerId = paymentServerId;
+                }
+
+                payment.SyncedAt = DateTime.Now;
+                payment.SyncError = null;
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        finally
+        {
+            WriteLock.Release();
+        }
+    }
+
+    public async Task MarkSaleSyncFailedAsync(
+        int orderNumber,
+        string error,
+        CancellationToken cancellationToken = default)
+    {
+        await WriteLock.WaitAsync(cancellationToken);
+        try
+        {
+            await using var context = CreateContext();
+            var shortError = error.Length > 1000 ? error[..1000] : error;
+            var order = await context.Orders.FirstOrDefaultAsync(item => item.Number == orderNumber, cancellationToken);
+            if (order is not null)
+            {
+                order.SyncStatus = 2;
+                order.SyncError = shortError;
+            }
+
+            var payments = await context.Dds
+                .Where(payment => payment.OrderType == "salepay" && payment.DocId == orderNumber)
+                .ToListAsync(cancellationToken);
+            foreach (var payment in payments)
+            {
+                payment.SyncStatus = 2;
+                payment.SyncError = shortError;
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        finally
+        {
+            WriteLock.Release();
+        }
+    }
+
+    public async Task DeleteOpenOrderAsync(int orderNumber, CancellationToken cancellationToken = default)
+    {
+        await WriteLock.WaitAsync(cancellationToken);
+        try
+        {
+            await using var context = CreateContext();
+            var tracked = await context.Orders
+                .Include(order => order.Items)
+                .FirstOrDefaultAsync(order => order.Number == orderNumber && order.Status == "open", cancellationToken);
+
+            if (tracked is null)
+            {
+                return;
+            }
+
+            context.Orders.Remove(tracked);
             await context.SaveChangesAsync(cancellationToken);
         }
         finally
@@ -341,6 +604,9 @@ public sealed class DatabaseService
 
     public Task UpsertPeoplesAsync(IEnumerable<People> peoples, CancellationToken cancellationToken = default) =>
         UpsertEntitiesAsync(peoples, nameof(People.Id), people => people.Id, cancellationToken);
+
+    public Task UpsertArticlesAsync(IEnumerable<Article> articles, CancellationToken cancellationToken = default) =>
+        UpsertEntitiesAsync(articles, nameof(Article.Id), article => article.Id, cancellationToken);
 
     public Task UpsertCategoriesAsync(IEnumerable<Category> categories, CancellationToken cancellationToken = default)
     {
@@ -442,12 +708,13 @@ public sealed class DatabaseService
                     bonussum DECIMAL(18,2) NOT NULL DEFAULT 0,
                     summapay DECIMAL(18,2) NOT NULL DEFAULT 0,
                     date DATETIME NOT NULL,
-                    type VARCHAR(50) NOT NULL DEFAULT 'open',
-                    status VARCHAR(30) NOT NULL DEFAULT 'open',
+                    type VARCHAR(50) NOT NULL DEFAULT '3',
+                    status VARCHAR(30) NOT NULL DEFAULT '1',
                     sync_status INT NOT NULL DEFAULT 0,
                     server_id INT NULL,
                     synced_at DATETIME NULL,
-                    sync_error TEXT NULL
+                    sync_error TEXT NULL,
+                    note TEXT NULL
                 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
                 """, cancellationToken);
 
@@ -460,7 +727,6 @@ public sealed class DatabaseService
                     price DECIMAL(18,2) NOT NULL DEFAULT 0,
                     discount DECIMAL(18,2) NOT NULL DEFAULT 0,
                     bonus DECIMAL(18,2) NOT NULL DEFAULT 0,
-                    note TEXT NULL,
                     INDEX ix_sale_data_sale_id (sale_id),
                     CONSTRAINT fk_sale_data_sales_sale_id FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE
                 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -482,12 +748,13 @@ public sealed class DatabaseService
                 bonussum REAL NOT NULL DEFAULT 0,
                 summapay REAL NOT NULL DEFAULT 0,
                 date TEXT NOT NULL,
-                type TEXT NOT NULL DEFAULT 'open',
-                status TEXT NOT NULL DEFAULT 'open',
+                type TEXT NOT NULL DEFAULT '3',
+                status TEXT NOT NULL DEFAULT '1',
                 sync_status INTEGER NOT NULL DEFAULT 0,
                 server_id INTEGER NULL,
                 synced_at TEXT NULL,
-                sync_error TEXT NULL
+                sync_error TEXT NULL,
+                note TEXT NULL
             );
             """, cancellationToken);
 
@@ -500,13 +767,88 @@ public sealed class DatabaseService
                 price REAL NOT NULL DEFAULT 0,
                 discount REAL NOT NULL DEFAULT 0,
                 bonus REAL NOT NULL DEFAULT 0,
-                note TEXT NULL,
                 FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE
             );
             """, cancellationToken);
 
         await context.Database.ExecuteSqlRawAsync("""
             CREATE INDEX IF NOT EXISTS ix_sale_data_sale_id ON sale_data(sale_id);
+            """, cancellationToken);
+    }
+
+    private async Task EnsureSalesColumnsAsync(AppDbContext context, CancellationToken cancellationToken)
+    {
+        if (IsMySql)
+        {
+            var dbConnection = context.Database.GetDbConnection();
+            await context.Database.OpenConnectionAsync(cancellationToken);
+            try
+            {
+                await using var command = dbConnection.CreateCommand();
+                command.CommandText = """
+                    SELECT COUNT(*)
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE()
+                      AND TABLE_NAME = 'sales'
+                      AND COLUMN_NAME = 'note';
+                    """;
+                var hasNote = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken)) > 0;
+                if (!hasNote)
+                {
+                    await context.Database.ExecuteSqlRawAsync("ALTER TABLE sales ADD COLUMN note TEXT NULL;", cancellationToken);
+                }
+            }
+            finally
+            {
+                await context.Database.CloseConnectionAsync();
+            }
+            return;
+        }
+
+        if (context.Database.GetDbConnection() is not SqliteConnection connection)
+        {
+            return;
+        }
+
+        var hasNoteColumn = false;
+        await context.Database.OpenConnectionAsync(cancellationToken);
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "PRAGMA table_info(sales);";
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var columnName = reader.GetString(1);
+                if (string.Equals(columnName, "note", StringComparison.OrdinalIgnoreCase))
+                {
+                    hasNoteColumn = true;
+                    break;
+                }
+            }
+        }
+        await context.Database.CloseConnectionAsync();
+
+        if (!hasNoteColumn)
+        {
+            await context.Database.ExecuteSqlRawAsync("ALTER TABLE sales ADD COLUMN note TEXT NULL;", cancellationToken);
+        }
+    }
+
+    private static async Task NormalizeSalesCodeValuesAsync(AppDbContext context, CancellationToken cancellationToken)
+    {
+        await context.Database.ExecuteSqlRawAsync("""
+            UPDATE sales
+            SET type = CASE
+                WHEN type = '1' OR type IN ('С собой', 'с собой') THEN '1'
+                WHEN type = '2' OR type IN ('Доставка', 'доставка') THEN '2'
+                WHEN type = '3' OR type IN ('В зале', 'в зале') THEN '3'
+                ELSE '3'
+            END,
+            status = CASE
+                WHEN status = '2' OR lower(status) = 'paid' OR status IN ('Оплачен', 'оплачен') THEN '2'
+                WHEN status = '1' OR lower(status) = 'open' OR status IN ('Открыт', 'открыт') THEN '1'
+                ELSE '1'
+            END;
             """, cancellationToken);
     }
 
@@ -565,6 +907,176 @@ public sealed class DatabaseService
         if (!hasAddress)
         {
             await context.Database.ExecuteSqlRawAsync("ALTER TABLE peoples ADD COLUMN address TEXT NULL;", cancellationToken);
+        }
+    }
+
+    private async Task EnsureDdsColumnsAsync(AppDbContext context, CancellationToken cancellationToken)
+    {
+        if (IsMySql)
+        {
+            await EnsureMySqlColumnAsync(context, "dds", "doc_id", "INT NOT NULL DEFAULT 0", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "dds", "article_id", "INT NOT NULL DEFAULT 1", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "dds", "order_type", "VARCHAR(50) NOT NULL DEFAULT 'salepay'", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "dds", "sync_status", "INT NOT NULL DEFAULT 0", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "dds", "server_id", "INT NULL", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "dds", "synced_at", "DATETIME NULL", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "dds", "sync_error", "TEXT NULL", cancellationToken);
+            return;
+        }
+
+        await EnsureSqliteColumnAsync(context, "dds", "doc_id", "INTEGER NOT NULL DEFAULT 0", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "dds", "article_id", "INTEGER NOT NULL DEFAULT 1", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "dds", "order_type", "TEXT NOT NULL DEFAULT 'salepay'", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "dds", "sync_status", "INTEGER NOT NULL DEFAULT 0", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "dds", "server_id", "INTEGER NULL", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "dds", "synced_at", "TEXT NULL", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "dds", "sync_error", "TEXT NULL", cancellationToken);
+    }
+
+    private async Task EnsureArticlesTableAsync(AppDbContext context, CancellationToken cancellationToken)
+    {
+        if (IsMySql)
+        {
+            await context.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS articles (
+                    id INT NOT NULL PRIMARY KEY,
+                    parent_id INT NOT NULL DEFAULT 0,
+                    name TEXT NULL,
+                    status INT NOT NULL DEFAULT 1,
+                    `check` INT NOT NULL DEFAULT 0,
+                    type VARCHAR(30) NULL
+                ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+                """, cancellationToken);
+            await EnsureMySqlColumnAsync(context, "articles", "type", "VARCHAR(30) NULL", cancellationToken);
+            return;
+        }
+
+        await context.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE IF NOT EXISTS articles (
+                id INTEGER NOT NULL PRIMARY KEY,
+                parent_id INTEGER NOT NULL DEFAULT 0,
+                name TEXT NULL,
+                status INTEGER NOT NULL DEFAULT 1,
+                "check" INTEGER NOT NULL DEFAULT 0,
+                type TEXT NULL
+            );
+            """, cancellationToken);
+        await EnsureSqliteColumnAsync(context, "articles", "type", "TEXT NULL", cancellationToken);
+    }
+
+    private static async Task EnsureMySqlColumnAsync(
+        AppDbContext context,
+        string tableName,
+        string columnName,
+        string definition,
+        CancellationToken cancellationToken)
+    {
+        var dbConnection = context.Database.GetDbConnection();
+        await context.Database.OpenConnectionAsync(cancellationToken);
+        try
+        {
+            await using var command = dbConnection.CreateCommand();
+            command.CommandText = $"""
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = '{tableName}'
+                  AND COLUMN_NAME = '{columnName}';
+                """;
+            var exists = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken)) > 0;
+            if (!exists)
+            {
+#pragma warning disable EF1002
+                await context.Database.ExecuteSqlRawAsync(
+                    $"ALTER TABLE `{tableName}` ADD COLUMN `{columnName}` {definition};",
+                    cancellationToken);
+#pragma warning restore EF1002
+            }
+        }
+        finally
+        {
+            await context.Database.CloseConnectionAsync();
+        }
+    }
+
+    private static async Task EnsureSqliteColumnAsync(
+        AppDbContext context,
+        string tableName,
+        string columnName,
+        string definition,
+        CancellationToken cancellationToken)
+    {
+        if (context.Database.GetDbConnection() is not SqliteConnection connection)
+        {
+            return;
+        }
+
+        var exists = false;
+        await context.Database.OpenConnectionAsync(cancellationToken);
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = $"PRAGMA table_info({tableName});";
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                if (string.Equals(reader.GetString(1), columnName, StringComparison.OrdinalIgnoreCase))
+                {
+                    exists = true;
+                    break;
+                }
+            }
+        }
+        await context.Database.CloseConnectionAsync();
+
+        if (!exists)
+        {
+#pragma warning disable EF1002
+            await context.Database.ExecuteSqlRawAsync(
+                $"ALTER TABLE {tableName} ADD COLUMN {columnName} {definition};",
+                cancellationToken);
+#pragma warning restore EF1002
+        }
+    }
+
+    private static void SavePaymentRows(
+        AppDbContext context,
+        Order order,
+        IEnumerable<PaymentLine>? payments)
+    {
+        var lines = (payments ?? Array.Empty<PaymentLine>())
+            .Where(payment => payment.Amount > 0)
+            .ToList();
+        if (lines.Count == 0 && order.SummaPay > 0)
+        {
+            lines.Add(new PaymentLine(order.CashId, order.SummaPay));
+        }
+
+        var existingPayments = context.Dds
+            .Where(payment => payment.OrderType == DdsOperationTypes.SalePayment && payment.DocId == order.Number)
+            .ToList();
+        context.Dds.RemoveRange(existingPayments);
+
+        var nextId = (context.Dds.Select(payment => (int?)payment.Id).Max() ?? 0) + 1;
+        var eventTime = new DateTimeOffset(order.Date == default ? DateTime.Now : order.Date).ToUnixTimeSeconds();
+        foreach (var payment in lines)
+        {
+            context.Dds.Add(new Dds
+            {
+                Id = nextId++,
+                DocId = order.Number,
+                StoreId = order.StoreId,
+                UserId = order.UserId,
+                CashId = payment.CashId,
+                PeopleId = order.PeopleId,
+                ArticleId = 1,
+                Summa = payment.Amount,
+                EventTime = eventTime,
+                OrderType = DdsOperationTypes.SalePayment,
+                Description = $"Sale payment #{order.Number}",
+                Date = order.Date.ToString("yyyy-MM-dd HH:mm:ss"),
+                Status = 1,
+                SyncStatus = 0
+            });
         }
     }
 

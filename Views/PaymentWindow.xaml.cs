@@ -21,6 +21,7 @@ public partial class PaymentWindow : Window
     private readonly decimal _subtotal;
     private readonly List<Cash> _cashes = new();
     private readonly List<TextBox> _extraPaymentBoxes = new();
+    private readonly List<ComboBox> _extraPaymentCashBoxes = new();
     private bool _isRefreshing;
     private string _activeInput = "cash";
     private TextBox? _activeExtraPaymentBox;
@@ -31,7 +32,13 @@ public partial class PaymentWindow : Window
         Status = 1
     };
 
-    public PaymentWindow(decimal total, string paymentType, decimal discount = 0m, string orderType = "В зале")
+    public PaymentWindow(
+        decimal total,
+        string paymentType,
+        decimal discount = 0m,
+        string orderType = "В зале",
+        int selectedPeopleId = 1,
+        string? note = null)
     {
         InitializeComponent();
 
@@ -41,9 +48,11 @@ public partial class PaymentWindow : Window
         PaymentType = NormalizePaymentType(paymentType);
         OrderType = string.IsNullOrWhiteSpace(orderType) ? "В зале" : orderType;
         DiscountAmount = Math.Clamp(discount, 0m, _subtotal);
+        NoteBox.Text = string.IsNullOrWhiteSpace(note) ? "-" : note;
 
         SetupOrderTypes();
         LoadCashes();
+        LoadSelectedCustomer(selectedPeopleId);
         SetupInitialAmounts();
         SetupQuickAmounts();
         RefreshUi(updateDiscountFields: true);
@@ -57,7 +66,10 @@ public partial class PaymentWindow : Window
     public decimal DiscountAmount { get; private set; }
     public bool PrintReceipt => PrintReceiptBox.IsChecked == true;
     public int PeopleId => _selectedCustomer.Id;
+    public int CashId => CashAccountBox.SelectedItem is Cash cash ? cash.Id : 1;
+    public string Note => NoteBox.Text.Trim() == "-" ? string.Empty : NoteBox.Text.Trim();
     public bool HoldRequested { get; private set; }
+    public IReadOnlyList<PaymentLine> PaymentLines => GetPaymentLines();
 
     private decimal TotalDue => Math.Max(0m, _subtotal - DiscountAmount);
 
@@ -95,8 +107,45 @@ public partial class PaymentWindow : Window
         if (sender is Button button && button.Content is string value)
         {
             OrderType = value;
+            SetNoteOrderType(value);
             RefreshOrderTypeButtons();
         }
+    }
+
+    private void SetNoteOrderType(string value)
+    {
+        var note = NoteBox.Text.Trim();
+        var details = GetNoteDetails(note);
+
+        if (string.IsNullOrWhiteSpace(note) || note == "-" || note == "В зале" || note == "С собой" || note == "Доставка")
+        {
+            NoteBox.Text = value;
+        }
+        else if (!string.IsNullOrWhiteSpace(details))
+        {
+            NoteBox.Text = $"{value} {details}";
+        }
+        else
+        {
+            NoteBox.Text = value;
+        }
+
+        _activeInput = "note";
+        NoteBox.Focus();
+        NoteBox.CaretIndex = NoteBox.Text.Length;
+    }
+
+    private static string GetNoteDetails(string note)
+    {
+        foreach (var prefix in new[] { "В зале", "С собой", "Доставка" })
+        {
+            if (note.StartsWith(prefix + " ", StringComparison.OrdinalIgnoreCase))
+            {
+                return note[prefix.Length..].TrimStart();
+            }
+        }
+
+        return string.Empty;
     }
 
     private void RefreshOrderTypeButtons()
@@ -132,7 +181,45 @@ public partial class PaymentWindow : Window
         }
 
         CashAccountBox.ItemsSource = _cashes;
-        CashAccountBox.SelectedIndex = PaymentType == CardType && _cashes.Count > 1 ? 1 : 0;
+        SelectDefaultCashAccount();
+    }
+
+    private void SelectDefaultCashAccount()
+    {
+        if (_cashes.Count == 0)
+        {
+            CashAccountBox.SelectedIndex = -1;
+            return;
+        }
+
+        var defaultCashId = _userSettings.DefaultCashId > 0
+            ? _userSettings.DefaultCashId
+            : App.CurrentUser?.CashId ?? 0;
+
+        CashAccountBox.SelectedItem = _cashes.FirstOrDefault(cash => cash.Id == defaultCashId)
+            ?? _cashes.FirstOrDefault();
+    }
+
+    private void LoadSelectedCustomer(int selectedPeopleId)
+    {
+        if (selectedPeopleId <= 1)
+        {
+            return;
+        }
+
+        try
+        {
+            var customer = _databaseService.GetPeoplesAsync().GetAwaiter().GetResult()
+                .FirstOrDefault(people => people.Id == selectedPeopleId);
+
+            if (customer is not null)
+            {
+                _selectedCustomer = customer;
+            }
+        }
+        catch
+        {
+        }
     }
 
     private void SetupInitialAmounts()
@@ -163,6 +250,12 @@ public partial class PaymentWindow : Window
         SelectText(CashPaymentBox);
     }
 
+    private void NoteFocused(object sender, RoutedEventArgs e)
+    {
+        _activeInput = "note";
+        NoteBox.CaretIndex = NoteBox.Text.Length;
+    }
+
     private void DiscountPercentChanged(object sender, TextChangedEventArgs e)
     {
         if (_isRefreshing)
@@ -172,8 +265,9 @@ public partial class PaymentWindow : Window
 
         var percent = Math.Clamp(ParseAmount(DiscountPercentBox.Text), 0m, 100m);
         DiscountAmount = Math.Round(_subtotal * percent / 100m, 2);
-        RefreshUi(updateDiscountAmount: true);
         RefillSinglePaymentRemainder();
+        SetupQuickAmounts();
+        RefreshUi(updateDiscountAmount: true);
     }
 
     private void DiscountAmountChanged(object sender, TextChangedEventArgs e)
@@ -184,8 +278,9 @@ public partial class PaymentWindow : Window
         }
 
         DiscountAmount = Math.Clamp(ParseAmount(DiscountAmountBox.Text), 0m, _subtotal);
-        RefreshUi(updateDiscountPercent: true);
         RefillSinglePaymentRemainder();
+        SetupQuickAmounts();
+        RefreshUi(updateDiscountPercent: true);
     }
 
     private void PaymentAmountChanged(object sender, TextChangedEventArgs e)
@@ -230,6 +325,12 @@ public partial class PaymentWindow : Window
         }
 
         var input = box.Text.Trim();
+        if (_activeInput == "note")
+        {
+            AppendNoteKey(value);
+            return;
+        }
+
         if (value == "." && input.Contains('.'))
         {
             return;
@@ -245,6 +346,23 @@ public partial class PaymentWindow : Window
             box.Text = input + value;
             box.CaretIndex = box.Text.Length;
         }
+    }
+
+    private void AppendNoteKey(string value)
+    {
+        if (value == ".")
+        {
+            return;
+        }
+
+        var note = NoteBox.Text.Trim();
+        NoteBox.Text = string.IsNullOrWhiteSpace(note) || note == "-"
+            ? value
+            : note is "В зале" or "С собой" or "Доставка"
+                ? $"{note} {value}"
+            : note + value;
+        NoteBox.CaretIndex = NoteBox.Text.Length;
+        NoteBox.Focus();
     }
 
     private void BackspaceClicked(object sender, RoutedEventArgs e)
@@ -273,7 +391,7 @@ public partial class PaymentWindow : Window
 
     private void ExactAmountClicked(object sender, RoutedEventArgs e)
     {
-        if (_activeInput is "discountPercent" or "discountAmount")
+        if (_activeInput is "discountPercent" or "discountAmount" or "note")
         {
             _activeInput = "cash";
         }
@@ -297,7 +415,7 @@ public partial class PaymentWindow : Window
             return;
         }
 
-        if (_activeInput is "discountPercent" or "discountAmount")
+        if (_activeInput is "discountPercent" or "discountAmount" or "note")
         {
             _activeInput = "cash";
         }
@@ -374,6 +492,7 @@ public partial class PaymentWindow : Window
         removeButton.Click += (_, _) =>
         {
             _extraPaymentBoxes.Remove(amountBox);
+            _extraPaymentCashBoxes.Remove(comboBox);
             PaymentRowsPanel.Children.Remove(row);
             if (_activeExtraPaymentBox == amountBox)
             {
@@ -391,6 +510,7 @@ public partial class PaymentWindow : Window
         row.Children.Add(amountBox);
         PaymentRowsPanel.Children.Add(row);
         _extraPaymentBoxes.Add(amountBox);
+        _extraPaymentCashBoxes.Add(comboBox);
         return amountBox;
     }
 
@@ -468,11 +588,13 @@ public partial class PaymentWindow : Window
             TotalBox.Text = FormatMoney(_subtotal);
             PayableBox.Text = FormatMoney(TotalDue);
             ReceivedText.Text = $"{ReceivedAmount:0.00}";
-            RemainderText.Text = $"{Math.Max(0m, TotalDue - ReceivedAmount):0.00}";
+            var remainder = TotalDue - ReceivedAmount;
+            RemainderLabel.Text = remainder > 0 ? "Остаток" : "Сдача";
+            RemainderText.Text = $"{Math.Abs(remainder):0.00}";
             ConfirmButtonText.Text = $"Оплатить {Math.Min(ReceivedAmount, TotalDue):0.##} c";
 
             RemainderLabel.Foreground = BrushFrom("#344054");
-            RemainderText.Foreground = ReceivedAmount >= TotalDue ? BrushFrom("#23A455") : BrushFrom("#FF2B22");
+            RemainderText.Foreground = remainder <= 0 ? BrushFrom("#23A455") : BrushFrom("#FF2B22");
         }
         finally
         {
@@ -505,12 +627,39 @@ public partial class PaymentWindow : Window
         return _extraPaymentBoxes.Sum(box => ParseAmount(box.Text));
     }
 
+    private IReadOnlyList<PaymentLine> GetPaymentLines()
+    {
+        var lines = new List<PaymentLine>();
+        var cashAmount = ParseAmount(CashPaymentBox.Text);
+        if (cashAmount > 0)
+        {
+            lines.Add(new PaymentLine(CashId, cashAmount));
+        }
+
+        for (var i = 0; i < _extraPaymentBoxes.Count; i++)
+        {
+            var amount = ParseAmount(_extraPaymentBoxes[i].Text);
+            if (amount <= 0)
+            {
+                continue;
+            }
+
+            var cashId = _extraPaymentCashBoxes.ElementAtOrDefault(i)?.SelectedItem is Cash cash
+                ? cash.Id
+                : CashId;
+            lines.Add(new PaymentLine(cashId, amount));
+        }
+
+        return lines;
+    }
+
     private TextBox? GetActiveTextBox()
     {
         return _activeInput switch
         {
             "discountPercent" => DiscountPercentBox,
             "discountAmount" => DiscountAmountBox,
+            "note" => NoteBox,
             "extra" => _activeExtraPaymentBox ?? CashPaymentBox,
             _ => CashPaymentBox
         };

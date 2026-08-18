@@ -11,7 +11,6 @@ public class OrderItem : INotifyPropertyChanged
     public int OrderNumber { get; set; }
     public int ProductId { get; set; }
     public Product Product { get; set; } = new();
-    public string? Note { get; set; }
     public decimal Price { get; set; }
     public decimal Discount { get; set; }
     public decimal Bonus { get; set; }
@@ -29,13 +28,10 @@ public class OrderItem : INotifyPropertyChanged
             _quantity = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(Total));
-            OnPropertyChanged(nameof(Description));
         }
     }
 
     public decimal Total => (Price > 0 ? Price : Product.Price) * Quantity;
-    public string Description => Product.CategoryId == 4 ? "Средняя" : "Обычный";
-    public bool HasNote => !string.IsNullOrWhiteSpace(Note);
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

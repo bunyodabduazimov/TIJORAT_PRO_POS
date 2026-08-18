@@ -5,10 +5,10 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:controls="clr-namespace:FFPOS.Controls"
         Title="Выбор клиента"
-        Width="760"
-        Height="560"
-        MinWidth="680"
-        MinHeight="480"
+        Width="980"
+        Height="720"
+        MinWidth="980"
+        MinHeight="700"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResizeWithGrip"
         WindowStyle="None"
@@ -36,21 +36,24 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
-                        <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Background" Value="#FFF7F6" />
-                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#FFB8B3" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Background" Value="#FFEDEA" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F8FAFC" />
+                    <Setter Property="BorderBrush" Value="#CBD5E1" />
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#EEF2F7" />
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <Style x:Key="PrimaryButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource FlatButtonStyle}">
@@ -68,8 +71,8 @@
         </Style>
 
         <Style x:Key="CustomerInputStyle" TargetType="{x:Type TextBox}">
-            <Setter Property="Height" Value="42" />
-            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Padding" Value="40,0,38,0" />
             <Setter Property="Background" Value="#FBFCFE" />
             <Setter Property="BorderBrush" Value="#DDE5EE" />
             <Setter Property="BorderThickness" Value="1" />
@@ -77,11 +80,16 @@
             <Setter Property="FontSize" Value="15" />
             <Setter Property="FontWeight" Value="Medium" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type TextBox}">
-                        <Border x:Name="RootBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8">
+                        <Border x:Name="RootBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8">
                             <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" />
                         </Border>
                         <ControlTemplate.Triggers>
@@ -106,12 +114,18 @@
         </Style>
 
         <Style TargetType="{x:Type ScrollBar}">
-            <Setter Property="Width" Value="12" />
+            <Setter Property="Width" Value="8" />
+            <Setter Property="MinWidth" Value="8" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type ScrollBar}">
                         <Border Background="#F8FAFC" CornerRadius="6">
-                            <Track x:Name="PART_Track" IsDirectionReversed="True" Value="{TemplateBinding Value}" Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}" ViewportSize="{TemplateBinding ViewportSize}">
+                            <Track x:Name="PART_Track"
+                                   IsDirectionReversed="True"
+                                   Value="{TemplateBinding Value}"
+                                   Minimum="{TemplateBinding Minimum}"
+                                   Maximum="{TemplateBinding Maximum}"
+                                   ViewportSize="{TemplateBinding ViewportSize}">
                                 <Track.DecreaseRepeatButton>
                                     <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}" Style="{StaticResource ListScrollBarRepeatButtonStyle}" />
                                 </Track.DecreaseRepeatButton>
@@ -119,7 +133,7 @@
                                     <Thumb>
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="{x:Type Thumb}">
-                                                <Border Background="#CBD8E8" Width="5" HorizontalAlignment="Center" CornerRadius="4" Margin="0,4" />
+                                                <Border Background="#CBD8E8" Width="4" HorizontalAlignment="Center" CornerRadius="4" Margin="0,4" />
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -133,14 +147,100 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="CustomerGridHeaderStyle" TargetType="{x:Type DataGridColumnHeader}">
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="Background" Value="#F8FAFC" />
+            <Setter Property="BorderBrush" Value="#E5EBF2" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
+            <Setter Property="Foreground" Value="#344054" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="CustomerGridCellTextStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="Foreground" Value="#111827" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Margin" Value="12,0" />
+        </Style>
+
+        <Style x:Key="CustomerGridRightCellTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource CustomerGridCellTextStyle}">
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="TextAlignment" Value="Right" />
+        </Style>
+
+        <Style x:Key="CustomerGridCellStyle" TargetType="{x:Type DataGridCell}">
+            <Setter Property="BorderBrush" Value="#EEF2F6" />
+            <Setter Property="BorderThickness" Value="0,0,1,0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DataGridCell}">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#FFF7F6" />
+                    <Setter Property="Foreground" Value="#111827" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="CustomerGridRowStyle" TargetType="{x:Type DataGridRow}">
+            <Setter Property="Height" Value="46" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#EEF2F6" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F8FAFC" />
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#FFF7F6" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="CustomerDataGridStyle" TargetType="{x:Type DataGrid}">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="GridLinesVisibility" Value="None" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="AutoGenerateColumns" Value="False" />
+            <Setter Property="CanUserAddRows" Value="False" />
+            <Setter Property="CanUserDeleteRows" Value="False" />
+            <Setter Property="CanUserReorderColumns" Value="False" />
+            <Setter Property="CanUserResizeRows" Value="False" />
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="SelectionMode" Value="Single" />
+            <Setter Property="SelectionUnit" Value="FullRow" />
+            <Setter Property="RowHeaderWidth" Value="0" />
+            <Setter Property="ColumnHeaderStyle" Value="{StaticResource CustomerGridHeaderStyle}" />
+            <Setter Property="CellStyle" Value="{StaticResource CustomerGridCellStyle}" />
+            <Setter Property="RowStyle" Value="{StaticResource CustomerGridRowStyle}" />
+        </Style>
     </Window.Resources>
 
     <Border Margin="12" Background="White" BorderBrush="#DDE5EE" BorderThickness="1" CornerRadius="14" Effect="{StaticResource WindowShadow}">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="58" />
+                <RowDefinition Height="50" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="96" />
+                <RowDefinition Height="55" />
             </Grid.RowDefinitions>
 
             <Border BorderBrush="#E8EDF3" BorderThickness="0,0,0,1" Padding="18,0" MouseLeftButtonDown="HeaderMouseLeftButtonDown">
@@ -153,23 +253,82 @@
                 </Grid>
             </Border>
 
-            <Grid Grid.Row="1" Margin="20,16,20,10">
+            <Grid Grid.Row="1" Margin="15,10,15,5">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="46" />
-                    <RowDefinition Height="12" />
-                    <RowDefinition Height="42" />
+                    <RowDefinition Height="51" />
                     <RowDefinition Height="*" />
+                    <RowDefinition Height="32" />
                 </Grid.RowDefinitions>
 
-                <Grid>
+                <Grid Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="520" />
+                        <ColumnDefinition Width="420" />
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="12" />
                         <ColumnDefinition Width="150" />
                     </Grid.ColumnDefinitions>
-                    <TextBox x:Name="SearchBox" Style="{StaticResource CustomerInputStyle}" TextChanged="SearchChanged" />
-                    <Button Grid.Column="3" Style="{StaticResource PrimaryButtonStyle}" Click="AddCustomerClicked">
+
+                    <Grid>
+                        <TextBox x:Name="SearchBox" Style="{StaticResource CustomerInputStyle}" TextChanged="SearchChanged" />
+                        <materialDesign:PackIcon Kind="Magnify" Width="20" Height="20" Foreground="#98A2B3" Margin="14,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" IsHitTestVisible="False" />
+                        <Button x:Name="ClearSearchButton"
+                                Width="28"
+                                Height="28"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Margin="0,0,6,0"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Cursor="Hand"
+                                FocusVisualStyle="{x:Null}"
+                                Click="ClearSearchClicked">
+                            <materialDesign:PackIcon Kind="CloseCircleOutline" Width="18" Height="18" Foreground="#98A2B3" />
+                            <Button.Style>
+                                <Style TargetType="{x:Type Button}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="{x:Type Button}">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text.Length, ElementName=SearchBox}" Value="0">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Text.Length, ElementName=SearchBox}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#EEF2F7" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <TextBlock Text="Поиск клиента"
+                                   FontSize="15"
+                                   FontWeight="Medium"
+                                   Foreground="#98A2B3"
+                                   Margin="40,0,0,0"
+                                   VerticalAlignment="Center"
+                                   IsHitTestVisible="False">
+                            <TextBlock.Style>
+                                <Style TargetType="{x:Type TextBlock}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text.Length, ElementName=SearchBox}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+
+                    <Button Grid.Column="2" Style="{StaticResource PrimaryButtonStyle}" Click="AddCustomerClicked">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="Plus" Width="20" Height="20" Margin="0,0,8,0" />
                             <TextBlock Text="Добавить" VerticalAlignment="Center" />
@@ -177,62 +336,36 @@
                     </Button>
                 </Grid>
 
-                <Border Grid.Row="3" BorderBrush="#DDE5EE" BorderThickness="1" CornerRadius="8" Background="#FFFFFF">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="38" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <Grid Background="#F8FAFC">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="60" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="150" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="120" />
-                            </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" BorderBrush="#E5EBF2" BorderThickness="0,0,1,0" />
-                            <Border Grid.Column="1" BorderBrush="#E5EBF2" BorderThickness="0,0,1,0" />
-                            <Border Grid.Column="2" BorderBrush="#E5EBF2" BorderThickness="0,0,1,0" />
-                            <Border Grid.Column="3" BorderBrush="#E5EBF2" BorderThickness="0,0,1,0" />
-                            <TextBlock Text="№" Margin="14,0" FontSize="13" FontWeight="Bold" Foreground="#344054" VerticalAlignment="Center" />
-                            <TextBlock Grid.Column="1" Text="Название" FontSize="13" FontWeight="Bold" Foreground="#344054" VerticalAlignment="Center" />
-                            <TextBlock Grid.Column="2" Text="Телефон" FontSize="13" FontWeight="Bold" Foreground="#344054" VerticalAlignment="Center" />
-                            <TextBlock Grid.Column="3" Text="Адрес" FontSize="13" FontWeight="Bold" Foreground="#344054" VerticalAlignment="Center" />
-                            <TextBlock Grid.Column="4" Text="Баланс" FontSize="13" FontWeight="Bold" Foreground="#344054" VerticalAlignment="Center" />
-                        </Grid>
-                        <ListBox x:Name="CustomersList"
-                                 Grid.Row="1"
-                                 BorderThickness="0"
-                                 Background="White"
-                                 SelectionMode="Single"
-                                 MouseDoubleClick="CustomerDoubleClicked"
-                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Height="44">
-                                        <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="60" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="150" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="120" />
-                            </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" BorderBrush="#E5EBF2" BorderThickness="0,0,1,0" />
-                            <Border Grid.Column="1" BorderBrush="#E5EBF2" BorderThickness="0,0,1,0" />
-                            <Border Grid.Column="2" BorderBrush="#E5EBF2" BorderThickness="0,0,1,0" />
-                            <Border Grid.Column="3" BorderBrush="#E5EBF2" BorderThickness="0,0,1,0" />
-                                        <TextBlock Text="{Binding Id}" Margin="14,0" FontSize="14" FontWeight="Medium" Foreground="#344054" VerticalAlignment="Center" />
-                                        <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="#111827" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Grid.Column="2" Text="{Binding Phone}" FontSize="14" Foreground="#344054" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Grid.Column="3" Text="{Binding Address}" FontSize="14" Foreground="#344054" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Grid.Column="4" Text="{Binding Balance, StringFormat={}{0:0.##}}" FontSize="14" FontWeight="Bold" Foreground="#111827" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,14,0" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </Grid>
+                <Border Grid.Row="1" BorderBrush="#DDE5EE" BorderThickness="1" CornerRadius="8" Background="#FFFFFF" ClipToBounds="True">
+                    <DataGrid x:Name="CustomersList"
+                              Style="{StaticResource CustomerDataGridStyle}"
+                              MouseDoubleClick="CustomerDoubleClicked"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="№" Binding="{Binding Id}" Width="62" ElementStyle="{StaticResource CustomerGridCellTextStyle}" />
+                            <DataGridTextColumn Header="Название" Binding="{Binding Name}" Width="*" ElementStyle="{StaticResource CustomerGridCellTextStyle}" />
+                            <DataGridTextColumn Header="Телефон" Binding="{Binding Phone}" Width="150" ElementStyle="{StaticResource CustomerGridCellTextStyle}" />
+                            <DataGridTextColumn Header="Адрес" Binding="{Binding Address}" Width="*" ElementStyle="{StaticResource CustomerGridCellTextStyle}" />
+                            <DataGridTextColumn Header="Баланс" Binding="{Binding Balance, StringFormat={}{0:N2}}" Width="112" ElementStyle="{StaticResource CustomerGridRightCellTextStyle}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
                 </Border>
+
+                <Grid x:Name="CustomerPager" Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="PreviousPageButton" Click="PreviousPageClicked" Style="{StaticResource FlatButtonStyle}" Width="34" Height="26">
+                        <materialDesign:PackIcon Kind="ChevronLeft" Width="18" Height="18" />
+                    </Button>
+                    <TextBlock x:Name="CustomerPageText" Grid.Column="1" FontSize="13" FontWeight="SemiBold" Foreground="#667085" VerticalAlignment="Center" Margin="12,0" />
+                    <Button x:Name="NextPageButton" Grid.Column="2" Click="NextPageClicked" Style="{StaticResource FlatButtonStyle}" Width="34" Height="26">
+                        <materialDesign:PackIcon Kind="ChevronRight" Width="18" Height="18" />
+                    </Button>
+                </Grid>
             </Grid>
 
             <Border Grid.Row="2" BorderBrush="#E8EDF3" BorderThickness="1,0,0,0" Padding="20,0">
