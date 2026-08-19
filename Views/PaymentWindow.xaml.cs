@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -19,6 +18,7 @@ public partial class PaymentWindow : Window
     private readonly AppActivationSettings _settings;
     private readonly UserSettings _userSettings;
     private readonly decimal _subtotal;
+    private readonly bool _allowDiscount;
     private readonly List<Cash> _cashes = new();
     private readonly List<TextBox> _extraPaymentBoxes = new();
     private readonly List<ComboBox> _extraPaymentCashBoxes = new();
@@ -38,19 +38,22 @@ public partial class PaymentWindow : Window
         decimal discount = 0m,
         string orderType = "В зале",
         int selectedPeopleId = 1,
-        string? note = null)
+        string? note = null,
+        bool allowDiscount = true)
     {
         InitializeComponent();
 
         _settings = new AppSettingsService().Load();
         _userSettings = ParseUserSettings(App.CurrentUser?.Settings);
         _subtotal = total;
+        _allowDiscount = allowDiscount;
         PaymentType = NormalizePaymentType(paymentType);
         OrderType = string.IsNullOrWhiteSpace(orderType) ? "В зале" : orderType;
-        DiscountAmount = Math.Clamp(discount, 0m, _subtotal);
+        DiscountAmount = _allowDiscount ? Math.Clamp(discount, 0m, _subtotal) : 0m;
         NoteBox.Text = string.IsNullOrWhiteSpace(note) ? "-" : note;
 
         SetupOrderTypes();
+        SetupDiscountAccess();
         LoadCashes();
         LoadSelectedCustomer(selectedPeopleId);
         SetupInitialAmounts();
@@ -72,6 +75,12 @@ public partial class PaymentWindow : Window
     public IReadOnlyList<PaymentLine> PaymentLines => GetPaymentLines();
 
     private decimal TotalDue => Math.Max(0m, _subtotal - DiscountAmount);
+
+    private void SetupDiscountAccess()
+    {
+        DiscountLabel.Visibility = _allowDiscount ? Visibility.Visible : Visibility.Collapsed;
+        DiscountEditor.Visibility = _allowDiscount ? Visibility.Visible : Visibility.Collapsed;
+    }
 
     private void SetupOrderTypes()
     {
@@ -234,12 +243,22 @@ public partial class PaymentWindow : Window
 
     private void DiscountPercentFocused(object sender, RoutedEventArgs e)
     {
+        if (!_allowDiscount)
+        {
+            return;
+        }
+
         _activeInput = "discountPercent";
         SelectText(DiscountPercentBox);
     }
 
     private void DiscountAmountFocused(object sender, RoutedEventArgs e)
     {
+        if (!_allowDiscount)
+        {
+            return;
+        }
+
         _activeInput = "discountAmount";
         SelectText(DiscountAmountBox);
     }
@@ -258,7 +277,7 @@ public partial class PaymentWindow : Window
 
     private void DiscountPercentChanged(object sender, TextChangedEventArgs e)
     {
-        if (_isRefreshing)
+        if (_isRefreshing || !_allowDiscount)
         {
             return;
         }
@@ -272,7 +291,7 @@ public partial class PaymentWindow : Window
 
     private void DiscountAmountChanged(object sender, TextChangedEventArgs e)
     {
-        if (_isRefreshing)
+        if (_isRefreshing || !_allowDiscount)
         {
             return;
         }
@@ -704,17 +723,7 @@ public partial class PaymentWindow : Window
             return new UserSettings { CheckPrint = _settings.CheckPrint };
         }
 
-        try
-        {
-            return JsonSerializer.Deserialize<UserSettings>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            }) ?? new UserSettings { CheckPrint = _settings.CheckPrint };
-        }
-        catch
-        {
-            return new UserSettings { CheckPrint = _settings.CheckPrint };
-        }
+        return UserSettings.Parse(json, _settings.CheckPrint);
     }
 
     private static void SetQuickButton(Button button, decimal amount)

@@ -63,6 +63,7 @@ public partial class SettingsWindow : Window
         SetCheck(PeopleShowBox, _settings.PeopleShow);
         SetCheck(PeoplePayBox, _settings.PeoplePay);
         SetCheck(DebtSaleBox, _settings.DebtSale);
+        SetCheck(UseShiftBox, _settings.UseShift);
         SetCheck(DeleteRowBox, _settings.DeleteRow);
 
         FiscalModuleToggle.IsChecked = _settings.FiscalPrint;
@@ -90,21 +91,16 @@ public partial class SettingsWindow : Window
         PopulatePrinters();
         SelectPrinter(_settings.PrinterNameDefault);
 
-        UpdateSummary();
         UpdateStoreDetails();
         UpdateDatabaseVisibility();
         UpdateFiscalVisibility();
-
-        ErrorText.Text = string.Empty;
-        ErrorText.Foreground = new SolidColorBrush(Color.FromRgb(249, 31, 37));
     }
 
     private void SaveClicked(object sender, RoutedEventArgs e)
     {
         if (!TryApplySettings(out var error))
         {
-            ErrorText.Foreground = new SolidColorBrush(Color.FromRgb(249, 31, 37));
-            ErrorText.Text = error;
+            AppDialogWindow.ShowError(error, "Ошибка валидации", this);
             return;
         }
 
@@ -129,7 +125,7 @@ public partial class SettingsWindow : Window
 
         _settingsService.Save(_settings);
         WasSaved = true;
-        UpdateSummary();
+
         AppDialogWindow.ShowSuccess("Настройки успешно сохранены", "Сохранено", this);
         Close();
     }
@@ -192,7 +188,7 @@ public partial class SettingsWindow : Window
         }
 
         _settings.BaseUrl = BaseUrlBox.Text.Trim();
-        _settings.PublicUrl = string.IsNullOrWhiteSpace(PublicUrlBox.Text) ? "/public" : PublicUrlBox.Text.Trim();
+        _settings.PublicUrl = PublicUrlBox.Text.Trim();
         _settings.DatabaseType = databaseType;
         _settings.CheckPrint = GetCheck(CheckPrintBox);
         _settings.FiscalPrint = FiscalModuleToggle.IsChecked;
@@ -222,6 +218,7 @@ public partial class SettingsWindow : Window
         _settings.PeopleShow = GetCheck(PeopleShowBox);
         _settings.PeoplePay = GetCheck(PeoplePayBox);
         _settings.DebtSale = GetCheck(DebtSaleBox);
+        _settings.UseShift = GetCheck(UseShiftBox);
         _settings.DeleteRow = GetCheck(DeleteRowBox);
 
         _settings.MySqlHost = MySqlHostBox.Text.Trim();
@@ -311,13 +308,6 @@ public partial class SettingsWindow : Window
         {
             DragMove();
         }
-    }
-
-    private void UpdateSummary()
-    {
-        HeaderSubtitle.Text = !string.IsNullOrWhiteSpace(_settings.AppName)
-            ? $"{_settings.AppName} • {(_settings.IsActivated ? "Активен" : "Отключен")}"
-            : "Все параметры POS в одном месте";
     }
 
     private void UpdateFiscalVisibility()
@@ -568,6 +558,33 @@ public partial class SettingsWindow : Window
                 server_id INT NULL,
                 synced_at DATETIME NULL,
                 sync_error TEXT NULL
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+            """);
+
+        ExecuteMySqlSchema(connection, """
+            CREATE TABLE IF NOT EXISTS shifts (
+                id INT NOT NULL PRIMARY KEY,
+                store_id INT NOT NULL DEFAULT 1,
+                cash_id INT NOT NULL DEFAULT 1,
+                opened_by_user_id INT NOT NULL DEFAULT 1,
+                closed_by_user_id INT NULL,
+                opening_balance DECIMAL(18,2) NOT NULL DEFAULT 0,
+                sales_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+                return_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+                sale_payment_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+                payment_income_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+                payment_expense_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+                payment_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+                cash_in_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+                cash_out_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+                closing_balance DECIMAL(18,2) NOT NULL DEFAULT 0,
+                sales_count INT NOT NULL DEFAULT 0,
+                payment_count INT NOT NULL DEFAULT 0,
+                opened_at DATETIME NOT NULL,
+                expires_at DATETIME NOT NULL,
+                closed_at DATETIME NULL,
+                note TEXT NULL,
+                status INT NOT NULL DEFAULT 1
             ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
             """);
 

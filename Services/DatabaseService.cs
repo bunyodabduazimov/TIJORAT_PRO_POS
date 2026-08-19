@@ -55,6 +55,7 @@ public sealed class DatabaseService
         await EnsurePeopleColumnsAsync(context, cancellationToken);
         await EnsureArticlesTableAsync(context, cancellationToken);
         await EnsureDdsColumnsAsync(context, cancellationToken);
+        await EnsureShiftsTableAsync(context, cancellationToken);
 
         if (!IsMySql)
         {
@@ -172,6 +173,140 @@ public sealed class DatabaseService
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<Shift?> GetOpenShiftAsync(
+        int storeId,
+        int cashId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var context = CreateContext();
+        return await context.Shifts
+            .AsNoTracking()
+            .Where(shift => shift.Status == 1 && shift.StoreId == storeId && shift.CashId == cashId && shift.ClosedAt == null)
+            .OrderByDescending(shift => shift.OpenedAt)
+            .ThenByDescending(shift => shift.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<Shift> OpenShiftAsync(
+        int storeId,
+        int cashId,
+        int openedByUserId,
+        decimal openingBalance = 0m,
+        CancellationToken cancellationToken = default)
+    {
+        await WriteLock.WaitAsync(cancellationToken);
+        try
+        {
+            await using var context = CreateContext();
+            var existing = await context.Shifts
+                .FirstOrDefaultAsync(
+                    shift => shift.Status == 1 && shift.StoreId == storeId && shift.CashId == cashId && shift.ClosedAt == null,
+                    cancellationToken);
+
+            if (existing is not null)
+            {
+                return existing;
+            }
+
+            var nextId = (await context.Shifts.AsNoTracking().Select(item => (int?)item.Id).MaxAsync(cancellationToken) ?? 0) + 1;
+            var now = DateTime.Now;
+            var shift = new Shift
+            {
+                Id = nextId,
+                StoreId = storeId,
+                CashId = cashId,
+                OpenedByUserId = openedByUserId,
+                OpeningBalance = openingBalance,
+                OpenedAt = now,
+                ExpiresAt = now.AddHours(24),
+                Status = 1
+            };
+
+            context.Shifts.Add(shift);
+            await context.SaveChangesAsync(cancellationToken);
+            return shift;
+        }
+        finally
+        {
+            WriteLock.Release();
+        }
+    }
+
+    public async Task<Shift?> CloseShiftAsync(
+        int shiftId,
+        int closedByUserId,
+        string? note = null,
+        CancellationToken cancellationToken = default)
+    {
+        await WriteLock.WaitAsync(cancellationToken);
+        try
+        {
+            await using var context = CreateContext();
+            var shift = await context.Shifts.FirstOrDefaultAsync(item => item.Id == shiftId, cancellationToken);
+            if (shift is null || shift.ClosedAt is not null)
+            {
+                return shift;
+            }
+
+            var closedAt = DateTime.Now;
+            var openedEpoch = new DateTimeOffset(shift.OpenedAt).ToUnixTimeSeconds();
+            var closedEpoch = new DateTimeOffset(closedAt).ToUnixTimeSeconds();
+            var orders = await context.Orders
+                .AsNoTracking()
+                .Where(order =>
+                    order.StoreId == shift.StoreId &&
+                    order.CashId == shift.CashId &&
+                    order.Date >= shift.OpenedAt &&
+                    order.Date <= closedAt)
+                .ToListAsync(cancellationToken);
+
+            var payments = await context.Dds
+                .AsNoTracking()
+                .Where(item =>
+                    item.StoreId == shift.StoreId &&
+                    item.CashId == shift.CashId &&
+                    item.EventTime >= openedEpoch &&
+                    item.EventTime <= closedEpoch)
+                .ToListAsync(cancellationToken);
+
+            var sales = orders.Where(order => order.Status == "paid" && !IsReturnSale(order)).ToList();
+            var returns = orders.Where(IsReturnSale).ToList();
+            var salePayments = sales.Sum(order => order.SummaPay > 0 ? order.SummaPay : order.Total);
+            var paymentIncome = payments.Where(item => item.OrderType is DdsOperationTypes.CustomerIn or DdsOperationTypes.CashIn).Sum(item => item.Summa);
+            var paymentExpense = payments.Where(item => item.OrderType is DdsOperationTypes.CustomerOut or DdsOperationTypes.CashOut).Sum(item => item.Summa);
+            var cashIncome = payments.Where(item => item.OrderType == DdsOperationTypes.CashIn).Sum(item => item.Summa);
+            var cashExpense = payments.Where(item => item.OrderType == DdsOperationTypes.CashOut).Sum(item => item.Summa);
+
+            shift.SalesCount = sales.Count;
+            shift.SalesTotal = sales.Sum(order => order.Total);
+            shift.ReturnTotal = returns.Sum(order => order.Total);
+            shift.SalePaymentTotal = salePayments;
+            shift.PaymentIncomeTotal = paymentIncome;
+            shift.PaymentExpenseTotal = paymentExpense;
+            shift.PaymentTotal = paymentIncome - paymentExpense;
+            shift.PaymentCount = payments.Count;
+            shift.CashInTotal = cashIncome;
+            shift.CashOutTotal = cashExpense;
+            shift.ClosingBalance = shift.OpeningBalance + shift.SalePaymentTotal + shift.PaymentTotal - shift.ReturnTotal;
+            shift.ClosedAt = closedAt;
+            shift.ClosedByUserId = closedByUserId;
+            shift.Note = string.IsNullOrWhiteSpace(note) ? shift.Note : note;
+            shift.Status = 2;
+
+            await context.SaveChangesAsync(cancellationToken);
+            return shift;
+        }
+        finally
+        {
+            WriteLock.Release();
+        }
+    }
+
+    private static bool IsReturnSale(Order order)
+    {
+        return order.SaleType == Order.SaleTypeReturn;
+    }
+
     public async Task<Dds> AddDdsOperationAsync(Dds operation, CancellationToken cancellationToken = default)
     {
         await WriteLock.WaitAsync(cancellationToken);
@@ -183,7 +318,11 @@ public sealed class DatabaseService
             operation.DocId = operation.DocId > 0 ? operation.DocId : operation.Id;
             operation.StoreId = operation.StoreId > 0 ? operation.StoreId : _settings.StoreId;
             operation.UserId = operation.UserId > 0 ? operation.UserId : App.CurrentUser?.Id ?? 1;
-            operation.CashId = operation.CashId > 0 ? operation.CashId : App.CurrentUser?.CashId ?? 1;
+            var userSettings = UserSettings.Parse(App.CurrentUser?.Settings);
+            var defaultCashId = userSettings.DefaultCashId > 0
+                ? userSettings.DefaultCashId
+                : App.CurrentUser?.CashId > 0 ? App.CurrentUser.CashId : 1;
+            operation.CashId = operation.CashId > 0 ? operation.CashId : defaultCashId;
             operation.PeopleId = operation.PeopleId > 0 ? operation.PeopleId : 1;
             operation.ArticleId = operation.ArticleId > 0 ? operation.ArticleId : 1;
             operation.Summa = Math.Abs(operation.Summa);
@@ -357,6 +496,7 @@ public sealed class DatabaseService
             }
 
             trackedOrder.OrderType = order.OrderType;
+            trackedOrder.SaleType = order.SaleType;
             trackedOrder.Status = string.IsNullOrWhiteSpace(order.Status) ? "open" : order.Status;
             trackedOrder.Discount = order.Discount;
             trackedOrder.StoreId = order.StoreId > 0 ? order.StoreId : _settings.StoreId;
@@ -380,22 +520,17 @@ public sealed class DatabaseService
 
             foreach (var sourceItem in order.Items)
             {
-                if (sourceItem.Product is null)
+                var productId = sourceItem.ProductId > 0 ? sourceItem.ProductId : sourceItem.Product?.Id ?? 0;
+                if (productId <= 0)
                 {
                     continue;
                 }
 
-                if (context.Entry(sourceItem.Product).State == EntityState.Detached)
-                {
-                    context.Attach(sourceItem.Product);
-                }
-
                 trackedOrder.Items.Add(new OrderItem
                 {
-                    ProductId = sourceItem.Product.Id,
-                    Product = sourceItem.Product,
+                    ProductId = productId,
                     Quantity = sourceItem.Quantity,
-                    Price = sourceItem.Price > 0 ? sourceItem.Price : sourceItem.Product.Price,
+                    Price = sourceItem.Price > 0 ? sourceItem.Price : sourceItem.Product?.Price ?? 0m,
                     Discount = sourceItem.Discount,
                     Bonus = sourceItem.Bonus
                 });
@@ -428,6 +563,7 @@ public sealed class DatabaseService
 
             tracked.Status = "paid";
             tracked.OrderType = order.OrderType;
+            tracked.SaleType = order.SaleType;
             tracked.CashId = order.CashId > 0 ? order.CashId : tracked.CashId;
             tracked.PeopleId = order.PeopleId > 0 ? order.PeopleId : tracked.PeopleId;
             tracked.Summa = order.Subtotal;
@@ -708,6 +844,7 @@ public sealed class DatabaseService
                     bonussum DECIMAL(18,2) NOT NULL DEFAULT 0,
                     summapay DECIMAL(18,2) NOT NULL DEFAULT 0,
                     date DATETIME NOT NULL,
+                    sale_type VARCHAR(30) NOT NULL DEFAULT 'sale',
                     type VARCHAR(50) NOT NULL DEFAULT '3',
                     status VARCHAR(30) NOT NULL DEFAULT '1',
                     sync_status INT NOT NULL DEFAULT 0,
@@ -731,6 +868,27 @@ public sealed class DatabaseService
                     CONSTRAINT fk_sale_data_sales_sale_id FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE
                 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
                 """, cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "store_id", "INT NOT NULL DEFAULT 1", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "cash_id", "INT NOT NULL DEFAULT 1", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "opened_by_user_id", "INT NOT NULL DEFAULT 1", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "closed_by_user_id", "INT NULL", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "opening_balance", "DECIMAL(18,2) NOT NULL DEFAULT 0", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "sales_total", "DECIMAL(18,2) NOT NULL DEFAULT 0", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "return_total", "DECIMAL(18,2) NOT NULL DEFAULT 0", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "sale_payment_total", "DECIMAL(18,2) NOT NULL DEFAULT 0", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "payment_income_total", "DECIMAL(18,2) NOT NULL DEFAULT 0", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "payment_expense_total", "DECIMAL(18,2) NOT NULL DEFAULT 0", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "payment_total", "DECIMAL(18,2) NOT NULL DEFAULT 0", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "cash_in_total", "DECIMAL(18,2) NOT NULL DEFAULT 0", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "cash_out_total", "DECIMAL(18,2) NOT NULL DEFAULT 0", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "closing_balance", "DECIMAL(18,2) NOT NULL DEFAULT 0", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "sales_count", "INT NOT NULL DEFAULT 0", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "payment_count", "INT NOT NULL DEFAULT 0", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "opened_at", "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "expires_at", "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "closed_at", "DATETIME NULL", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "note", "TEXT NULL", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "shifts", "status", "INT NOT NULL DEFAULT 1", cancellationToken);
             return;
         }
 
@@ -748,6 +906,7 @@ public sealed class DatabaseService
                 bonussum REAL NOT NULL DEFAULT 0,
                 summapay REAL NOT NULL DEFAULT 0,
                 date TEXT NOT NULL,
+                sale_type TEXT NOT NULL DEFAULT 'sale',
                 type TEXT NOT NULL DEFAULT '3',
                 status TEXT NOT NULL DEFAULT '1',
                 sync_status INTEGER NOT NULL DEFAULT 0,
@@ -780,58 +939,13 @@ public sealed class DatabaseService
     {
         if (IsMySql)
         {
-            var dbConnection = context.Database.GetDbConnection();
-            await context.Database.OpenConnectionAsync(cancellationToken);
-            try
-            {
-                await using var command = dbConnection.CreateCommand();
-                command.CommandText = """
-                    SELECT COUNT(*)
-                    FROM INFORMATION_SCHEMA.COLUMNS
-                    WHERE TABLE_SCHEMA = DATABASE()
-                      AND TABLE_NAME = 'sales'
-                      AND COLUMN_NAME = 'note';
-                    """;
-                var hasNote = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken)) > 0;
-                if (!hasNote)
-                {
-                    await context.Database.ExecuteSqlRawAsync("ALTER TABLE sales ADD COLUMN note TEXT NULL;", cancellationToken);
-                }
-            }
-            finally
-            {
-                await context.Database.CloseConnectionAsync();
-            }
+            await EnsureMySqlColumnAsync(context, "sales", "sale_type", "VARCHAR(30) NOT NULL DEFAULT 'sale'", cancellationToken);
+            await EnsureMySqlColumnAsync(context, "sales", "note", "TEXT NULL", cancellationToken);
             return;
         }
 
-        if (context.Database.GetDbConnection() is not SqliteConnection connection)
-        {
-            return;
-        }
-
-        var hasNoteColumn = false;
-        await context.Database.OpenConnectionAsync(cancellationToken);
-        await using (var command = connection.CreateCommand())
-        {
-            command.CommandText = "PRAGMA table_info(sales);";
-            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                var columnName = reader.GetString(1);
-                if (string.Equals(columnName, "note", StringComparison.OrdinalIgnoreCase))
-                {
-                    hasNoteColumn = true;
-                    break;
-                }
-            }
-        }
-        await context.Database.CloseConnectionAsync();
-
-        if (!hasNoteColumn)
-        {
-            await context.Database.ExecuteSqlRawAsync("ALTER TABLE sales ADD COLUMN note TEXT NULL;", cancellationToken);
-        }
+        await EnsureSqliteColumnAsync(context, "sales", "sale_type", "TEXT NOT NULL DEFAULT 'sale'", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "sales", "note", "TEXT NULL", cancellationToken);
     }
 
     private static async Task NormalizeSalesCodeValuesAsync(AppDbContext context, CancellationToken cancellationToken)
@@ -931,6 +1045,88 @@ public sealed class DatabaseService
         await EnsureSqliteColumnAsync(context, "dds", "server_id", "INTEGER NULL", cancellationToken);
         await EnsureSqliteColumnAsync(context, "dds", "synced_at", "TEXT NULL", cancellationToken);
         await EnsureSqliteColumnAsync(context, "dds", "sync_error", "TEXT NULL", cancellationToken);
+    }
+
+    private async Task EnsureShiftsTableAsync(AppDbContext context, CancellationToken cancellationToken)
+    {
+        if (IsMySql)
+        {
+            await context.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS shifts (
+                    id INT NOT NULL PRIMARY KEY,
+                    store_id INT NOT NULL DEFAULT 1,
+                    cash_id INT NOT NULL DEFAULT 1,
+                    opened_by_user_id INT NOT NULL DEFAULT 1,
+                    closed_by_user_id INT NULL,
+                    opening_balance DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    sales_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    return_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    sale_payment_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    payment_income_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    payment_expense_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    payment_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    cash_in_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    cash_out_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    closing_balance DECIMAL(18,2) NOT NULL DEFAULT 0,
+                    sales_count INT NOT NULL DEFAULT 0,
+                    payment_count INT NOT NULL DEFAULT 0,
+                    opened_at DATETIME NOT NULL,
+                    expires_at DATETIME NOT NULL,
+                    closed_at DATETIME NULL,
+                    note TEXT NULL,
+                    status INT NOT NULL DEFAULT 1
+                ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+                """, cancellationToken);
+            return;
+        }
+
+        await context.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE IF NOT EXISTS shifts (
+                id INTEGER NOT NULL PRIMARY KEY,
+                store_id INTEGER NOT NULL DEFAULT 1,
+                cash_id INTEGER NOT NULL DEFAULT 1,
+                opened_by_user_id INTEGER NOT NULL DEFAULT 1,
+                closed_by_user_id INTEGER NULL,
+                opening_balance REAL NOT NULL DEFAULT 0,
+                sales_total REAL NOT NULL DEFAULT 0,
+                return_total REAL NOT NULL DEFAULT 0,
+                sale_payment_total REAL NOT NULL DEFAULT 0,
+                payment_income_total REAL NOT NULL DEFAULT 0,
+                payment_expense_total REAL NOT NULL DEFAULT 0,
+                payment_total REAL NOT NULL DEFAULT 0,
+                cash_in_total REAL NOT NULL DEFAULT 0,
+                cash_out_total REAL NOT NULL DEFAULT 0,
+                closing_balance REAL NOT NULL DEFAULT 0,
+                sales_count INTEGER NOT NULL DEFAULT 0,
+                payment_count INTEGER NOT NULL DEFAULT 0,
+                opened_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                closed_at TEXT NULL,
+                note TEXT NULL,
+                status INTEGER NOT NULL DEFAULT 1
+            );
+            """, cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "store_id", "INTEGER NOT NULL DEFAULT 1", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "cash_id", "INTEGER NOT NULL DEFAULT 1", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "opened_by_user_id", "INTEGER NOT NULL DEFAULT 1", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "closed_by_user_id", "INTEGER NULL", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "opening_balance", "REAL NOT NULL DEFAULT 0", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "sales_total", "REAL NOT NULL DEFAULT 0", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "return_total", "REAL NOT NULL DEFAULT 0", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "sale_payment_total", "REAL NOT NULL DEFAULT 0", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "payment_income_total", "REAL NOT NULL DEFAULT 0", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "payment_expense_total", "REAL NOT NULL DEFAULT 0", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "payment_total", "REAL NOT NULL DEFAULT 0", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "cash_in_total", "REAL NOT NULL DEFAULT 0", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "cash_out_total", "REAL NOT NULL DEFAULT 0", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "closing_balance", "REAL NOT NULL DEFAULT 0", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "sales_count", "INTEGER NOT NULL DEFAULT 0", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "payment_count", "INTEGER NOT NULL DEFAULT 0", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "opened_at", "TEXT NOT NULL DEFAULT '1970-01-01 00:00:00'", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "expires_at", "TEXT NOT NULL DEFAULT '1970-01-01 00:00:00'", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "closed_at", "TEXT NULL", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "note", "TEXT NULL", cancellationToken);
+        await EnsureSqliteColumnAsync(context, "shifts", "status", "INTEGER NOT NULL DEFAULT 1", cancellationToken);
     }
 
     private async Task EnsureArticlesTableAsync(AppDbContext context, CancellationToken cancellationToken)

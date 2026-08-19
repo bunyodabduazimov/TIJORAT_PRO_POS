@@ -390,6 +390,7 @@ public class SyncService
                 summapay = order.SummaPay,
                 note = order.Note,
                 date = order.Date.ToString("yyyy-MM-dd HH:mm:ss"),
+                sale_type = order.SaleType,
                 type = OrderCodes.ToOrderTypeCode(order.OrderType),
                 status = OrderCodes.ToStatusCode(order.Status)
             },

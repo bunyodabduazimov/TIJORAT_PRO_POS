@@ -5,6 +5,7 @@
              xmlns:converters="clr-namespace:FFPOS.Converters"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="FFPOS.Views.SalesView"
+             x:Name="Root"
              Background="#F7F8FA"
              FontFamily="Inter, Segoe UI" d:DesignHeight="680.402" d:DesignWidth="1089.262">
     <UserControl.Resources>
@@ -13,7 +14,9 @@
         <converters:BoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" Invert="True" />
         <converters:BoolToGridLengthConverter x:Key="SidebarWidthConverter" Expanded="250" Collapsed="0" />
         <converters:BoolToGridLengthConverter x:Key="FooterHeightConverter" Expanded="60" Collapsed="0" />
+        <converters:BoolToGridLengthConverter x:Key="StockColumnWidthConverter" Expanded="90" Collapsed="0" />
         <converters:SortDirectionToIconConverter x:Key="SortDirectionToIconConverter" />
+        <controls:BindingProxy x:Key="ViewModelProxy" Data="{Binding}" />
 
         <Style x:Key="ScrollBarRepeatButtonStyle" TargetType="{x:Type RepeatButton}">
             <Setter Property="Focusable" Value="False" />
@@ -403,6 +406,7 @@
         </Style>
 
         <Style x:Key="OrderItemsGridStyle" TargetType="{x:Type DataGrid}" BasedOn="{StaticResource PaymentDataGridStyle}">
+            <Setter Property="ColumnHeaderStyle" Value="{StaticResource ReceiptItemsGridHeaderStyle}" />
             <Setter Property="CellStyle" Value="{StaticResource OrderItemsGridCellStyle}" />
             <Setter Property="RowStyle" Value="{StaticResource OrderItemsGridRowStyle}" />
             <Setter Property="CanUserSortColumns" Value="False" />
@@ -421,6 +425,29 @@
         <Style x:Key="ReceiptItemsGridRightCellTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource ReceiptItemsGridCellTextStyle}">
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="TextAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="InlineValueTextBoxStyle" TargetType="{x:Type TextBox}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="4,0" />
+            <Setter Property="Foreground" Value="#111827" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Style.Triggers>
+                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                    <Setter Property="Background" Value="#FFFFFF" />
+                    <Setter Property="BorderBrush" Value="#FFB8B3" />
+                    <Setter Property="BorderThickness" Value="1" />
+                </Trigger>
+                <Trigger Property="IsReadOnly" Value="True">
+                    <Setter Property="Cursor" Value="Hand" />
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <Style x:Key="ReceiptItemsGridCellStyle" TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource PaymentGridCellStyle}">
@@ -581,7 +608,7 @@
                                 <TextBlock Text="Касса" />
                             </StackPanel>
                         </Button>
-                        <Button Command="{Binding NavigateCommand}" CommandParameter="Заказы" Margin="8,0,0,0">
+                        <Button Command="{Binding NavigateCommand}" CommandParameter="Заказы" Margin="8,0,0,0" Visibility="{Binding CanShowOrders, Converter={StaticResource BoolToVisibilityConverter}}">
                             <Button.Style>
                                 <Style TargetType="{x:Type Button}" BasedOn="{StaticResource NavButtonStyle}">
                                     <Style.Triggers>
@@ -597,7 +624,7 @@
                                 <TextBlock Text="Заказы" />
                             </StackPanel>
                         </Button>
-                        <Button Command="{Binding NavigateCommand}" CommandParameter="Платежи" Margin="8,0,0,0">
+                        <Button Command="{Binding NavigateCommand}" CommandParameter="Платежи" Margin="8,0,0,0" Visibility="{Binding CanShowPayments, Converter={StaticResource BoolToVisibilityConverter}}">
                             <Button.Style>
                                 <Style TargetType="{x:Type Button}" BasedOn="{StaticResource NavButtonStyle}">
                                     <Style.Triggers>
@@ -648,6 +675,48 @@
                                 Padding="8"
                                 Effect="{StaticResource SoftShadow}">
                             <StackPanel>
+                                <StackPanel Visibility="{Binding IsShiftEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <Border Background="{Binding ShiftStatusBackground}" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding ShiftStatusText}" FontSize="14" FontWeight="Bold" Foreground="{Binding ShiftStatusBrush}" />
+                                            <TextBlock Text="{Binding ShiftStatusHint}" FontSize="12" Foreground="#667085" Margin="0,3,0,0" TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding ShiftRemainingText}" FontSize="12" Foreground="#344054" Margin="0,3,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Button Command="{Binding OpenShiftCommand}">
+                                        <Button.Style>
+                                            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ProfileMenuButtonStyle}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasOpenShift}" Value="False">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                            <materialDesign:PackIcon Kind="LockOpenOutline" Width="20" Height="20" Margin="0,0,12,0" />
+                                            <TextBlock Text="Открыть смену" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Command="{Binding CloseShiftCommand}">
+                                        <Button.Style>
+                                            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource ProfileMenuButtonStyle}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasOpenShift}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                            <materialDesign:PackIcon Kind="LockOutline" Width="20" Height="20" Margin="0,0,12,0" />
+                                            <TextBlock Text="Закрыть смену" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Border Height="1" Background="#EEF2F6" Margin="8,6" />
+                                </StackPanel>
                                 <Button Command="{Binding OpenSettingsCommand}" Style="{StaticResource ProfileMenuButtonStyle}">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                         <materialDesign:PackIcon Kind="CogOutline" Width="20" Height="20" Margin="0,0,12,0" />
@@ -845,13 +914,13 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="60" />
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="90" />
+                                    <ColumnDefinition Width="{Binding ShowStockQuantity, Converter={StaticResource StockColumnWidthConverter}}" />
                                     <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="60" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="Фото" FontSize="14" FontWeight="Medium" Foreground="#475467" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Товар" FontSize="14" FontWeight="Medium" Foreground="#475467" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="2" Text="Остаток" FontSize="14" FontWeight="Medium" Foreground="#475467" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="2" Text="Остаток" FontSize="14" FontWeight="Medium" Foreground="#475467" VerticalAlignment="Center" Visibility="{Binding ShowStockQuantity, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 <TextBlock Grid.Column="3" Text="Цена" FontSize="14" FontWeight="Medium" Foreground="#475467" VerticalAlignment="Center" />
                             </Grid>
                         </Border>
@@ -885,7 +954,7 @@
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="60" />
                                                     <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="90" />
+                                                    <ColumnDefinition Width="{Binding DataContext.ShowStockQuantity, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Converter={StaticResource StockColumnWidthConverter}}" />
                                                     <ColumnDefinition Width="90" />
                                                     <ColumnDefinition Width="60" />
                                                 </Grid.ColumnDefinitions>
@@ -899,7 +968,7 @@
                                                         <TextBlock Text="{Binding Barcode, TargetNullValue=-}" FontSize="12" Foreground="#667085" TextTrimming="CharacterEllipsis" MaxWidth="160" />
                                                     </StackPanel>
                                                 </StackPanel>
-                                                <TextBlock Grid.Column="2" Text="{Binding Quantity, StringFormat={}{0:0.##}}" FontSize="14" FontWeight="Medium" Foreground="#475467" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="2" Text="{Binding Quantity, StringFormat={}{0:0.##}}" FontSize="14" FontWeight="Medium" Foreground="#475467" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding DataContext.ShowStockQuantity, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Converter={StaticResource BoolToVisibilityConverter}}" />
                                                 <TextBlock Grid.Column="3" Text="{Binding Price, StringFormat={}{0:0} c}" FontSize="15" FontWeight="SemiBold" Foreground="#111827" VerticalAlignment="Center" />
                                                 <Border Grid.Column="4" Width="42" Height="34" Background="White" BorderBrush="#DEE4EC" BorderThickness="1" CornerRadius="7" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                     <TextBlock FontSize="16" Foreground="#102033" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -953,15 +1022,52 @@
 
                         <Border BorderBrush="#E8EDF3" BorderThickness="0,0,0,1" Padding="16,0,16,0">
                             <Grid>
-                                <TextBlock Text="{Binding CurrentOrder.DisplayName}" FontSize="17" FontWeight="SemiBold" Foreground="#111827" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,184,0" />
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                    <Button Command="{Binding AddNoteCommand}" Style="{StaticResource TinyIconButtonStyle}" ToolTip="Примечание">
-                                        <materialDesign:PackIcon Kind="NoteEditOutline" Width="22" Height="22" />
-                                    </Button>
-                                    <Button Command="{Binding ShowCustomerCommand}" Style="{StaticResource TinyIconButtonStyle}" Margin="6,0,0,0" ToolTip="Клиент">
-                                        <materialDesign:PackIcon Kind="AccountCheckOutline" Width="22" Height="22" />
-                                    </Button>
-                                    <Button Command="{Binding ShowReceiptCommand}" Style="{StaticResource TinyIconButtonStyle}" Margin="6,0,0,0" ToolTip="Печать чека">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding CurrentOrder.DisplayName}" FontSize="17" FontWeight="SemiBold" Foreground="#111827" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,12,0" />
+                                <Border Grid.Column="1" Background="#F2F4F7" BorderBrush="#D9E2EC" BorderThickness="1" CornerRadius="8" Height="38" Width="190" VerticalAlignment="Center" Margin="0,0,10,0">
+                                    <UniformGrid Columns="2" Margin="3">
+                                        <Button Command="{Binding SelectSaleTypeCommand}" CommandParameter="sale" Height="30" Padding="10,0" BorderThickness="0" Cursor="Hand" FocusVisualStyle="{x:Null}">
+                                            <Button.Style>
+                                                <Style TargetType="{x:Type Button}" BasedOn="{StaticResource SecondaryButtonStyle}">
+                                                    <Setter Property="Background" Value="Transparent" />
+                                                    <Setter Property="Foreground" Value="#344054" />
+                                                    <Setter Property="BorderThickness" Value="0" />
+                                                    <Setter Property="Padding" Value="10,0" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSaleSelected}" Value="True">
+                                                            <Setter Property="Background" Value="White" />
+                                                            <Setter Property="Foreground" Value="#FF2B22" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <TextBlock Text="Продажа" FontSize="13" FontWeight="Bold" />
+                                        </Button>
+                                        <Button Command="{Binding SelectSaleTypeCommand}" CommandParameter="sale_return" Height="30" Padding="10,0" BorderThickness="0" Cursor="Hand" FocusVisualStyle="{x:Null}" Visibility="{Binding CanReturnSale, Converter={StaticResource BoolToVisibilityConverter}}">
+                                            <Button.Style>
+                                                <Style TargetType="{x:Type Button}" BasedOn="{StaticResource SecondaryButtonStyle}">
+                                                    <Setter Property="Background" Value="Transparent" />
+                                                    <Setter Property="Foreground" Value="#344054" />
+                                                    <Setter Property="BorderThickness" Value="0" />
+                                                    <Setter Property="Padding" Value="10,0" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSaleReturnSelected}" Value="True">
+                                                            <Setter Property="Background" Value="White" />
+                                                            <Setter Property="Foreground" Value="#FF2B22" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <TextBlock Text="Возврат" FontSize="13" FontWeight="Bold" />
+                                        </Button>
+                                    </UniformGrid>
+                                </Border>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <Button Command="{Binding ShowReceiptCommand}" Style="{StaticResource TinyIconButtonStyle}" Margin="0,0,0,0" ToolTip="Печать чека">
                                         <materialDesign:PackIcon Kind="Printer" Width="22" Height="22" />
                                     </Button>
                                     <Button x:Name="OrderActionsButton" Click="OrderActionsButton_OnClick" Style="{StaticResource TinyIconButtonStyle}" Margin="6,0,0,0" ToolTip="Действия">
@@ -982,12 +1088,6 @@
                                                 Padding="8"
                                                 Effect="{StaticResource SoftShadow}">
                                             <StackPanel>
-                                                <Button Command="{Binding AddNoteCommand}" Style="{StaticResource ProfileMenuButtonStyle}">
-                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                                                        <materialDesign:PackIcon Kind="NoteEditOutline" Width="20" Height="20" Margin="0,0,12,0" />
-                                                        <TextBlock Text="Примечание" VerticalAlignment="Center" />
-                                                    </StackPanel>
-                                                </Button>
                                                 <Button Command="{Binding HoldOrderCommand}" Style="{StaticResource ProfileMenuButtonStyle}">
                                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                                         <materialDesign:PackIcon Kind="PauseCircleOutline" Width="20" Height="20" Margin="0,0,12,0" />
@@ -1036,6 +1136,7 @@
                                         <DataTemplate>
                                             <TextBlock Text="{Binding Product.Name}"
                                                        Style="{StaticResource ReceiptItemsGridCellTextStyle}"
+                                                       FontWeight="Normal"
                                                        TextWrapping="Wrap"
                                                        TextTrimming="None"
                                                        VerticalAlignment="Center" />
@@ -1048,10 +1149,12 @@
                                     </DataGridTemplateColumn.CellStyle>
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="{Binding Quantity}"
-                                                       Style="{StaticResource ReceiptItemsGridCellTextStyle}"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center" />
+                                            <TextBox Text="{Binding Quantity, Mode=OneWay}"
+                                                     Tag="Quantity"
+                                                     Style="{StaticResource InlineValueTextBoxStyle}"
+                                                     IsReadOnly="{Binding DataContext.IsInlineQuantityReadOnly, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                                     LostFocus="CurrentOrderInlineValue_LostFocus"
+                                                     PreviewTextInput="InlineValue_PreviewTextInput" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
@@ -1061,9 +1164,12 @@
                                     </DataGridTemplateColumn.CellStyle>
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="{Binding Price, StringFormat={}{0:0.##}}"
-                                                       Style="{StaticResource ReceiptItemsGridRightCellTextStyle}"
-                                                       VerticalAlignment="Center" />
+                                            <TextBox Text="{Binding Price, StringFormat={}{0:0.##}, Mode=OneWay}"
+                                                     Tag="Price"
+                                                     Style="{StaticResource InlineValueTextBoxStyle}"
+                                                     IsReadOnly="{Binding DataContext.IsInlinePriceReadOnly, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                                     LostFocus="CurrentOrderInlineValue_LostFocus"
+                                                     PreviewTextInput="InlineValue_PreviewTextInput" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
@@ -1073,9 +1179,12 @@
                                     </DataGridTemplateColumn.CellStyle>
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="{Binding Total, StringFormat={}{0:0.##}}"
-                                                       Style="{StaticResource ReceiptItemsGridRightCellTextStyle}"
-                                                       VerticalAlignment="Center" />
+                                            <TextBox Text="{Binding Total, StringFormat={}{0:0.##}, Mode=OneWay}"
+                                                     Tag="Total"
+                                                     Style="{StaticResource InlineValueTextBoxStyle}"
+                                                     IsReadOnly="{Binding DataContext.IsInlinePriceReadOnly, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                                     LostFocus="CurrentOrderInlineValue_LostFocus"
+                                                     PreviewTextInput="InlineValue_PreviewTextInput" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
@@ -1091,9 +1200,9 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="14,0,0,0">
                                         <materialDesign:PackIcon Kind="CashRegister" Width="20" Height="20" Foreground="White" Margin="0,0,8,0" />
-                                        <TextBlock Text="Оплатить" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding SaleActionText}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                                     </StackPanel>
-                                    <TextBlock Grid.Column="1" Text="{Binding CurrentOrder.Total, StringFormat={}{0:0} c}" FontSize="23" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="14,0,16,0" />
+                                    <TextBlock Grid.Column="1" Text="{Binding CurrentOrder.Total, StringFormat={}{0:0} c}" FontSize="23" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="14,0,16,0" Visibility="{Binding ShowTotals, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 </Grid>
                             </Button>
                         </StackPanel>
@@ -1205,6 +1314,7 @@
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Чек" Binding="{Binding NumberText}" SortMemberPath="Number" Width="115" MinWidth="104" ElementStyle="{StaticResource PaymentGridCellTextStyle}" />
                                     <DataGridTextColumn Header="Дата" Binding="{Binding DateText}" SortMemberPath="Date" Width="145" MinWidth="136" ElementStyle="{StaticResource PaymentGridCellTextStyle}" />
+                                    <DataGridTextColumn Header="Тип" Binding="{Binding SaleTypeText}" SortMemberPath="SaleTypeText" Width="95" MinWidth="90" ElementStyle="{StaticResource PaymentGridCellTextStyle}" />
                                     <DataGridTemplateColumn Header="Клиент" SortMemberPath="CustomerName" Width="2*" MinWidth="220">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
@@ -1225,7 +1335,7 @@
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
                                     <DataGridTextColumn Header="Товаров" Binding="{Binding ItemsCount}" SortMemberPath="ItemsCount" Width="88" MinWidth="82" ElementStyle="{StaticResource PaymentGridRightCellTextStyle}" />
-                                    <DataGridTextColumn Header="Сумма" Binding="{Binding TotalText}" SortMemberPath="Total" Width="120" MinWidth="110" ElementStyle="{StaticResource PaymentGridRightCellTextStyle}" />
+                                    <DataGridTextColumn Header="Сумма" Binding="{Binding TotalText}" SortMemberPath="Total" Width="120" MinWidth="110" ElementStyle="{StaticResource PaymentGridRightCellTextStyle}" Visibility="{Binding Data.ShowTotals, Source={StaticResource ViewModelProxy}, Converter={StaticResource BoolToVisibilityConverter}}" />
                                     <DataGridTextColumn Header="Синх." Binding="{Binding SyncText}" SortMemberPath="SyncText" Width="98" MinWidth="90" ElementStyle="{StaticResource PaymentGridRightCellTextStyle}" />
                                 </DataGrid.Columns>
                             </DataGrid>
@@ -1306,24 +1416,9 @@
                     <Border Grid.Row="2" BorderBrush="#E8EDF3" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="34" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
-                            <Border Background="#F8FAFC" BorderBrush="#E8EDF3" BorderThickness="0,0,0,1">
-                                <Grid Margin="12,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="74" />
-                                        <ColumnDefinition Width="82" />
-                                        <ColumnDefinition Width="92" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Товар" FontSize="13" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" />
-                                    <TextBlock Grid.Column="1" Text="Кол-во" FontSize="13" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" HorizontalAlignment="Center" />
-                                    <TextBlock Grid.Column="2" Text="Цена" FontSize="13" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" HorizontalAlignment="Right" />
-                                    <TextBlock Grid.Column="3" Text="Сумма" FontSize="13" FontWeight="SemiBold" Foreground="#475467" VerticalAlignment="Center" HorizontalAlignment="Right" />
-                                </Grid>
-                            </Border>
-                            <DataGrid Grid.Row="1"
+                            <DataGrid Grid.Row="0"
                                       ItemsSource="{Binding SelectedOrderListItem.Order.Items}"
                                       Style="{StaticResource OrderItemsGridStyle}"
                                       VerticalScrollBarVisibility="Auto"
@@ -1357,41 +1452,40 @@
                                     <DataGridTemplateColumn Header="Кол-во" Width="74" IsReadOnly="True">
                                         <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Button Command="{Binding DataContext.EditSelectedOrderQuantityCommand, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
-                                                    CommandParameter="{Binding}"
-                                                    Style="{StaticResource InlineTextButtonStyle}">
-                                                <TextBlock Text="{Binding Quantity}"
-                                                           Style="{StaticResource OrderItemsGridCellTextStyle}"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center" />
-                                            </Button>
+                                            <TextBox Text="{Binding Quantity, Mode=OneWay}"
+                                                     Tag="Quantity"
+                                                     Style="{StaticResource InlineValueTextBoxStyle}"
+                                                     IsReadOnly="{Binding DataContext.IsInlineQuantityReadOnly, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                                     LostFocus="SelectedOrderInlineValue_LostFocus"
+                                                     PreviewMouseLeftButtonUp="SelectedOrderInlineValue_PreviewMouseLeftButtonUp"
+                                                     PreviewTextInput="InlineValue_PreviewTextInput" />
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
                                     <DataGridTemplateColumn Header="Цена" Width="82" IsReadOnly="True">
                                         <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Button Command="{Binding DataContext.EditSelectedOrderPriceCommand, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
-                                                    CommandParameter="{Binding}"
-                                                    Style="{StaticResource InlineTextButtonStyle}">
-                                                <TextBlock Text="{Binding Price, StringFormat={}{0:0.##} c}"
-                                                           Style="{StaticResource OrderItemsGridRightCellTextStyle}"
-                                                           VerticalAlignment="Center" />
-                                            </Button>
+                                            <TextBox Text="{Binding Price, StringFormat={}{0:0.##}, Mode=OneWay}"
+                                                     Tag="Price"
+                                                     Style="{StaticResource InlineValueTextBoxStyle}"
+                                                     IsReadOnly="{Binding DataContext.IsInlinePriceReadOnly, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                                     LostFocus="SelectedOrderInlineValue_LostFocus"
+                                                     PreviewMouseLeftButtonUp="SelectedOrderInlineValue_PreviewMouseLeftButtonUp"
+                                                     PreviewTextInput="InlineValue_PreviewTextInput" />
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
                                     <DataGridTemplateColumn Header="Сумма" Width="92" IsReadOnly="True">
                                         <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Button Command="{Binding DataContext.EditSelectedOrderTotalCommand, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
-                                                    CommandParameter="{Binding}"
-                                                    Style="{StaticResource InlineTextButtonStyle}">
-                                                <TextBlock Text="{Binding Total, StringFormat={}{0:0.##} c}"
-                                                           Style="{StaticResource OrderItemsGridRightCellTextStyle}"
-                                                           FontWeight="Bold"
-                                                           VerticalAlignment="Center" />
-                                            </Button>
+                                            <TextBox Text="{Binding Total, StringFormat={}{0:0.##}, Mode=OneWay}"
+                                                     Tag="Total"
+                                                     Style="{StaticResource InlineValueTextBoxStyle}"
+                                                     FontWeight="Bold"
+                                                     IsReadOnly="{Binding DataContext.IsInlinePriceReadOnly, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                                     LostFocus="SelectedOrderInlineValue_LostFocus"
+                                                     PreviewMouseLeftButtonUp="SelectedOrderInlineValue_PreviewMouseLeftButtonUp"
+                                                     PreviewTextInput="InlineValue_PreviewTextInput" />
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
@@ -1407,9 +1501,9 @@
                             <RowDefinition Height="32" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-                        <TextBlock Text="{Binding SelectedOrderListItem.Subtotal, StringFormat=Итого: {0:0.00} c}" FontSize="16" FontWeight="SemiBold" Foreground="#344054" HorizontalAlignment="Right" />
-                        <TextBlock Grid.Row="1" Text="{Binding SelectedOrderListItem.Discount, StringFormat=Скидка: {0:0.00} c}" FontSize="16" FontWeight="SemiBold" Foreground="#344054" HorizontalAlignment="Right" />
-                        <TextBlock Grid.Row="2" Text="{Binding SelectedOrderListItem.Total, StringFormat=К оплате: {0:0.00} c}" FontSize="21" FontWeight="Bold" Foreground="#111827" HorizontalAlignment="Right" />
+                        <TextBlock Text="{Binding SelectedOrderListItem.Subtotal, StringFormat=Итого: {0:0.00} c}" FontSize="16" FontWeight="SemiBold" Foreground="#344054" HorizontalAlignment="Right" Visibility="{Binding ShowTotals, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <TextBlock Grid.Row="1" Text="{Binding SelectedOrderListItem.Discount, StringFormat=Скидка: {0:0.00} c}" FontSize="16" FontWeight="SemiBold" Foreground="#344054" HorizontalAlignment="Right" Visibility="{Binding ShowDiscountTotals, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <TextBlock Grid.Row="2" Text="{Binding SelectedOrderListItem.Total, StringFormat=К оплате: {0:0.00} c}" FontSize="21" FontWeight="Bold" Foreground="#111827" HorizontalAlignment="Right" Visibility="{Binding ShowTotals, Converter={StaticResource BoolToVisibilityConverter}}" />
                         <Grid Grid.Row="3" Margin="0,8,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -1501,7 +1595,7 @@
                         </Border>
 
                         <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
-                            <Button x:Name="PaymentActionsButton" Click="PaymentActionsButton_OnClick" Style="{StaticResource SecondaryButtonStyle}" Width="150" Height="40" ToolTip="Создать">
+                            <Button x:Name="PaymentActionsButton" Click="PaymentActionsButton_OnClick" Style="{StaticResource SecondaryButtonStyle}" Width="150" Height="40" ToolTip="Создать" Visibility="{Binding CanAddAnyPayment, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <materialDesign:PackIcon Kind="PlusCircleOutline" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center" />
                                     <TextBlock Text="Создать" VerticalAlignment="Center" />
@@ -1523,26 +1617,26 @@
                                         Padding="8"
                                         Effect="{StaticResource SoftShadow}">
                                     <StackPanel>
-                                        <Button Command="{Binding AddCustomerInPaymentCommand}" Style="{StaticResource ProfileMenuButtonStyle}">
+                                        <Button Command="{Binding AddCustomerInPaymentCommand}" Style="{StaticResource ProfileMenuButtonStyle}" Visibility="{Binding CanAddCustomerInPayment, Converter={StaticResource BoolToVisibilityConverter}}">
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                                 <materialDesign:PackIcon Kind="AccountArrowLeftOutline" Width="20" Height="20" Margin="0,0,12,0" />
                                                 <TextBlock Text="Платеж от контрагента" VerticalAlignment="Center" />
                                             </StackPanel>
                                         </Button>
-                                        <Button Command="{Binding AddCustomerOutPaymentCommand}" Style="{StaticResource ProfileMenuButtonStyle}">
+                                        <Button Command="{Binding AddCustomerOutPaymentCommand}" Style="{StaticResource ProfileMenuButtonStyle}" Visibility="{Binding CanAddCustomerOutPayment, Converter={StaticResource BoolToVisibilityConverter}}">
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                                 <materialDesign:PackIcon Kind="AccountArrowRightOutline" Width="20" Height="20" Margin="0,0,12,0" />
                                                 <TextBlock Text="Платеж контрагенту" VerticalAlignment="Center" />
                                             </StackPanel>
                                         </Button>
                                         <Border Height="1" Background="#EEF2F6" Margin="8,6" />
-                                        <Button Command="{Binding AddCashInPaymentCommand}" Style="{StaticResource ProfileMenuButtonStyle}">
+                                        <Button Command="{Binding AddCashInPaymentCommand}" Style="{StaticResource ProfileMenuButtonStyle}" Visibility="{Binding CanAddCashInPayment, Converter={StaticResource BoolToVisibilityConverter}}">
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                                 <materialDesign:PackIcon Kind="CashPlus" Width="20" Height="20" Margin="0,0,12,0" />
                                                 <TextBlock Text="Приходный ордер" VerticalAlignment="Center" />
                                             </StackPanel>
                                         </Button>
-                                        <Button Command="{Binding AddCashOutPaymentCommand}" Style="{StaticResource ProfileMenuButtonStyle}">
+                                        <Button Command="{Binding AddCashOutPaymentCommand}" Style="{StaticResource ProfileMenuButtonStyle}" Visibility="{Binding CanAddCashOutPayment, Converter={StaticResource BoolToVisibilityConverter}}">
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                                 <materialDesign:PackIcon Kind="CashMinus" Width="20" Height="20" Margin="0,0,12,0" />
                                                 <TextBlock Text="Расходный ордер" VerticalAlignment="Center" />
@@ -1588,7 +1682,7 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="Сумма" Binding="{Binding AmountText}" SortMemberPath="Amount" Width="125" MinWidth="116" ElementStyle="{StaticResource PaymentGridRightCellTextStyle}" />
+                                    <DataGridTextColumn Header="Сумма" Binding="{Binding AmountText}" SortMemberPath="Amount" Width="125" MinWidth="116" ElementStyle="{StaticResource PaymentGridRightCellTextStyle}" Visibility="{Binding Data.ShowTotals, Source={StaticResource ViewModelProxy}, Converter={StaticResource BoolToVisibilityConverter}}" />
                                     <DataGridTextColumn Header="Синх." Binding="{Binding SyncText}" SortMemberPath="SyncText" Width="100" MinWidth="92" ElementStyle="{StaticResource PaymentGridRightCellTextStyle}" />
                                 </DataGrid.Columns>
                             </DataGrid>
@@ -1614,7 +1708,7 @@
                                             <materialDesign:PackIcon Kind="ChevronRight" Width="18" Height="18" />
                                         </Button>
                                     </Grid>
-                                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="{Binding ShowTotals, Converter={StaticResource BoolToVisibilityConverter}}">
                                         <TextBlock Text="Приход:" FontSize="14" FontWeight="SemiBold" Foreground="#667085" VerticalAlignment="Center" Margin="0,0,6,0" />
                                         <TextBlock Text="{Binding PaymentIncomeTotalText}" FontSize="14" FontWeight="Bold" Foreground="#16A34A" VerticalAlignment="Center" Margin="0,0,16,0" />
                                         <TextBlock Text="Расход:" FontSize="14" FontWeight="SemiBold" Foreground="#667085" VerticalAlignment="Center" Margin="0,0,6,0" />
@@ -1669,7 +1763,7 @@
                                         <Border Grid.Column="1" Width="18" Height="18" CornerRadius="5" Background="#FB970E" VerticalAlignment="Center" Margin="0,0,10,0">
                                             <TextBlock Text="?" Foreground="White" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </Border>
-                                        <TextBlock Grid.Column="2" Text="{Binding Total, StringFormat={}{0:0} c}" FontSize="15" FontWeight="SemiBold" Foreground="#475467" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Total, StringFormat={}{0:0} c}" FontSize="15" FontWeight="SemiBold" Foreground="#475467" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="{Binding DataContext.ShowTotals, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}, Converter={StaticResource BoolToVisibilityConverter}}" />
                                     </Grid>
                                 </Button>
                             </DataTemplate>

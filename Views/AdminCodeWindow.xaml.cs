@@ -41,7 +41,6 @@ public partial class AdminCodeWindow : Window
     {
         if (sender is Button { Tag: not null } button)
         {
-            UiSoundPlayer.PlayPinClick();
             CodeBox.Password += button.Tag.ToString();
             ErrorText.Text = string.Empty;
         }

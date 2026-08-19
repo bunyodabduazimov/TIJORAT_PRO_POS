@@ -87,7 +87,7 @@
         </Style>
 
         <Style x:Key="SaveButtonStyle" TargetType="{x:Type Button}">
-            <Setter Property="Height" Value="52" />
+            <Setter Property="Height" Value="48" />
             <Setter Property="Background" Value="#F91F25" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="BorderThickness" Value="0" />
@@ -118,7 +118,7 @@
         </Style>
 
         <Style x:Key="FlatButtonStyle" TargetType="{x:Type Button}">
-            <Setter Property="Height" Value="52" />
+            <Setter Property="Height" Value="48" />
             <Setter Property="Background" Value="White" />
             <Setter Property="Foreground" Value="#344054" />
             <Setter Property="BorderBrush" Value="#DDE3EB" />
@@ -260,48 +260,47 @@
             <Setter Property="Background" Value="White" />
             <Setter Property="BorderBrush" Value="#E1E7EF" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="12" />
-            <Setter Property="Padding" Value="18" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="8" />
         </Style>
     </Window.Resources>
 
-    <Border Margin="18"
+    <Border
             Background="White"
             BorderBrush="#DDE3EB"
             BorderThickness="1"
-            CornerRadius="14"
+            CornerRadius="10"
             Effect="{StaticResource WindowShadow}">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="76" />
+                <RowDefinition Height="50" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="85" />
+                <RowDefinition Height="70" />
             </Grid.RowDefinitions>
 
             <Border BorderBrush="#E8EDF3"
                     BorderThickness="0,0,0,1"
-                    Padding="28,0"
+                    Padding="10,0"
                     PreviewMouseLeftButtonDown="HeaderMouseLeftButtonDown">
                 <Grid>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border Width="42" Height="42" CornerRadius="21" Background="#FFF0EF">
-                            <materialDesign:PackIcon Kind="CogOutline" Width="24" Height="24" Foreground="#F91F25" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Border Width="35" Height="35" CornerRadius="18" Background="#FFF0EF">
+                            <materialDesign:PackIcon Kind="CogOutline" Width="20" Height="20" Foreground="#F91F25" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
-                        <StackPanel Orientation="Vertical" Margin="14,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="Настройки приложения" FontSize="22" FontWeight="Bold" Foreground="#111827" />
-                            <TextBlock x:Name="HeaderSubtitle" Text="Все параметры POS в одном месте" FontSize="14" Foreground="#667085" />
+                        <StackPanel Orientation="Vertical" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="Настройки приложения" FontSize="20" FontWeight="Bold" Foreground="#111827" />
                         </StackPanel>
                     </StackPanel>
                     <controls:WindowControlButtons HorizontalAlignment="Right" VerticalAlignment="Center" />
                 </Grid>
             </Border>
 
-            <Grid Grid.Row="1" Margin="24,22,24,18">
+            <Grid Grid.Row="1" Margin="20 10">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
-                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,14">
+                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,6">
                             <StackPanel>
-                                <TextBlock Text="Основное" FontSize="19" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,14" PreviewMouseLeftButtonDown="HeaderMouseLeftButtonDown" />
+                                <TextBlock Text="Учетная запись" FontSize="19" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,14" PreviewMouseLeftButtonDown="HeaderMouseLeftButtonDown" />
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -328,9 +327,9 @@
                             </StackPanel>
                         </Border>
 
-                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,14">
+                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,6">
                             <StackPanel>
-                                <TextBlock Text="Точка продаж" FontSize="19" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,14" PreviewMouseLeftButtonDown="HeaderMouseLeftButtonDown" />
+                                <TextBlock Text="Организация" FontSize="19" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,14" PreviewMouseLeftButtonDown="HeaderMouseLeftButtonDown" />
 
                                 <TextBlock Text="Выбор точки продаж" FontSize="14" FontWeight="SemiBold" Foreground="#667085" />
                                 <ComboBox x:Name="StoreSelectBox"
@@ -348,12 +347,12 @@
                                 </ComboBox>
 
                                 <Border x:Name="StoreDetailsPanel"
-                                        Margin="0,12,0,0"
+                                        Margin="0,6,0,0"
                                         Background="#FBFCFE"
                                         BorderBrush="#E1E7EF"
                                         BorderThickness="1"
-                                        CornerRadius="10"
-                                        Padding="14">
+                                        CornerRadius="8"
+                                        Padding="8">
                                     <StackPanel>
                                         <TextBlock Text="Реквизиты выбранной точки"
                                                    FontSize="14"
@@ -504,8 +503,9 @@
                                     <controls:SettingToggleField x:Name="TotalSummaBox" Header="Показывать итог" Margin="0,0,20,8" />
                                     <controls:SettingToggleField x:Name="ColumnQtyStockBox" Header="Показывать остаток" Margin="0,0,20,8" />
                                     <controls:SettingToggleField x:Name="NewRowBox" Header="Новая строка всегда" Margin="0,0,20,8" />
-                                    <controls:SettingToggleField x:Name="EditPriceBox" Header="Изменение цены" Margin="0,0,20,8" />
-                                    <controls:SettingToggleField x:Name="DiscountBox" Header="Доступ к скидке" Margin="0,0,20,8" />
+                                    <controls:SettingToggleField x:Name="EditPriceBox" Header="Изменение цены" Margin="0,0,20,8" Visibility="Collapsed" />
+                                    <controls:SettingToggleField x:Name="DiscountBox" Header="Доступ к скидке" Margin="0,0,20,8" Visibility="Collapsed" />
+                                    <controls:SettingToggleField x:Name="UseShiftBox" Header="Использовать смену" Margin="0,0,20,8" />
                                 </WrapPanel>
                                 <controls:SettingTripleChoiceField x:Name="AppTypeBox"
                                                                    Header="Тип приложения"
@@ -517,7 +517,7 @@
                             </StackPanel>
                         </Border>
 
-                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,14">
+                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,14" Visibility="Collapsed">
                             <StackPanel>
                                 <TextBlock Text="Печать" FontSize="19" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,14" PreviewMouseLeftButtonDown="HeaderMouseLeftButtonDown" />
                                 <Grid>
@@ -545,7 +545,7 @@
                             </StackPanel>
                         </Border>
 
-                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,14">
+                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,14" Visibility="Collapsed">
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,14">
                                     <TextBlock Text="Фискальный модуль" FontSize="19" FontWeight="Bold" Foreground="#111827" VerticalAlignment="Center" PreviewMouseLeftButtonDown="HeaderMouseLeftButtonDown" />
@@ -639,7 +639,7 @@
                 </ScrollViewer>
             </Grid>
 
-            <Border Grid.Row="2" BorderBrush="#E8EDF3" BorderThickness="1,0,0,0" Padding="24,0">
+            <Border Grid.Row="2" BorderBrush="#E8EDF3" BorderThickness="1,0,0,0" Padding="20,0">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="400" />
@@ -652,17 +652,8 @@
                                                Header="Код администратора"
                                                IconKind="ShieldKeyOutline"
                                                FloatingHeader="True"
-                                               FieldHeight="52"
+                                               FieldHeight="48"
                                                VerticalAlignment="Center"  IsPassword="True"/>
-
-                    <TextBlock x:Name="ErrorText"
-                               Grid.Column="1"
-                               Margin="18,0"
-                               Foreground="#F91F25"
-                               FontSize="14"
-                               FontWeight="SemiBold"
-                               VerticalAlignment="Center"
-                               TextWrapping="Wrap" />
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Button Style="{StaticResource FlatButtonStyle}" Width="140" Margin="0,0,10,0" Click="ReloadClicked">

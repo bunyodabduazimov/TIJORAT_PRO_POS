@@ -11,7 +11,7 @@ public class OrderItem : INotifyPropertyChanged
     public int Id { get; set; }
     public int OrderNumber { get; set; }
     public int ProductId { get; set; }
-    public Product Product { get; set; } = new();
+    public Product? Product { get; set; }
     public decimal Discount { get; set; }
     public decimal Bonus { get; set; }
 
@@ -47,7 +47,14 @@ public class OrderItem : INotifyPropertyChanged
         }
     }
 
-    public decimal Total => (Price > 0 ? Price : Product.Price) * Quantity;
+    public decimal Total => (Price > 0 ? Price : Product?.Price ?? 0m) * Quantity;
+
+    public void OnPropertyChangedForInlineEdit()
+    {
+        OnPropertyChanged(nameof(Quantity));
+        OnPropertyChanged(nameof(Price));
+        OnPropertyChanged(nameof(Total));
+    }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

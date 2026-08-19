@@ -4,8 +4,8 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:controls="clr-namespace:FFPOS.Controls"
         Title="Авторизация"
-        Width="1024"
-        Height="680"
+        Width="980"
+        Height="650"
         MinWidth="760"
         MinHeight="560"
         WindowStartupLocation="CenterScreen"
@@ -287,211 +287,210 @@
         </Style>
     </Window.Resources>
 
-    <Grid>
-        <Border Background="White"
-                BorderBrush="#D7DEE8"
-                BorderThickness="1"
-                CornerRadius="8"
-                Effect="{StaticResource SoftWindowShadow}">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="60" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="70" />
-                </Grid.RowDefinitions>
 
-                <Border Grid.Row="0"
-                        Background="Transparent"
-                        BorderBrush="#E8EDF3"
-                        BorderThickness="0,0,0,1"
-                        Padding="26,0"
-                        PreviewMouseLeftButtonDown="HeaderMouseLeftButtonDown">
-                    <Grid>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Width="42" Height="42" CornerRadius="12" Background="#F4F7FB" VerticalAlignment="Center">
-                                <materialDesign:PackIcon Kind="LoginVariant"
-                                                         Width="24"
-                                                         Height="24"
-                                                         Foreground="#24364A"
-                                                         HorizontalAlignment="Center"
-                                                         VerticalAlignment="Center" />
-                            </Border>
-                            <Border Width="1" Height="40" Background="#DDE3EB" Margin="24,0,24,0" />
-                            <TextBlock Text="Авторизация" FontSize="18" FontWeight="Medium" Foreground="#344054" VerticalAlignment="Center" />
+    <Border Background="White"
+            BorderBrush="#D7DEE8"
+            BorderThickness="1"
+            CornerRadius="10"
+            Effect="{StaticResource SoftWindowShadow}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="50" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="60" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0"
+                    Background="Transparent"
+                    BorderBrush="#E8EDF3"
+                    BorderThickness="0,0,0,1"
+                    Padding="10,0"
+                    PreviewMouseLeftButtonDown="HeaderMouseLeftButtonDown">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="35" Height="35" CornerRadius="12" Background="#F4F7FB" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="LoginVariant"
+                                                        Width="24"
+                                                        Height="24"
+                                                        Foreground="#24364A"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center" />
+                        </Border>
+                        <Border Width="1" Height="40" Background="#DDE3EB" Margin="24,0,24,0" />
+                        <TextBlock Text="Авторизация" FontSize="18" FontWeight="Medium" Foreground="#344054" VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <controls:WindowControlButtons ShowMaximize="False" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <Grid x:Name="ContentGrid" Grid.Row="1" Margin="25,20,25,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="FormColumn" Width="450*" MinWidth="360" />
+                    <ColumnDefinition x:Name="SpacerColumn" Width="50" MinWidth="22" />
+                    <ColumnDefinition x:Name="KeypadColumn" Width="456*" MinWidth="330" />
+                </Grid.ColumnDefinitions>
+
+
+                <Grid x:Name="FormPanel" Grid.Column="0" Grid.Row="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="15" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="28" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="20" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="10" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="22" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,4">
+                        <Image Source="pack://application:,,,/Assets/Images/logo.png"
+                                Width="250"
+                                Height="70"
+                                Stretch="Uniform"
+                                HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2">
+                        <StackPanel Orientation="Horizontal" Margin="6,0,0,10">
+                            <materialDesign:PackIcon Kind="AccountOutline" Width="23" Height="23" Foreground="#111827" VerticalAlignment="Center" />
+                            <TextBlock Text="Логин:" FontSize="19" FontWeight="Bold" Foreground="#111827" Margin="14,0,0,0" VerticalAlignment="Center" />
                         </StackPanel>
+                        <Grid>
+                            <ComboBox x:Name="LoginBox"
+                                        Style="{StaticResource UserComboStyle}"
+                                        IsEditable="False"
+                                        SelectionChanged="LoginSelectionChanged"
+                                        PreviewGotKeyboardFocus="LoginBoxPreviewGotKeyboardFocus"
+                                        DisplayMemberPath="DisplayName" />
+                            <TextBlock x:Name="LoginPlaceholder"
+                                        Text="Выберите пользователя"
+                                        Foreground="#8A94A3"
+                                        FontSize="18"
+                                        FontWeight="Medium"
+                                        VerticalAlignment="Center"
+                                        IsHitTestVisible="False" 
+                                        Margin="15 0"/>
+                        </Grid>
+                    </StackPanel>
 
-                        <controls:WindowControlButtons HorizontalAlignment="Right" VerticalAlignment="Center" />
-                    </Grid>
-                </Border>
-
-                <Grid x:Name="ContentGrid" Grid.Row="1" Margin="30,20,30,20">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition x:Name="FormColumn" Width="450*" MinWidth="360" />
-                        <ColumnDefinition x:Name="SpacerColumn" Width="50" MinWidth="22" />
-                        <ColumnDefinition x:Name="KeypadColumn" Width="456*" MinWidth="330" />
-                    </Grid.ColumnDefinitions>
-
-
-                    <Grid x:Name="FormPanel" Grid.Column="0" Grid.Row="0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="15" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="28" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="30" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="18" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="22" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,4">
-                            <Image Source="pack://application:,,,/Assets/Images/logo.png"
-                                   Width="250"
-                                   Height="70"
-                                   Stretch="Uniform"
-                                   HorizontalAlignment="Center" />
+                    <StackPanel Grid.Row="4">
+                        <StackPanel Orientation="Horizontal" Margin="6,0,0,10">
+                            <materialDesign:PackIcon Kind="LockOutline" Width="23" Height="23" Foreground="#111827" VerticalAlignment="Center" />
+                            <TextBlock Text="Пинкод:" FontSize="19" FontWeight="Bold" Foreground="#111827" Margin="14,0,0,0" VerticalAlignment="Center" />
                         </StackPanel>
-
-                        <StackPanel Grid.Row="2">
-                            <StackPanel Orientation="Horizontal" Margin="6,0,0,10">
-                                <materialDesign:PackIcon Kind="AccountOutline" Width="23" Height="23" Foreground="#111827" VerticalAlignment="Center" />
-                                <TextBlock Text="Логин:" FontSize="19" FontWeight="Bold" Foreground="#111827" Margin="14,0,0,0" VerticalAlignment="Center" />
-                            </StackPanel>
+                        <Border Style="{StaticResource FieldBorderStyle}">
                             <Grid>
-                                <ComboBox x:Name="LoginBox"
-                                            Style="{StaticResource UserComboStyle}"
-                                            IsEditable="False"
-                                            SelectionChanged="LoginSelectionChanged"
-                                            PreviewGotKeyboardFocus="LoginBoxPreviewGotKeyboardFocus"
-                                            DisplayMemberPath="DisplayName" />
-                                <TextBlock x:Name="LoginPlaceholder"
-                                            Text="Выберите пользователя"
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="38" />
+                                </Grid.ColumnDefinitions>
+                                <PasswordBox x:Name="PasswordBox"
+                                                Grid.Column="0"
+                                                Style="{StaticResource PasswordInputStyle}"
+                                                PasswordChanged="PasswordChanged" />
+                                <TextBox x:Name="VisiblePasswordBox"
+                                            Grid.Column="0"
+                                            Style="{StaticResource TextInputStyle}"
+                                            Visibility="Collapsed"
+                                            TextChanged="VisiblePasswordChanged" />
+                                <TextBlock x:Name="PasswordPlaceholder"
+                                            Grid.Column="0"
+                                            Text="Введите пинкод"
                                             Foreground="#8A94A3"
                                             FontSize="18"
                                             FontWeight="Medium"
                                             VerticalAlignment="Center"
-                                            IsHitTestVisible="False" 
-                                            Margin="15 0"/>
+                                            IsHitTestVisible="False" />
+                                <Button Grid.Column="1"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Cursor="Hand"
+                                        FocusVisualStyle="{x:Null}"
+                                        Click="TogglePasswordClicked">
+                                    <materialDesign:PackIcon x:Name="PasswordEyeIcon" Kind="EyeOffOutline" Width="25" Height="25" Foreground="#344054" />
+                                </Button>
                             </Grid>
-                        </StackPanel>
+                        </Border>
+                    </StackPanel>
 
-                        <StackPanel Grid.Row="4">
-                            <StackPanel Orientation="Horizontal" Margin="6,0,0,10">
-                                <materialDesign:PackIcon Kind="LockOutline" Width="23" Height="23" Foreground="#111827" VerticalAlignment="Center" />
-                                <TextBlock Text="Пинкод:" FontSize="19" FontWeight="Bold" Foreground="#111827" Margin="14,0,0,0" VerticalAlignment="Center" />
-                            </StackPanel>
-                            <Border Style="{StaticResource FieldBorderStyle}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="38" />
-                                    </Grid.ColumnDefinitions>
-                                    <PasswordBox x:Name="PasswordBox"
-                                                 Grid.Column="0"
-                                                 Style="{StaticResource PasswordInputStyle}"
-                                                 PasswordChanged="PasswordChanged" />
-                                    <TextBox x:Name="VisiblePasswordBox"
-                                             Grid.Column="0"
-                                             Style="{StaticResource TextInputStyle}"
-                                             Visibility="Collapsed"
-                                             TextChanged="VisiblePasswordChanged" />
-                                    <TextBlock x:Name="PasswordPlaceholder"
-                                               Grid.Column="0"
-                                               Text="Введите пинкод"
-                                               Foreground="#8A94A3"
-                                               FontSize="18"
-                                               FontWeight="Medium"
-                                               VerticalAlignment="Center"
-                                               IsHitTestVisible="False" />
-                                    <Button Grid.Column="1"
-                                            Background="Transparent"
-                                            BorderThickness="0"
-                                            Cursor="Hand"
-                                            FocusVisualStyle="{x:Null}"
-                                            Click="TogglePasswordClicked">
-                                        <materialDesign:PackIcon x:Name="PasswordEyeIcon" Kind="EyeOffOutline" Width="25" Height="25" Foreground="#344054" />
-                                    </Button>
-                                </Grid>
-                            </Border>
-                        </StackPanel>
-
-                        <Grid Grid.Row="6">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="60" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Border Height="1" Background="#E5EAF0" VerticalAlignment="Center" />
-                            <TextBlock Grid.Column="1" Text="или" FontSize="18" FontWeight="Medium" Foreground="#667085" HorizontalAlignment="Center" />
-                            <Border Grid.Column="2" Height="1" Background="#E5EAF0" VerticalAlignment="Center" />
-                        </Grid>
-
-                        <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Center">
-                            <materialDesign:PackIcon Kind="QrcodeScan" Width="25" Height="25" Foreground="#344054" VerticalAlignment="Center" />
-                            <TextBlock Text="Отсканируйте QR-код" FontSize="19" FontWeight="Medium" Foreground="#344054" Margin="16,0,0,0" VerticalAlignment="Center" />
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="10">
-                            <TextBlock x:Name="AppNameText" Visibility="Collapsed" FontSize="14" FontWeight="SemiBold" Foreground="#667085" HorizontalAlignment="Center" />
-                            <TextBlock x:Name="ErrorText" Foreground="#FF2B22" FontSize="14" FontWeight="SemiBold" TextAlignment="Center" Margin="0,0,0,8" />
-                            <Button Style="{StaticResource RedButtonStyle}" Click="LoginClicked">
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="LoginVariant" Width="31" Height="31" Margin="0,0,20,0" />
-                                    <TextBlock Text="Войти" VerticalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
+                    <Grid Grid.Row="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="60" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Height="1" Background="#E5EAF0" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="или" FontSize="18" FontWeight="Medium" Foreground="#667085" HorizontalAlignment="Center" />
+                        <Border Grid.Column="2" Height="1" Background="#E5EAF0" VerticalAlignment="Center" />
                     </Grid>
 
-                    <Viewbox x:Name="KeypadPanel" Grid.Column="2" Grid.Row="0" Stretch="Uniform" StretchDirection="DownOnly" VerticalAlignment="Top">
-                        <UniformGrid Rows="4" Columns="3" Width="456" Height="456">
-                            <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="1" Click="NumberKeyClicked" />
-                            <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="2" Click="NumberKeyClicked" />
-                            <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="3" Click="NumberKeyClicked" />
-                            <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="4" Click="NumberKeyClicked" />
-                            <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="5" Click="NumberKeyClicked" />
-                            <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="6" Click="NumberKeyClicked" />
-                            <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="7" Click="NumberKeyClicked" />
-                            <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="8" Click="NumberKeyClicked" />
-                            <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="9" Click="NumberKeyClicked" />
-                            <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Foreground="#F91F25" Content="C" Click="ClearPasswordClicked" />
-                            <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="0" Click="NumberKeyClicked" />
-                            <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Foreground="#F91F25" Click="BackspaceClicked">
-                                <materialDesign:PackIcon Kind="BackspaceOutline" Width="43" Height="43" />
-                            </Button>
-                        </UniformGrid>
-                    </Viewbox>
-                </Grid>
+                    <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <materialDesign:PackIcon Kind="QrcodeScan" Width="25" Height="25" Foreground="#344054" VerticalAlignment="Center" />
+                        <TextBlock Text="Отсканируйте QR-код" FontSize="19" FontWeight="Medium" Foreground="#344054" Margin="16,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
 
-                <Border Grid.Row="2" BorderBrush="#E8EDF3" BorderThickness="0,1,0,0" Padding="34,0">
-                    <Grid>
-                        <Button Style="{StaticResource FooterButtonStyle}" HorizontalAlignment="Left" VerticalAlignment="Center" Click="OpenKeyboardClicked">
-                            <StackPanel Orientation="Horizontal" Margin="10,0,10,0">
-                                <materialDesign:PackIcon Kind="KeyboardOutline" Width="25" Height="25" Margin="0,0,14,0" />
-                                <TextBlock Text="Клавиатура" VerticalAlignment="Center" />
+                    <StackPanel Grid.Row="10">
+                        <TextBlock x:Name="AppNameText" Visibility="Collapsed" FontSize="14" FontWeight="SemiBold" Foreground="#667085" HorizontalAlignment="Center" />
+                        <TextBlock x:Name="ErrorText" Foreground="#FF2B22" FontSize="14" FontWeight="SemiBold" TextAlignment="Center" Margin="0,0,0,8" />
+                        <Button Style="{StaticResource RedButtonStyle}" Click="LoginClicked">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="LoginVariant" Width="31" Height="31" Margin="0,0,20,0" />
+                                <TextBlock Text="Войти" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
+                    </StackPanel>
+                </Grid>
 
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                            <Button Style="{StaticResource FooterIconButtonStyle}" Click="OpenSyncClicked">
-                                <materialDesign:PackIcon Kind="Sync" Width="34" Height="34" />
-                            </Button>
-                            <Border Width="1" Height="38" Background="#DDE3EB" Margin="24,0" />
-                            <Button Style="{StaticResource FooterIconButtonStyle}" Click="OpenSettingsClicked">
-                                <materialDesign:PackIcon Kind="AccountCogOutline" Width="34" Height="34" />
-                            </Button>
-                            <Border Width="1" Height="38" Background="#DDE3EB" Margin="24,0" />
-                            <Button Style="{StaticResource FooterIconButtonStyle}" Click="OpenSettingsClicked">
-                                <materialDesign:PackIcon Kind="CogOutline" Width="38" Height="38" />
-                            </Button>
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                <Viewbox x:Name="KeypadPanel" Grid.Column="2" Grid.Row="0" Stretch="Uniform" StretchDirection="DownOnly" VerticalAlignment="Top">
+                    <UniformGrid Rows="4" Columns="3" Width="444" Height="444">
+                        <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="1" Click="NumberKeyClicked" />
+                        <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="2" Click="NumberKeyClicked" />
+                        <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="3" Click="NumberKeyClicked" />
+                        <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="4" Click="NumberKeyClicked" />
+                        <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="5" Click="NumberKeyClicked" />
+                        <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="6" Click="NumberKeyClicked" />
+                        <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="7" Click="NumberKeyClicked" />
+                        <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="8" Click="NumberKeyClicked" />
+                        <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="9" Click="NumberKeyClicked" />
+                        <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Foreground="#F91F25" Content="C" Click="ClearPasswordClicked" />
+                        <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Content="0" Click="NumberKeyClicked" />
+                        <Button Style="{StaticResource KeyButtonStyle}" Margin="6" Foreground="#F91F25" Click="BackspaceClicked">
+                            <materialDesign:PackIcon Kind="BackspaceOutline" Width="43" Height="43" />
+                        </Button>
+                    </UniformGrid>
+                </Viewbox>
             </Grid>
-        </Border>
-    </Grid>
+
+            <Border Grid.Row="2" BorderBrush="#E8EDF3" BorderThickness="0,1,0,0" Padding="34,0">
+                <Grid>
+                    <Button Style="{StaticResource FooterButtonStyle}" HorizontalAlignment="Left" VerticalAlignment="Center" Click="OpenKeyboardClicked">
+                        <StackPanel Orientation="Horizontal" Margin="10,0,10,0">
+                            <materialDesign:PackIcon Kind="KeyboardOutline" Width="25" Height="25" Margin="0,0,14,0" />
+                            <TextBlock Text="Клавиатура" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Button Style="{StaticResource FooterIconButtonStyle}" Click="OpenSyncClicked">
+                            <materialDesign:PackIcon Kind="Sync" Width="34" Height="34" />
+                        </Button>
+                        <Border Width="1" Height="38" Background="#DDE3EB" Margin="24,0" />
+                        <Button Style="{StaticResource FooterIconButtonStyle}" Click="OpenSettingsClicked">
+                            <materialDesign:PackIcon Kind="AccountCogOutline" Width="34" Height="34" />
+                        </Button>
+                        <Border Width="1" Height="38" Background="#DDE3EB" Margin="24,0" />
+                        <Button Style="{StaticResource FooterIconButtonStyle}" Click="OpenSettingsClicked">
+                            <materialDesign:PackIcon Kind="CogOutline" Width="38" Height="38" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
 </Window>
 

@@ -90,35 +90,35 @@
         </Style>
     </Window.Resources>
 
-    <Border Margin="14"
+    <Border 
             Background="White"
             BorderBrush="#DDE3EB"
             BorderThickness="1"
-            CornerRadius="12"
+            CornerRadius="10"
             Effect="{StaticResource WindowShadow}">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="70" />
+                <RowDefinition Height="50" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
             <Border BorderBrush="#E8EDF3"
                     BorderThickness="0,0,0,1"
-                    Padding="28,0"
+                    Padding="10,0"
                     PreviewMouseLeftButtonDown="HeaderMouseLeftButtonDown">
                 <Grid>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,92,0">
-                        <Border Width="42" Height="42" CornerRadius="21" Background="#FFF0EF">
+                        <Border Width="35" Height="35" CornerRadius="21" Background="#FFF0EF">
                             <materialDesign:PackIcon Kind="ShieldKeyOutline" Width="24" Height="24" Foreground="#FF2B22" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
-                        <TextBlock Text="Код администратора" FontSize="22" FontWeight="Bold" Foreground="#111827" Margin="14,0,0,0" VerticalAlignment="Center" />
+                        <TextBlock Text="Код администратора" FontSize="20" FontWeight="Bold" Foreground="#111827" Margin="14,0,0,0" VerticalAlignment="Center" />
                     </StackPanel>
 
                     <controls:WindowControlButtons ShowMaximize="False" HorizontalAlignment="Right" VerticalAlignment="Center" />
                 </Grid>
             </Border>
 
-            <Grid Grid.Row="1" Margin="30,20,30,20">
+            <Grid Grid.Row="1" Margin="20">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="10" />
@@ -126,6 +126,7 @@
                     <RowDefinition Height="10" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="250" />
+                    <RowDefinition Height="10" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
@@ -166,9 +167,9 @@
                            Foreground="#FF2B22"
                            FontSize="14"
                            FontWeight="SemiBold"
-                           MinHeight="18" />
+                           MinHeight="10" />
 
-                <UniformGrid Grid.Row="5" Rows="4" Columns="3" Height="228">
+                <UniformGrid Grid.Row="5" Rows="4" Columns="3" Height="240">
                     <Button Content="1" Tag="1" Margin="4" Style="{StaticResource KeyButtonStyle}" Click="NumberClicked" />
                     <Button Content="2" Tag="2" Margin="4" Style="{StaticResource KeyButtonStyle}" Click="NumberClicked" />
                     <Button Content="3" Tag="3" Margin="4" Style="{StaticResource KeyButtonStyle}" Click="NumberClicked" />
@@ -185,7 +186,7 @@
                     </Button>
                 </UniformGrid>
 
-                <Button Grid.Row="6"
+                <Button Grid.Row="7"
                         Style="{StaticResource RedButtonStyle}"
                         Click="ConfirmClicked" Height="58" VerticalAlignment="Bottom">
                     <StackPanel Orientation="Horizontal">

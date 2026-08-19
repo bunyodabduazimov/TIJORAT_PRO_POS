@@ -80,20 +80,12 @@ public class AppSettingsService
     {
         settings.BaseUrl = NormalizeBaseUrl(settings.BaseUrl);
 
-        if (settings.App is not null)
-        {
-            settings.ApplyApp(settings.App);
-        }
-
         if (string.IsNullOrWhiteSpace(settings.BaseUrl))
         {
             settings.BaseUrl = "https://app.tijorat.pro";
         }
 
-        if (string.IsNullOrWhiteSpace(settings.PublicUrl))
-        {
-            settings.PublicUrl = "/public";
-        }
+        settings.PublicUrl = NormalizePublicUrl(settings.PublicUrl);
 
         if (string.IsNullOrWhiteSpace(settings.AdminCode))
         {
@@ -133,6 +125,11 @@ public class AppSettingsService
         settings.BaseUrl = ReadString(root, "BaseUrl", settings.BaseUrl);
         settings.BaseUrl = ReadString(root, "Url", settings.BaseUrl);
         settings.BaseUrl = ReadString(root, "ApiBaseUrl", settings.BaseUrl);
+        var hasSavedPublicUrl = HasAnyProperty(root, "PublicUrl", "public_url", "PublicURL");
+        settings.PublicUrl = ReadString(root, "PublicUrl", settings.PublicUrl);
+        settings.PublicUrl = ReadString(root, "public_url", settings.PublicUrl);
+        settings.PublicUrl = ReadString(root, "PublicURL", settings.PublicUrl);
+        var publicUrlBeforeApp = settings.PublicUrl;
 
         settings.AppName = ReadString(root, "AppName", settings.AppName);
         settings.AppName = ReadString(root, "StoreName", settings.AppName);
@@ -168,7 +165,13 @@ public class AppSettingsService
             var app = JsonSerializer.Deserialize<AppInfo>(appElement.GetRawText(), JsonOptions);
             if (app is not null)
             {
+                app.PublicUrl = ReadString(appElement, "PublicUrl", app.PublicUrl);
+                app.PublicUrl = ReadString(appElement, "public_url", app.PublicUrl);
                 settings.ApplyApp(app);
+                if (hasSavedPublicUrl)
+                {
+                    settings.PublicUrl = publicUrlBeforeApp;
+                }
             }
         }
     }
@@ -178,6 +181,11 @@ public class AppSettingsService
         return root.TryGetProperty(key, out var element) && element.ValueKind == JsonValueKind.String
             ? element.GetString() ?? fallback
             : fallback;
+    }
+
+    private static bool HasAnyProperty(JsonElement root, params string[] keys)
+    {
+        return keys.Any(key => root.TryGetProperty(key, out _));
     }
 
     private static int ReadInt(JsonElement root, string key, int fallback)
@@ -235,5 +243,11 @@ public class AppSettingsService
         }
 
         return trimmed;
+    }
+
+    private static string NormalizePublicUrl(string value)
+    {
+        var trimmed = NormalizeBaseUrl(value);
+        return trimmed.TrimEnd('/');
     }
 }

@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:controls="clr-namespace:FFPOS.Controls"
-        Title="FF POS"
+        Title="Уведомление"
         Width="460"
         Height="260"
         MinWidth="420"
@@ -64,28 +64,28 @@
         </Style>
     </Window.Resources>
 
-    <Border Margin="16"
+    <Border
             Background="White"
             BorderBrush="#DEE4EC"
             BorderThickness="1"
-            CornerRadius="12"
+            CornerRadius="10"
             Effect="{StaticResource DialogShadow}">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="60" />
+                <RowDefinition Height="50" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="65" />
             </Grid.RowDefinitions>
 
-            <Border BorderBrush="#E8EDF3" BorderThickness="0,0,0,1" Padding="22,0" MouseLeftButtonDown="HeaderMouseLeftButtonDown">
+            <Border BorderBrush="#E8EDF3" BorderThickness="0,0,0,1" Padding="10,0" MouseLeftButtonDown="HeaderMouseLeftButtonDown">
                 <Grid>
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,140,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,120,0">
                         <Border x:Name="IconCircle" Width="38" Height="38" CornerRadius="19" Background="#FFF0EF">
                             <materialDesign:PackIcon x:Name="DialogIcon" Kind="InformationOutline" Width="23" Height="23" Foreground="#FF2B22" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
-                        <TextBlock x:Name="TitleText" Text="FF POS" FontSize="21" FontWeight="Bold" Foreground="#111827" Margin="14,0,0,0" VerticalAlignment="Center" />
+                        <TextBlock x:Name="TitleText" Text="Уведомление" FontSize="21" FontWeight="Bold" Foreground="#111827" Margin="14,0,0,0" VerticalAlignment="Center" />
                     </StackPanel>
-                    <controls:WindowControlButtons HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    <controls:WindowControlButtons ShowMaximize="False" HorizontalAlignment="Right" VerticalAlignment="Center" />
                 </Grid>
             </Border>
 
@@ -98,13 +98,13 @@
                        Margin="24,5,24,0"
                        VerticalAlignment="Center" />
 
-            <Grid Grid.Row="2" Margin="22,10,22,18">
+            <Grid Grid.Row="2" Margin="24,8,24,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <Button x:Name="CancelButton" Content="РћС‚РјРµРЅР°" Style="{StaticResource DialogButtonStyle}" Margin="0,0,8,0" Click="CancelClicked" />
-                <Button x:Name="OkButton" Grid.Column="1" Content="РћРљ" Style="{StaticResource PrimaryDialogButtonStyle}" Margin="8,0,0,0" Click="OkClicked" />
+                <Button x:Name="CancelButton" Content="Отмена" Style="{StaticResource DialogButtonStyle}" Margin="0,0,8,0" Click="CancelClicked" />
+                <Button x:Name="OkButton" Grid.Column="1" Content="ОК" Style="{StaticResource PrimaryDialogButtonStyle}" Margin="8,0,0,0" Click="OkClicked" />
             </Grid>
         </Grid>
     </Border>

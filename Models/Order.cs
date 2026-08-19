@@ -7,7 +7,11 @@ namespace FFPOS.Models;
 
 public class Order : INotifyPropertyChanged
 {
+    public const string SaleTypeSale = "sale";
+    public const string SaleTypeReturn = "sale_return";
+
     private string _orderType = "С собой";
+    private string _saleType = SaleTypeSale;
     private decimal _discount;
     private bool _isSelected;
 
@@ -34,6 +38,29 @@ public class Order : INotifyPropertyChanged
     public DateTime? SyncedAt { get; set; }
     public string? SyncError { get; set; }
     public ObservableCollection<OrderItem> Items { get; } = new();
+
+    public string SaleType
+    {
+        get => string.Equals(_saleType, SaleTypeReturn, StringComparison.OrdinalIgnoreCase)
+            ? SaleTypeReturn
+            : SaleTypeSale;
+        set
+        {
+            var normalized = string.Equals(value, SaleTypeReturn, StringComparison.OrdinalIgnoreCase)
+                ? SaleTypeReturn
+                : SaleTypeSale;
+            if (_saleType == normalized)
+            {
+                return;
+            }
+
+            _saleType = normalized;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SaleTypeText));
+        }
+    }
+
+    public string SaleTypeText => SaleType == SaleTypeReturn ? "Возврат" : "Продажа";
 
     public string OrderType
     {

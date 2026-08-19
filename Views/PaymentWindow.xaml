@@ -345,17 +345,17 @@
         </Style>
     </Window.Resources>
 
-    <Border Margin="12"
+    <Border 
             Background="White"
             BorderBrush="#DDE5EE"
             BorderThickness="1"
-            CornerRadius="14"
+            CornerRadius="10"
             Effect="{StaticResource WindowShadow}">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="50" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="82" />
+                <RowDefinition Height="80" />
             </Grid.RowDefinitions>
 
             <Border BorderBrush="#E8EDF3" BorderThickness="0,0,0,1" Padding="18,0" MouseLeftButtonDown="HeaderMouseLeftButtonDown">
@@ -410,8 +410,8 @@
                         <TextBlock Grid.Row="1" Text="Итого:" FontSize="19" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" />
                         <TextBox x:Name="TotalBox" Grid.Row="1" Grid.Column="1" Style="{StaticResource PaymentInputStyle}" IsReadOnly="True" Margin="10,6,10,6"/>
 
-                        <TextBlock Grid.Row="2" Text="Скидка:" FontSize="19" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" />
-                        <Grid Grid.Row="2" Grid.Column="1">
+                        <TextBlock x:Name="DiscountLabel" Grid.Row="2" Text="Скидка:" FontSize="19" FontWeight="SemiBold" Foreground="#344054" VerticalAlignment="Center" />
+                        <Grid x:Name="DiscountEditor" Grid.Row="2" Grid.Column="1">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="1*" />
                                 <ColumnDefinition Width="8" />
@@ -592,19 +592,19 @@
                 </Grid>
             </Grid>
 
-            <Grid Grid.Row="2" Margin="20,10,20,16">
+            <Grid Grid.Row="2" Margin="20,5,20,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 
-                <Button Grid.Column="0" Style="{StaticResource BaseButtonStyle}" Height="54" Margin="0,0,10,0" Click="HoldClicked">
+                <Button Grid.Column="0" Style="{StaticResource BaseButtonStyle}" Height="60" Margin="0,0,10,0" Click="HoldClicked">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="PauseCircleOutline" Width="22" Height="22" Margin="0,0,10,0" />
                         <TextBlock Text="Отложить" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
-                <Button x:Name="ConfirmButton" Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" Height="54" Margin="10,0,0,0" Click="ConfirmClicked">
+                <Button x:Name="ConfirmButton" Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" Height="60" Margin="10,0,0,0" Click="ConfirmClicked">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="CashRegister" Width="24" Height="24" Margin="0,0,10,0" />
                         <TextBlock x:Name="ConfirmButtonText" Text="Оплатить" VerticalAlignment="Center" />

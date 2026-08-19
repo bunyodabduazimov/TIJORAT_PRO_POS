@@ -40,7 +40,7 @@ public partial class AppDialogWindow : Window
         }
     }
 
-    public static bool ShowInfo(string message, string title = "FF POS", Window? owner = null)
+    public static bool ShowInfo(string message, string title = "Сообщение", Window? owner = null)
     {
         return Show(title, message, false, PackIconKind.InformationOutline, Color.FromRgb(37, 99, 235), Color.FromRgb(239, 246, 255), owner);
     }
@@ -55,7 +55,7 @@ public partial class AppDialogWindow : Window
         return Show(title, message, false, PackIconKind.AlertCircleOutline, Color.FromRgb(249, 31, 37), Color.FromRgb(255, 240, 239), owner);
     }
 
-    public static bool Confirm(string message, string title = "FF POS", Window? owner = null)
+    public static bool Confirm(string message, string title = "Подтверждение", Window? owner = null)
     {
         return Show(title, message, true, PackIconKind.HelpCircleOutline, Color.FromRgb(249, 31, 37), Color.FromRgb(255, 240, 239), owner);
     }

@@ -331,11 +331,11 @@
         </Style>
     </Window.Resources>
 
-    <Border Margin="12"
+    <Border
             Background="White"
             BorderBrush="#DDE5EE"
             BorderThickness="1"
-            CornerRadius="12"
+            CornerRadius="10"
             Effect="{StaticResource WindowShadow}">
         <Grid>
             <Grid.RowDefinitions>

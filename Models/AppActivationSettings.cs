@@ -46,6 +46,7 @@ public class AppActivationSettings
     public bool PeoplePay { get; set; } = true;
     public bool DebtSale { get; set; } = true;
     public bool DeleteRow { get; set; } = true;
+    public bool UseShift { get; set; } = false;
 
     public string AdminCode { get; set; } = "2244";
 
@@ -65,7 +66,7 @@ public class AppActivationSettings
     public int AppStatus => IsActivated ? 1 : 0;
 
     [JsonIgnore]
-    public string EffectiveApiBaseUrl => BaseUrl;
+    public string EffectiveApiBaseUrl => BuildEffectiveApiBaseUrl();
 
     [JsonIgnore]
     public string EffectiveAppId => AppId;
@@ -79,9 +80,27 @@ public class AppActivationSettings
         AppDate = app.DateTo;
         PublicUrl = string.IsNullOrWhiteSpace(app.PublicUrl) ? PublicUrl : app.PublicUrl;
         FiscalPrint = app.Fiscat == 1;
-        IsActivated = string.Equals(app.Status, "\u0410\u043a\u0442\u0438\u0432\u0435\u043d", StringComparison.OrdinalIgnoreCase) ||
+        IsActivated = string.Equals(app.Status, "Активен", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(app.Status, "active", StringComparison.OrdinalIgnoreCase) ||
             !string.IsNullOrWhiteSpace(app.AppId);
+    }
+
+    private string BuildEffectiveApiBaseUrl()
+    {
+        var baseUrl = BaseUrl.TrimEnd('/');
+        var publicUrl = PublicUrl.Trim();
+
+        if (string.IsNullOrWhiteSpace(publicUrl) || publicUrl == "/")
+        {
+            return baseUrl;
+        }
+
+        if (Uri.TryCreate(publicUrl, UriKind.Absolute, out _))
+        {
+            return publicUrl.TrimEnd('/');
+        }
+
+        return $"{baseUrl}/{publicUrl.Trim('/')}";
     }
 }
 
@@ -94,5 +113,6 @@ public class AppInfo
     public string Status { get; set; } = string.Empty;
     public int Fiscat { get; set; }
     public string AppId { get; set; } = string.Empty;
+
     public string PublicUrl { get; set; } = string.Empty;
 }

@@ -79,7 +79,7 @@
         </Style>
 
         <Style x:Key="PrimaryButtonStyle" TargetType="{x:Type Button}">
-            <Setter Property="Height" Value="52" />
+            <Setter Property="Height" Value="45" />
             <Setter Property="Background" Value="#F91F25" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="BorderThickness" Value="0" />
@@ -107,7 +107,7 @@
         </Style>
 
         <Style x:Key="FlatButtonStyle" TargetType="{x:Type Button}">
-            <Setter Property="Height" Value="52" />
+            <Setter Property="Height" Value="45" />
             <Setter Property="Background" Value="White" />
             <Setter Property="Foreground" Value="#344054" />
             <Setter Property="BorderBrush" Value="#DDE3EB" />
@@ -251,31 +251,30 @@
         </Style>
     </Window.Resources>
 
-    <Border Margin="18"
+    <Border 
             Background="White"
             BorderBrush="#DDE3EB"
             BorderThickness="1"
-            CornerRadius="14"
+            CornerRadius="10"
             Effect="{StaticResource WindowShadow}">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="76" />
+                <RowDefinition Height="50" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="82" />
+                <RowDefinition Height="65" />
             </Grid.RowDefinitions>
 
             <Border BorderBrush="#E8EDF3"
                     BorderThickness="0,0,0,1"
-                    Padding="28,0"
+                    Padding="10,0"
                     PreviewMouseLeftButtonDown="HeaderMouseLeftButtonDown">
                 <Grid>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border Width="42" Height="42" CornerRadius="21" Background="#FFF0EF">
+                        <Border Width="35" Height="35" CornerRadius="21" Background="#FFF0EF">
                             <materialDesign:PackIcon Kind="AccountCogOutline" Width="24" Height="24" Foreground="#F91F25" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="Настройки пользователя" FontSize="22" FontWeight="Bold" Foreground="#111827" />
-                            <TextBlock x:Name="HeaderSubtitle" Text="Личные параметры кассира" FontSize="14" Foreground="#667085" />
+                            <TextBlock Text="Настройки пользователя" FontSize="20" FontWeight="Bold" Foreground="#111827" />
                         </StackPanel>
                     </StackPanel>
                     <controls:WindowControlButtons HorizontalAlignment="Right" VerticalAlignment="Center" />

@@ -4,8 +4,8 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:controls="clr-namespace:FFPOS.Controls"
         Title="Синхронизация"
-        Width="520"
-        Height="430"
+        Width="580"
+        Height="480"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         WindowStyle="None"
@@ -16,7 +16,7 @@
         <DropShadowEffect x:Key="WindowShadow" BlurRadius="24" ShadowDepth="4" Opacity="0.16" Color="#0B1220" />
 
         <Style x:Key="RedButtonStyle" TargetType="{x:Type Button}">
-            <Setter Property="Height" Value="58" />
+            <Setter Property="Height" Value="50" />
             <Setter Property="Background" Value="#F91F25" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="BorderThickness" Value="0" />
@@ -71,11 +71,11 @@
     <Border Background="White"
             BorderBrush="#D7DEE8"
             BorderThickness="1"
-            CornerRadius="12"
+            CornerRadius="10"
             Effect="{StaticResource WindowShadow}">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="76" />
+                <RowDefinition Height="50" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
@@ -83,15 +83,15 @@
                     Background="Transparent"
                     BorderBrush="#E8EDF3"
                     BorderThickness="0,0,0,1"
-                    Padding="24,0"
+                    Padding="10,0"
                     PreviewMouseLeftButtonDown="HeaderMouseLeftButtonDown">
                 <Grid>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border Width="42" Height="42" CornerRadius="21" Background="#FFF0EF">
+                        <Border Width="35" Height="35" CornerRadius="21" Background="#FFF0EF">
                             <materialDesign:PackIcon Kind="Sync" Width="24" Height="24" Foreground="#F91F25" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <TextBlock Text="Синхронизация"
-                                   FontSize="23"
+                                   FontSize="20"
                                    FontWeight="Bold"
                                    Foreground="#111827"
                                    Margin="14,0,0,0"
@@ -102,12 +102,12 @@
                 </Grid>
             </Border>
 
-            <Grid Grid.Row="1" Margin="30,26,30,28">
+            <Grid Grid.Row="1" Margin="20,10,20,20">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="16" />
+                    <RowDefinition Height="10" />
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="22" />
+                    <RowDefinition Height="10" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="22" />
                     <RowDefinition Height="Auto" />
@@ -138,7 +138,7 @@
                         Background="#F8FAFC"
                         BorderBrush="#E1E7EF"
                         BorderThickness="1"
-                        CornerRadius="8"
+                        CornerRadius="10"
                         Padding="14">
                     <Grid>
                         <Grid.RowDefinitions>

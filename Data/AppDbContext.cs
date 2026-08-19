@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<People> Peoples => Set<People>();
     public DbSet<Article> Articles => Set<Article>();
     public DbSet<Dds> Dds => Set<Dds>();
+    public DbSet<Shift> Shifts => Set<Shift>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -39,6 +40,7 @@ public class AppDbContext : DbContext
         ConfigurePeoples(modelBuilder);
         ConfigureArticles(modelBuilder);
         ConfigureDds(modelBuilder);
+        ConfigureShifts(modelBuilder);
     }
 
     private static void ConfigureStores(ModelBuilder modelBuilder)
@@ -121,6 +123,7 @@ public class AppDbContext : DbContext
         entity.Property(x => x.SummaPay).HasColumnName("summapay");
         entity.Property(x => x.Note).HasColumnName("note");
         entity.Property(x => x.Date).HasColumnName("date");
+        entity.Property(x => x.SaleType).HasColumnName("sale_type");
         entity.Property(x => x.OrderType)
             .HasColumnName("type")
             .HasConversion(
@@ -138,6 +141,7 @@ public class AppDbContext : DbContext
         entity.Ignore(x => x.Subtotal);
         entity.Ignore(x => x.Total);
         entity.Ignore(x => x.DisplayName);
+        entity.Ignore(x => x.SaleTypeText);
         entity.Ignore(x => x.IsSelected);
 
         entity.HasMany(x => x.Items)
@@ -274,5 +278,34 @@ public class AppDbContext : DbContext
         entity.Property(x => x.ServerId).HasColumnName("server_id");
         entity.Property(x => x.SyncedAt).HasColumnName("synced_at");
         entity.Property(x => x.SyncError).HasColumnName("sync_error");
+    }
+
+    private static void ConfigureShifts(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<Shift>();
+        entity.ToTable("shifts");
+        entity.HasKey(x => x.Id);
+        entity.Property(x => x.Id).ValueGeneratedNever();
+        entity.Property(x => x.StoreId).HasColumnName("store_id");
+        entity.Property(x => x.CashId).HasColumnName("cash_id");
+        entity.Property(x => x.OpenedByUserId).HasColumnName("opened_by_user_id");
+        entity.Property(x => x.ClosedByUserId).HasColumnName("closed_by_user_id");
+        entity.Property(x => x.OpeningBalance).HasColumnName("opening_balance");
+        entity.Property(x => x.SalesTotal).HasColumnName("sales_total");
+        entity.Property(x => x.ReturnTotal).HasColumnName("return_total");
+        entity.Property(x => x.SalePaymentTotal).HasColumnName("sale_payment_total");
+        entity.Property(x => x.PaymentIncomeTotal).HasColumnName("payment_income_total");
+        entity.Property(x => x.PaymentExpenseTotal).HasColumnName("payment_expense_total");
+        entity.Property(x => x.PaymentTotal).HasColumnName("payment_total");
+        entity.Property(x => x.CashInTotal).HasColumnName("cash_in_total");
+        entity.Property(x => x.CashOutTotal).HasColumnName("cash_out_total");
+        entity.Property(x => x.ClosingBalance).HasColumnName("closing_balance");
+        entity.Property(x => x.SalesCount).HasColumnName("sales_count");
+        entity.Property(x => x.PaymentCount).HasColumnName("payment_count");
+        entity.Property(x => x.OpenedAt).HasColumnName("opened_at");
+        entity.Property(x => x.ExpiresAt).HasColumnName("expires_at");
+        entity.Property(x => x.ClosedAt).HasColumnName("closed_at");
+        entity.Property(x => x.Note).HasColumnName("note");
+        entity.Property(x => x.Status).HasColumnName("status");
     }
 }

@@ -48,10 +48,6 @@ public partial class UserSettingsWindow : Window
             _settings.DefaultCashId = _user.CashId;
         }
 
-        HeaderSubtitle.Text = string.IsNullOrWhiteSpace(_user.Name)
-            ? "Личные параметры кассира"
-            : _user.Name;
-
         UserNameBox.Text = string.IsNullOrWhiteSpace(_user.Name) ? "-" : _user.Name;
         UserLoginBox.Text = string.IsNullOrWhiteSpace(_user.Username) ? "-" : _user.Username;
 
@@ -200,14 +196,7 @@ public partial class UserSettingsWindow : Window
             return new UserSettings();
         }
 
-        try
-        {
-            return JsonSerializer.Deserialize<UserSettings>(json, JsonOptions) ?? new UserSettings();
-        }
-        catch
-        {
-            return new UserSettings();
-        }
+        return UserSettings.Parse(json);
     }
 
     private static void SelectById(ComboBox comboBox, int id)

@@ -31,6 +31,29 @@ public class AuthApiClient
         return await PostAsync("auth/verify-code", new { phone, code }, cancellationToken);
     }
 
+    public async Task<AuthApiResponse> CheckStatusAsync(AppActivationSettings settings, CancellationToken cancellationToken = default)
+    {
+        var body = new
+        {
+            app_id = settings.EffectiveAppId,
+            phone = settings.AppPhone
+        };
+
+        AuthApiResponse? lastResponse = null;
+        foreach (var endpoint in new[] { "auth/check-status", "auth/status", "auth/app-status", "app/status" })
+        {
+            var response = await PostAsync(endpoint, body, cancellationToken);
+            if (response.IsSuccess || response.App is not null)
+            {
+                return response;
+            }
+
+            lastResponse = response;
+        }
+
+        return lastResponse ?? AuthApiResponse.Error("Не удалось проверить статус активации на сервере");
+    }
+
     private async Task<AuthApiResponse> PostAsync(string endpoint, object body, CancellationToken cancellationToken)
     {
         try

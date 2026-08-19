@@ -67,6 +67,27 @@ public partial class LoginWindow : Window
             return;
         }
 
+        var settingsService = new AppSettingsService();
+        _settings = settingsService.Load();
+        if (_settings.IsActivated && ActivationExpiredWindow.IsActivationExpired(_settings.AppDate))
+        {
+            var activationWindow = new ActivationExpiredWindow(_settings)
+            {
+                Owner = this
+            };
+
+            if (activationWindow.ShowDialog() != true)
+            {
+                ErrorText.Text = "Срок активации истек";
+                return;
+            }
+
+            _settings = activationWindow.Settings;
+            AppNameText.Text = string.IsNullOrWhiteSpace(_settings.AppName)
+                ? string.Empty
+                : $"{_settings.AppName} · {(_settings.IsActivated ? "Активен" : "Отключен")}";
+        }
+
         AuthenticatedUser = user;
         DialogResult = true;
         Close();

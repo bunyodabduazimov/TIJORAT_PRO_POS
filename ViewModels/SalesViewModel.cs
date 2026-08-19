@@ -1,9 +1,8 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
 using FFPOS.Models;
@@ -21,11 +20,15 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private readonly DatabaseService _databaseService = new();
     private readonly PrintService _printService = new();
+    private AppActivationSettings _settings = new AppSettingsService().Load();
+    private readonly UserSettings _userSettings = UserSettings.Parse(App.CurrentUser?.Settings);
     private readonly List<Product> _allProducts = new();
     private Category? _selectedCategory;
     private Order? _currentOrder;
+    private Shift? _currentShift;
     private string _searchText = string.Empty;
     private string _selectedOrderType = "В зале";
+    private string _selectedSaleType = Order.SaleTypeSale;
     private string _activeSection = "Касса";
     private string _selectedPaymentType = "Наличные";
     private bool _isSidebarOpen = true;
@@ -47,6 +50,18 @@ public class SalesViewModel : INotifyPropertyChanged
     private OrderListItem? _selectedOrderListItem;
     private PaymentListItem? _selectedPaymentListItem;
     private bool _isLoading;
+
+    private int DefaultStockId => _userSettings.DefaultStockId > 0
+        ? _userSettings.DefaultStockId
+        : App.CurrentUser?.StockId > 0 ? App.CurrentUser.StockId : _settings.StockId > 0 ? _settings.StockId : 1;
+
+    private int DefaultCashId => _userSettings.DefaultCashId > 0
+        ? _userSettings.DefaultCashId
+        : App.CurrentUser?.CashId > 0 ? App.CurrentUser.CashId : 1;
+
+    private int DefaultPriceId => _userSettings.ProductPriceId > 0
+        ? _userSettings.ProductPriceId
+        : _settings.PriceId > 0 ? _settings.PriceId : 1;
 
     public ObservableCollection<Category> Categories { get; } = new();
     public ObservableCollection<Product> Products { get; } = new();
@@ -81,6 +96,7 @@ public class SalesViewModel : INotifyPropertyChanged
 
             _currentOrder = value;
             SelectedOrderType = value?.OrderType ?? "В зале";
+            _selectedSaleType = value?.SaleType ?? Order.SaleTypeSale;
             foreach (var order in OpenOrders)
             {
                 order.IsSelected = order == value;
@@ -88,6 +104,10 @@ public class SalesViewModel : INotifyPropertyChanged
 
             RefreshProductQuantities();
             OnPropertyChanged();
+            OnPropertyChanged(nameof(SelectedSaleType));
+            OnPropertyChanged(nameof(IsSaleSelected));
+            OnPropertyChanged(nameof(IsSaleReturnSelected));
+            OnPropertyChanged(nameof(SaleActionText));
         }
     }
 
@@ -154,6 +174,41 @@ public class SalesViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(IsDineInSelected));
             OnPropertyChanged(nameof(IsTakeAwaySelected));
             OnPropertyChanged(nameof(IsDeliverySelected));
+        }
+    }
+
+    public string SelectedSaleType
+    {
+        get => _selectedSaleType;
+        set
+        {
+            var normalized = string.Equals(value, Order.SaleTypeReturn, StringComparison.OrdinalIgnoreCase)
+                ? Order.SaleTypeReturn
+                : Order.SaleTypeSale;
+            if (normalized == Order.SaleTypeReturn && !CanReturnSale)
+            {
+                normalized = Order.SaleTypeSale;
+            }
+
+            if (_selectedSaleType == normalized)
+            {
+                return;
+            }
+
+            _selectedSaleType = normalized;
+            if (CurrentOrder is not null)
+            {
+                CurrentOrder.SaleType = normalized;
+                if (!_isLoading)
+                {
+                    SaveCurrentOrder();
+                }
+            }
+
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsSaleSelected));
+            OnPropertyChanged(nameof(IsSaleReturnSelected));
+            OnPropertyChanged(nameof(SaleActionText));
         }
     }
 
@@ -227,12 +282,34 @@ public class SalesViewModel : INotifyPropertyChanged
     }
 
     public bool IsCardView => !IsTableView;
+    public bool IsTouchScreen => _settings.IsTouchScreen;
+    public bool ShowTotals => _settings.TotalSumma;
+    public bool ShowStockQuantity => _settings.QtyStock;
+    public bool CanEditPrice => _settings.EditPrice && _userSettings.CanChangePrice;
+    public bool CanReturnSale => _settings.ReturnSale && _userSettings.CanReturnSale;
+    public bool CanUseDiscount => _settings.Discount;
+    public bool ShowDiscountTotals => ShowTotals && CanUseDiscount;
+    public bool IsInlineQuantityReadOnly => IsTouchScreen;
+    public bool IsInlinePriceReadOnly => IsTouchScreen || !CanEditPrice;
     public bool IsDineInSelected => SelectedOrderType == "В зале";
     public bool IsTakeAwaySelected => SelectedOrderType == "С собой";
     public bool IsDeliverySelected => SelectedOrderType == "Доставка";
+    public bool IsSaleSelected => SelectedSaleType == Order.SaleTypeSale;
+    public bool IsSaleReturnSelected => SelectedSaleType == Order.SaleTypeReturn;
+    public string SaleActionText => IsSaleReturnSelected ? "Вернуть" : "Оплатить";
     public bool IsCashierSection => ActiveSection == "Касса";
     public bool IsOrdersSection => ActiveSection == "Заказы";
     public bool IsPaymentsSection => ActiveSection == "Платежи";
+    public bool CanShowOrders => _userSettings.CanViewOrders;
+    public bool CanShowPayments => _userSettings.CanViewPayments;
+    public bool CanShowTransactions => CanShowPayments;
+    public bool CanAddCustomerInPayment => _userSettings.CanAddCustomerInPayment;
+    public bool CanAddCustomerOutPayment => _userSettings.CanAddCustomerOutPayment;
+    public bool CanAddCashInPayment => _userSettings.CanAddCashInPayment;
+    public bool CanAddCashOutPayment => _userSettings.CanAddCashOutPayment;
+    public bool CanAddAnyPayment => CanAddCustomerInPayment || CanAddCustomerOutPayment || CanAddCashInPayment || CanAddCashOutPayment;
+    public bool CanEditAllPayments => _userSettings.CanEditAllPayments;
+    public bool CanDeleteUnsyncedPayments => _userSettings.CanDeleteUnsyncedPayments;
     public bool IsKitchenSection => ActiveSection == "Кухня";
     public bool IsReportsSection => ActiveSection == "Отчёты";
     public string ProductViewIcon => IsTableView ? "ViewGridOutline" : "FormatListBulleted";
@@ -259,6 +336,50 @@ public class SalesViewModel : INotifyPropertyChanged
     public bool IsPaymentPagerVisible => _paymentTotalCount > PaymentPageSize;
     public string PaymentIncomeTotalText => $"+{_paymentIncomeTotal:0.00} c";
     public string PaymentExpenseTotalText => $"-{_paymentExpenseTotal:0.00} c";
+    public Shift? CurrentShift => _currentShift;
+    public bool IsShiftEnabled => _settings.UseShift;
+    public bool HasOpenShift => _currentShift?.IsOpen == true;
+    public bool IsShiftOpen => IsShiftEnabled && _currentShift is not null && _currentShift.IsOpen && !_currentShift.IsExpired;
+    public bool IsShiftExpired => IsShiftEnabled && _currentShift?.IsExpired == true;
+    public string ShiftStatusText => _currentShift is null
+        ? (IsShiftEnabled ? "Смена не открыта" : "Смена отключена")
+        : _currentShift.IsExpired
+            ? "Смена просрочена"
+            : _currentShift.IsOpen
+                ? "Смена открыта"
+                : "Смена закрыта";
+    public string ShiftStatusHint => _currentShift is null
+        ? (IsShiftEnabled ? "Откройте смену, чтобы начать работу" : "Работа идёт без контроля смен")
+        : _currentShift.IsOpen
+            ? _currentShift.IsExpired
+                ? $"Нужно закрыть до {_currentShift.ExpiresAt:HH:mm dd.MM}"
+                : $"Открыта до {_currentShift.ExpiresAt:HH:mm dd.MM}"
+            : _currentShift.ClosedAt is not null
+                ? $"Закрыта {_currentShift.ClosedAt:HH:mm dd.MM}"
+                : string.Empty;
+    public string ShiftActionText => !IsShiftEnabled ? "Смена отключена" : IsShiftOpen ? "Закрыть смену" : "Открыть смену";
+    public string ShiftStatusBrush => _currentShift is null
+        ? (IsShiftEnabled ? "#667085" : "#98A2B3")
+        : _currentShift.IsExpired
+            ? "#D92D20"
+            : _currentShift.IsOpen
+                ? "#16A34A"
+                : "#667085";
+    public string ShiftStatusBackground => _currentShift is null
+        ? (IsShiftEnabled ? "#F2F4F7" : "#F8FAFC")
+        : _currentShift.IsExpired
+            ? "#FFF1F0"
+            : _currentShift.IsOpen
+                ? "#ECFDF3"
+                : "#F2F4F7";
+    public string ShiftRemainingText => _currentShift is null
+        ? string.Empty
+        : _currentShift.IsOpen
+            ? _currentShift.IsExpired
+                ? "Требуется закрытие"
+                : $"Осталось {_currentShift.RemainingTime:hh\\:mm\\:ss}"
+            : string.Empty;
+    public bool CanUseCashier => !IsShiftEnabled || IsShiftOpen;
 
     public string OrderSearchText
     {
@@ -391,6 +512,7 @@ public class SalesViewModel : INotifyPropertyChanged
     public ICommand HoldOrderCommand { get; }
     public ICommand PayCommand { get; }
     public ICommand SelectOrderTypeCommand { get; }
+    public ICommand SelectSaleTypeCommand { get; }
     public ICommand ToggleSidebarCommand { get; }
     public ICommand NavigateCommand { get; }
     public ICommand OpenProfileCommand { get; }
@@ -398,11 +520,10 @@ public class SalesViewModel : INotifyPropertyChanged
     public ICommand LogoutCommand { get; }
     public ICommand SelectPaymentTypeCommand { get; }
     public ICommand ToggleProductViewCommand { get; }
-    public ICommand AddNoteCommand { get; }
-    public ICommand EditDiscountCommand { get; }
-    public ICommand ShowCustomerCommand { get; }
     public ICommand ShowReceiptCommand { get; }
     public ICommand ShowOrderActionsCommand { get; }
+    public ICommand OpenShiftCommand { get; }
+    public ICommand CloseShiftCommand { get; }
     public ICommand PreviousProductPageCommand { get; }
     public ICommand NextProductPageCommand { get; }
     public ICommand RefreshOrdersCommand { get; }
@@ -444,6 +565,7 @@ public class SalesViewModel : INotifyPropertyChanged
         HoldOrderCommand = new RelayCommand(HoldOrder);
         PayCommand = new RelayCommand(Pay);
         SelectOrderTypeCommand = new RelayCommand<string>(type => SelectedOrderType = type ?? "В зале");
+        SelectSaleTypeCommand = new RelayCommand<string>(SelectSaleType);
         ToggleSidebarCommand = new RelayCommand(() => IsSidebarOpen = !IsSidebarOpen);
         NavigateCommand = new RelayCommand<string>(Navigate);
         OpenProfileCommand = new RelayCommand(OpenUserSettings);
@@ -451,11 +573,10 @@ public class SalesViewModel : INotifyPropertyChanged
         LogoutCommand = new RelayCommand(Logout);
         SelectPaymentTypeCommand = new RelayCommand<string>(type => SelectedPaymentType = type ?? "Наличные");
         ToggleProductViewCommand = new RelayCommand(() => IsTableView = !IsTableView);
-        AddNoteCommand = new RelayCommand(EditOrderNote);
-        EditDiscountCommand = new RelayCommand(EditDiscount);
-        ShowCustomerCommand = new RelayCommand(SelectOrderCustomer);
         ShowReceiptCommand = new RelayCommand(PrintCurrentReceipt);
         ShowOrderActionsCommand = new RelayCommand(() => { });
+        OpenShiftCommand = new RelayCommand(OpenShift, () => IsShiftEnabled && !HasOpenShift);
+        CloseShiftCommand = new RelayCommand(CloseShift, () => IsShiftEnabled && HasOpenShift);
 
         PreviousProductPageCommand = new RelayCommand(() => ChangeProductPage(-1));
         NextProductPageCommand = new RelayCommand(() => ChangeProductPage(1));
@@ -475,10 +596,10 @@ public class SalesViewModel : INotifyPropertyChanged
         RefreshPaymentsCommand = new RelayCommand(RefreshPayments);
         ClearPaymentSearchCommand = new RelayCommand(() => PaymentSearchText = string.Empty);
         SelectPaymentListItemCommand = new RelayCommand<PaymentListItem>(item => SelectedPaymentListItem = item);
-        AddCustomerInPaymentCommand = new RelayCommand(() => AddDdsOperation(DdsOperationTypes.CustomerIn));
-        AddCustomerOutPaymentCommand = new RelayCommand(() => AddDdsOperation(DdsOperationTypes.CustomerOut));
-        AddCashInPaymentCommand = new RelayCommand(() => AddDdsOperation(DdsOperationTypes.CashIn));
-        AddCashOutPaymentCommand = new RelayCommand(() => AddDdsOperation(DdsOperationTypes.CashOut));
+        AddCustomerInPaymentCommand = new RelayCommand(() => AddDdsOperation(DdsOperationTypes.CustomerIn), () => CanAddCustomerInPayment);
+        AddCustomerOutPaymentCommand = new RelayCommand(() => AddDdsOperation(DdsOperationTypes.CustomerOut), () => CanAddCustomerOutPayment);
+        AddCashInPaymentCommand = new RelayCommand(() => AddDdsOperation(DdsOperationTypes.CashIn), () => CanAddCashInPayment);
+        AddCashOutPaymentCommand = new RelayCommand(() => AddDdsOperation(DdsOperationTypes.CashOut), () => CanAddCashOutPayment);
         PreviousPaymentPageCommand = new RelayCommand(() => ChangePaymentPage(-1));
         NextPaymentPageCommand = new RelayCommand(() => ChangePaymentPage(1));
 
@@ -519,7 +640,8 @@ public class SalesViewModel : INotifyPropertyChanged
             }
 
             _nextOrderNumber = _databaseService.GetNextOrderNumberAsync().GetAwaiter().GetResult();
-            if (CurrentOrder is null)
+            LoadShiftState();
+            if (CurrentOrder is null && CanUseCashier)
             {
                 CurrentOrder = CreateOrder(saveToDatabase: false);
             }
@@ -529,6 +651,7 @@ public class SalesViewModel : INotifyPropertyChanged
         finally
         {
             _isLoading = false;
+            RefreshShiftState();
         }
 
         RefreshProductQuantities();
@@ -537,6 +660,16 @@ public class SalesViewModel : INotifyPropertyChanged
     private void Navigate(string? section)
     {
         if (string.IsNullOrWhiteSpace(section))
+        {
+            return;
+        }
+
+        if (section == "Заказы" && !CanShowOrders)
+        {
+            return;
+        }
+
+        if (section == "Платежи" && !CanShowPayments)
         {
             return;
         }
@@ -639,6 +772,16 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void AddDdsOperation(string operationType)
     {
+        if (!CanAddDdsOperation(operationType))
+        {
+            return;
+        }
+
+        if (!EnsureShiftOpen())
+        {
+            return;
+        }
+
         var window = new DdsOperationWindow(operationType)
         {
             Owner = Application.Current?.MainWindow
@@ -660,6 +803,18 @@ public class SalesViewModel : INotifyPropertyChanged
         }
     }
 
+    private bool CanAddDdsOperation(string operationType)
+    {
+        return operationType switch
+        {
+            DdsOperationTypes.CustomerIn => CanAddCustomerInPayment,
+            DdsOperationTypes.CustomerOut => CanAddCustomerOutPayment,
+            DdsOperationTypes.CashIn => CanAddCashInPayment,
+            DdsOperationTypes.CashOut => CanAddCashOutPayment,
+            _ => false
+        };
+    }
+
     private void OpenProfile()
     {
         var settingsService = new AppSettingsService();
@@ -676,6 +831,8 @@ public class SalesViewModel : INotifyPropertyChanged
         }
 
         var settings = settingsService.Load();
+        _settings = settings;
+        LoadShiftState();
         if (settings.AppType != previousAppType)
         {
             App.SwitchMainWindow(settings);
@@ -701,7 +858,7 @@ public class SalesViewModel : INotifyPropertyChanged
     private void Logout()
     {
         if (!AppDialogWindow.Confirm(
-                "Выйти из текущей смены и вернуться на экран авторизации?",
+                "Выйти из программы и вернуться на экран авторизации?",
                 "Выход",
                 "Выйти",
                 "Отмена"))
@@ -712,35 +869,166 @@ public class SalesViewModel : INotifyPropertyChanged
         App.ShowLoginWindow();
     }
 
-    private void EditDiscount()
+    private void LoadShiftState()
     {
-        if (CurrentOrder is null)
+        if (!IsShiftEnabled)
         {
+            _currentShift = null;
+            RefreshShiftState();
             return;
         }
 
-        var window = new DiscountWindow(CurrentOrder.Subtotal, CurrentOrder.Discount)
+        var user = App.CurrentUser;
+        var storeId = _settings.StoreId > 0 ? _settings.StoreId : 1;
+        var cashId = DefaultCashId;
+        _currentShift = _databaseService.GetOpenShiftAsync(storeId, cashId).GetAwaiter().GetResult();
+        RefreshShiftState();
+    }
+
+    private void RefreshShiftState()
+    {
+        OnPropertyChanged(nameof(CurrentShift));
+        OnPropertyChanged(nameof(HasOpenShift));
+        OnPropertyChanged(nameof(IsShiftOpen));
+        OnPropertyChanged(nameof(IsShiftExpired));
+        OnPropertyChanged(nameof(ShiftStatusText));
+        OnPropertyChanged(nameof(ShiftStatusHint));
+        OnPropertyChanged(nameof(ShiftActionText));
+        OnPropertyChanged(nameof(ShiftStatusBrush));
+        OnPropertyChanged(nameof(ShiftStatusBackground));
+        OnPropertyChanged(nameof(ShiftRemainingText));
+        OnPropertyChanged(nameof(CanUseCashier));
+        OnPropertyChanged(nameof(IsShiftEnabled));
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    private bool EnsureShiftOpen()
+    {
+        if (!IsShiftEnabled)
+        {
+            return true;
+        }
+
+        if (IsShiftOpen)
+        {
+            return true;
+        }
+
+        var message = _currentShift is null
+            ? "Смена не открыта. Сначала откройте смену."
+            : _currentShift.IsExpired
+                ? "Смена просрочена. Сначала закройте её и откройте новую."
+                : "Смена закрыта. Откройте новую смену.";
+        AppDialogWindow.ShowInfo(message, "Смена");
+        return false;
+    }
+
+    private void OpenShift()
+    {
+        if (!IsShiftEnabled)
+        {
+            AppDialogWindow.ShowInfo("Смена отключена в настройках.", "Смена");
+            return;
+        }
+
+        if (_currentShift is not null && _currentShift.IsOpen)
+        {
+            AppDialogWindow.ShowInfo(
+                _currentShift.IsExpired
+                    ? "Смена уже просрочена. Сначала закройте её и откройте новую."
+                    : "Смена уже открыта.",
+                "Смена");
+            return;
+        }
+
+        var inputWindow = new OrderValueInputWindow("Остаток на начало смены", "0")
         {
             Owner = Application.Current?.MainWindow
         };
 
-        if (window.ShowDialog() == true)
+        if (inputWindow.ShowDialog() != true)
         {
-            CurrentOrder.Discount = window.Discount;
-            CurrentOrder.RefreshTotals();
-            SaveCurrentOrder();
+            return;
         }
+
+        var user = App.CurrentUser;
+        var storeId = _settings.StoreId > 0 ? _settings.StoreId : 1;
+        var cashId = DefaultCashId;
+        var shift = _databaseService.OpenShiftAsync(
+            storeId,
+            cashId,
+            user?.Id ?? 1,
+            inputWindow.Value).GetAwaiter().GetResult();
+
+        _currentShift = shift;
+        RefreshShiftState();
+        AppDialogWindow.ShowSuccess(
+            $"Смена открыта до {shift.ExpiresAt:dd.MM.yyyy HH:mm}.",
+            "Смена открыта");
     }
+
+    private void CloseShift()
+    {
+        if (!IsShiftEnabled)
+        {
+            AppDialogWindow.ShowInfo("Смена отключена в настройках.", "Смена");
+            return;
+        }
+
+        if (_currentShift is null || !_currentShift.IsOpen)
+        {
+            AppDialogWindow.ShowInfo("Нет открытой смены для закрытия.", "Смена");
+            return;
+        }
+
+        if (!AppDialogWindow.Confirm(
+                _currentShift.IsExpired
+                    ? "Смена просрочена. Закрыть её и напечатать итог?"
+                    : "Закрыть смену и напечатать итог?",
+                "Закрытие смены",
+                "Закрыть",
+                "Отмена"))
+        {
+            return;
+        }
+
+        var user = App.CurrentUser;
+        var closedShift = _databaseService.CloseShiftAsync(
+            _currentShift.Id,
+            user?.Id ?? 1).GetAwaiter().GetResult();
+
+        if (closedShift is null)
+        {
+            AppDialogWindow.ShowError("Не удалось закрыть смену.", "Смена");
+            return;
+        }
+
+        try
+        {
+            _printService.PrintReceipt(BuildShiftReceiptText(closedShift), GetReceiptPrinterName());
+        }
+        catch (Exception ex)
+        {
+            AppDialogWindow.ShowError($"Смена закрыта, но не удалось напечатать итог.\n{ex.Message}", "Печать смены");
+        }
+
+        _currentShift = closedShift;
+        RefreshShiftState();
+        AppDialogWindow.ShowSuccess("Смена закрыта. Итог напечатан.", "Смена закрыта");
+    }
+
 
     private void AddProduct(Product? product)
     {
-        if (product is null)
+        if (product is null || !EnsureShiftOpen())
         {
             return;
         }
 
         CurrentOrder ??= CreateOrder();
-        var existing = CurrentOrder.Items.FirstOrDefault(item => item.Product.Id == product.Id);
+        var existing = _settings.NewRow
+            ? null
+            : CurrentOrder.Items.FirstOrDefault(item => item.ProductId == product.Id);
         if (existing is not null)
         {
             existing.Quantity++;
@@ -766,7 +1054,7 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void IncreaseQuantity(OrderItem? item)
     {
-        if (item is null)
+        if (item is null || !EnsureShiftOpen())
         {
             return;
         }
@@ -779,7 +1067,7 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void DecreaseQuantity(OrderItem? item)
     {
-        if (item is null)
+        if (item is null || !EnsureShiftOpen())
         {
             return;
         }
@@ -797,7 +1085,7 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void RemoveOrderItem(OrderItem? item)
     {
-        if (item is null || CurrentOrder is null)
+        if (item is null || CurrentOrder is null || !EnsureShiftOpen())
         {
             return;
         }
@@ -810,6 +1098,11 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void EditCurrentOrderQuantity(OrderItem? item)
     {
+        if (!IsTouchScreen)
+        {
+            return;
+        }
+
         EditCurrentOrderItem(item, "Изменить количество", current => current.Quantity.ToString(CultureInfo.CurrentCulture), value =>
         {
             var quantity = (int)Math.Round(value, 0, MidpointRounding.AwayFromZero);
@@ -819,7 +1112,12 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void EditCurrentOrderPrice(OrderItem? item)
     {
-        EditCurrentOrderItem(item, "Изменить цену", current => (current.Price > 0 ? current.Price : current.Product.Price).ToString("0.##", CultureInfo.CurrentCulture), value =>
+        if (!IsTouchScreen || !CanEditPrice)
+        {
+            return;
+        }
+
+        EditCurrentOrderItem(item, "Изменить цену", current => GetUnitPrice(current).ToString("0.##", CultureInfo.CurrentCulture), value =>
         {
             var price = Math.Max(0, value);
             return price;
@@ -828,13 +1126,18 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void EditCurrentOrderTotal(OrderItem? item)
     {
+        if (!IsTouchScreen || !CanEditPrice)
+        {
+            return;
+        }
+
         EditCurrentOrderItem(item, "Изменить сумму", current => current.Total.ToString("0.##", CultureInfo.CurrentCulture), value =>
         {
             var total = Math.Max(0, value);
             return total;
         }, applyValue: (orderItem, value) =>
         {
-            var unitPrice = orderItem.Price > 0 ? orderItem.Price : orderItem.Product.Price;
+            var unitPrice = GetUnitPrice(orderItem);
             if (unitPrice <= 0)
             {
                 orderItem.Quantity = 1;
@@ -849,7 +1152,7 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void ClearOrder()
     {
-        if (CurrentOrder is null || CurrentOrder.Items.Count == 0)
+        if (CurrentOrder is null || CurrentOrder.Items.Count == 0 || !EnsureShiftOpen())
         {
             return;
         }
@@ -866,6 +1169,11 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void HoldOrder()
     {
+        if (!EnsureShiftOpen())
+        {
+            return;
+        }
+
         if (CurrentOrder is null || CurrentOrder.Items.Count == 0)
         {
             return;
@@ -885,18 +1193,31 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void Pay()
     {
+        if (!EnsureShiftOpen())
+        {
+            return;
+        }
+
         if (CurrentOrder is null || CurrentOrder.Items.Count == 0)
         {
             return;
         }
 
+        if (!CanUseDiscount && CurrentOrder.Discount != 0)
+        {
+            CurrentOrder.Discount = 0;
+            CurrentOrder.RefreshTotals();
+            SaveCurrentOrder();
+        }
+
         var window = new PaymentWindow(
             CurrentOrder.Subtotal,
             SelectedPaymentType,
-            CurrentOrder.Discount,
+            CanUseDiscount ? CurrentOrder.Discount : 0m,
             CurrentOrder.OrderType,
             CurrentOrder.PeopleId,
-            CurrentOrder.Note)
+            CurrentOrder.Note,
+            CanUseDiscount)
         {
             Owner = Application.Current?.MainWindow
         };
@@ -911,9 +1232,10 @@ public class SalesViewModel : INotifyPropertyChanged
 
         if (paymentResult == true)
         {
+            var wasReturnSale = CurrentOrder.SaleType == Order.SaleTypeReturn;
             SelectedPaymentType = window.PaymentType;
             SelectedOrderType = window.OrderType;
-            CurrentOrder.Discount = window.DiscountAmount;
+            CurrentOrder.Discount = CanUseDiscount ? window.DiscountAmount : 0m;
             CurrentOrder.PeopleId = window.PeopleId;
             CurrentOrder.CashId = window.CashId;
             CurrentOrder.SummaPay = window.ReceivedAmount;
@@ -931,12 +1253,45 @@ public class SalesViewModel : INotifyPropertyChanged
             var paidOrder = CurrentOrder;
             OpenOrders.Remove(paidOrder);
             CurrentOrder = GetOrCreateEmptyOrder(paidOrder);
+            if (wasReturnSale)
+            {
+                SelectedSaleType = Order.SaleTypeSale;
+            }
+
             RefreshProductQuantities();
         }
     }
 
+    private void SelectSaleType(string? saleType)
+    {
+        var normalized = string.Equals(saleType, Order.SaleTypeReturn, StringComparison.OrdinalIgnoreCase)
+            ? Order.SaleTypeReturn
+            : Order.SaleTypeSale;
+
+        if (normalized == Order.SaleTypeReturn)
+        {
+            if (!CanReturnSale)
+            {
+                return;
+            }
+
+            if (SelectedSaleType != Order.SaleTypeReturn &&
+                !AppDialogWindow.Confirm("Включить режим возврата для текущего чека?", "Подтверждение возврата", Application.Current?.MainWindow))
+            {
+                return;
+            }
+        }
+
+        SelectedSaleType = normalized;
+    }
+
     private void CreateNewOrder()
     {
+        if (!EnsureShiftOpen())
+        {
+            return;
+        }
+
         if (CurrentOrder is not null && CurrentOrder.Items.Count == 0)
         {
             return;
@@ -1034,7 +1389,7 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void OpenSelectedOrderInCash()
     {
-        if (SelectedOrderListItem?.Order is not { } order)
+        if (SelectedOrderListItem?.Order is not { } order || !EnsureShiftOpen())
         {
             return;
         }
@@ -1059,6 +1414,11 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void PaySelectedOrder()
     {
+        if (!EnsureShiftOpen())
+        {
+            return;
+        }
+
         OpenSelectedOrderInCash();
         if (ActiveSection == "Касса")
         {
@@ -1079,7 +1439,7 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void DeleteSelectedOrder()
     {
-        if (SelectedOrderListItem?.Order is not { } order)
+        if (SelectedOrderListItem?.Order is not { } order || !EnsureShiftOpen())
         {
             return;
         }
@@ -1108,6 +1468,16 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void EditSelectedOrderQuantity(OrderItem? item)
     {
+        if (!EnsureShiftOpen())
+        {
+            return;
+        }
+
+        if (!IsTouchScreen)
+        {
+            return;
+        }
+
         EditSelectedOrderItem(item, "Изменить количество", current => current.Quantity.ToString(CultureInfo.CurrentCulture), value =>
         {
             var quantity = (int)Math.Round(value, 0, MidpointRounding.AwayFromZero);
@@ -1117,7 +1487,17 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void EditSelectedOrderPrice(OrderItem? item)
     {
-        EditSelectedOrderItem(item, "Изменить цену", current => (current.Price > 0 ? current.Price : current.Product.Price).ToString("0.##", CultureInfo.CurrentCulture), value =>
+        if (!EnsureShiftOpen())
+        {
+            return;
+        }
+
+        if (!IsTouchScreen || !CanEditPrice)
+        {
+            return;
+        }
+
+        EditSelectedOrderItem(item, "Изменить цену", current => GetUnitPrice(current).ToString("0.##", CultureInfo.CurrentCulture), value =>
         {
             var price = Math.Max(0, value);
             return price;
@@ -1126,13 +1506,23 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void EditSelectedOrderTotal(OrderItem? item)
     {
+        if (!EnsureShiftOpen())
+        {
+            return;
+        }
+
+        if (!IsTouchScreen || !CanEditPrice)
+        {
+            return;
+        }
+
         EditSelectedOrderItem(item, "Изменить сумму", current => current.Total.ToString("0.##", CultureInfo.CurrentCulture), value =>
         {
             var total = Math.Max(0, value);
             return total;
         }, applyValue: (orderItem, value) =>
         {
-            var unitPrice = orderItem.Price > 0 ? orderItem.Price : orderItem.Product.Price;
+            var unitPrice = GetUnitPrice(orderItem);
             if (unitPrice <= 0)
             {
                 orderItem.Quantity = 1;
@@ -1152,7 +1542,7 @@ public class SalesViewModel : INotifyPropertyChanged
         Func<decimal, decimal> normalizeValue,
         Action<OrderItem, decimal> applyValue)
     {
-        if (item is null || SelectedOrderListItem?.Order is not { } order)
+        if (item is null || SelectedOrderListItem?.Order is not { } order || !EnsureShiftOpen())
         {
             return;
         }
@@ -1189,7 +1579,7 @@ public class SalesViewModel : INotifyPropertyChanged
         Action<OrderItem, decimal> applyValue,
         bool allowDecimal = true)
     {
-        if (item is null || CurrentOrder is not { } order)
+        if (item is null || CurrentOrder is not { } order || !EnsureShiftOpen())
         {
             return;
         }
@@ -1218,47 +1608,91 @@ public class SalesViewModel : INotifyPropertyChanged
         RefreshProductQuantities();
     }
 
-    private void SelectOrderCustomer()
+    public void ApplyCurrentOrderInlineEdit(OrderItem? item, string field, string? rawValue)
     {
-        if (CurrentOrder is null)
+        if (item is null || CurrentOrder is not { } order || !EnsureShiftOpen() || order.Status != "open")
         {
             return;
         }
 
-        var window = new CustomerSelectWindow(CurrentOrder.PeopleId)
+        if (field is "Price" or "Total" && !CanEditPrice)
         {
-            Owner = Application.Current?.MainWindow
-        };
-
-        if (window.ShowDialog() != true || window.SelectedCustomer is null)
-        {
+            item.OnPropertyChangedForInlineEdit();
             return;
         }
 
-        CurrentOrder.PeopleId = window.SelectedCustomer.Id;
-        SaveCurrentOrder();
-        AppDialogWindow.ShowSuccess($"Клиент выбран: {GetCustomerName(CurrentOrder.PeopleId)}");
+        if (!TryParsePositiveDecimal(rawValue, out var value))
+        {
+            item.OnPropertyChangedForInlineEdit();
+            return;
+        }
+
+        ApplyInlineValue(item, field, value);
+        order.RefreshTotals();
+        SaveCurrentOrder(order);
+        RefreshOrders();
+        RefreshProductQuantities();
     }
 
-    private void EditOrderNote()
+    public void ApplySelectedOrderInlineEdit(OrderItem? item, string field, string? rawValue)
     {
-        if (CurrentOrder is null)
+        if (item is null || SelectedOrderListItem?.Order is not { } order || !EnsureShiftOpen() || order.Status != "open")
         {
             return;
         }
 
-        var window = new OrderNoteWindow(CurrentOrder.Note)
+        if (field is "Price" or "Total" && !CanEditPrice)
         {
-            Owner = Application.Current?.MainWindow
-        };
-
-        if (window.ShowDialog() != true)
-        {
+            item.OnPropertyChangedForInlineEdit();
             return;
         }
 
-        CurrentOrder.Note = window.Note;
-        SaveCurrentOrder();
+        if (!TryParsePositiveDecimal(rawValue, out var value))
+        {
+            item.OnPropertyChangedForInlineEdit();
+            return;
+        }
+
+        ApplyInlineValue(item, field, value);
+        order.RefreshTotals();
+        SaveCurrentOrder(order);
+        RefreshOrders();
+        RefreshProductQuantities();
+    }
+
+    private static void ApplyInlineValue(OrderItem item, string field, decimal value)
+    {
+        switch (field)
+        {
+            case "Quantity":
+                item.Quantity = Math.Max(1, (int)Math.Round(value, 0, MidpointRounding.AwayFromZero));
+                break;
+            case "Price":
+                item.Price = Math.Max(0, value);
+                break;
+            case "Total":
+                var unitPrice = GetUnitPrice(item);
+                if (unitPrice <= 0)
+                {
+                    item.Quantity = 1;
+                    item.Price = Math.Max(0, value);
+                    break;
+                }
+
+                item.Quantity = Math.Max(1, (int)Math.Round(value / unitPrice, MidpointRounding.AwayFromZero));
+                break;
+        }
+    }
+
+    private static bool TryParsePositiveDecimal(string? rawValue, out decimal value)
+    {
+        var text = (rawValue ?? string.Empty).Trim().Replace(',', '.');
+        return decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out value) && value >= 0;
+    }
+
+    private static decimal GetUnitPrice(OrderItem item)
+    {
+        return item.Price > 0 ? item.Price : item.Product?.Price ?? 0m;
     }
 
     private Order GetOrCreateEmptyOrder(Order? exclude = null)
@@ -1269,7 +1703,17 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private Order CreateOrder(bool saveToDatabase = true)
     {
-        var order = new Order { Number = _nextOrderNumber++, OrderType = SelectedOrderType };
+        var order = new Order
+        {
+            Number = _nextOrderNumber++,
+            OrderType = SelectedOrderType,
+            SaleType = SelectedSaleType,
+            StoreId = _settings.StoreId > 0 ? _settings.StoreId : 1,
+            StockId = DefaultStockId,
+            CashId = DefaultCashId,
+            PriceId = DefaultPriceId,
+            UserId = App.CurrentUser?.Id ?? 1
+        };
         OpenOrders.Add(order);
         OnPropertyChanged(nameof(OpenOrders));
         if (saveToDatabase && !_isLoading)
@@ -1295,6 +1739,11 @@ public class SalesViewModel : INotifyPropertyChanged
             return;
         }
 
+        if (!EnsureShiftOpen())
+        {
+            return;
+        }
+
         try
         {
             _databaseService.SaveOpenOrderAsync(order).GetAwaiter().GetResult();
@@ -1307,7 +1756,7 @@ public class SalesViewModel : INotifyPropertyChanged
 
     private void PrintCurrentReceipt()
     {
-        if (CurrentOrder is null || CurrentOrder.Items.Count == 0)
+        if (CurrentOrder is null || CurrentOrder.Items.Count == 0 || !EnsureShiftOpen())
         {
             return;
         }
@@ -1343,17 +1792,7 @@ public class SalesViewModel : INotifyPropertyChanged
             return new UserSettings();
         }
 
-        try
-        {
-            return JsonSerializer.Deserialize<UserSettings>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            }) ?? new UserSettings();
-        }
-        catch
-        {
-            return new UserSettings();
-        }
+        return UserSettings.Parse(json);
     }
 
     private void PrintReceipt(Order order)
@@ -1400,6 +1839,37 @@ public class SalesViewModel : INotifyPropertyChanged
         return builder.ToString();
     }
 
+    private string BuildShiftReceiptText(Shift shift)
+    {
+        var users = _databaseService.GetUsersAsync().GetAwaiter().GetResult()
+            .ToDictionary(user => user.Id, user => string.IsNullOrWhiteSpace(user.Name) ? (user.Username ?? $"Пользователь №{user.Id}") : user.Name!);
+        var builder = new StringBuilder();
+        builder.AppendLine("TIJORAT.PRO");
+        builder.AppendLine("Итог смены");
+        builder.AppendLine($"Смена №{shift.Id}");
+        builder.AppendLine($"Открыта: {shift.OpenedAt:dd.MM.yyyy HH:mm}");
+        builder.AppendLine($"Закрыта: {shift.ClosedAt:dd.MM.yyyy HH:mm}");
+        builder.AppendLine($"Открыл: {GetUserName(shift.OpenedByUserId, users)}");
+        builder.AppendLine($"Закрыл: {GetUserName(shift.ClosedByUserId ?? 0, users)}");
+        builder.AppendLine(new string('-', 32));
+        builder.AppendLine($"Остаток на начало: {shift.OpeningBalance:0.##}");
+        builder.AppendLine($"Продажи: {shift.SalesTotal:0.##}");
+        builder.AppendLine($"Возвраты: {shift.ReturnTotal:0.##}");
+        builder.AppendLine($"Оплата продаж: {shift.SalePaymentTotal:0.##}");
+        builder.AppendLine($"Платежи приход: {shift.PaymentIncomeTotal:0.##}");
+        builder.AppendLine($"Платежи расход: {shift.PaymentExpenseTotal:0.##}");
+        builder.AppendLine($"Итоговый остаток: {shift.ClosingBalance:0.##}");
+        builder.AppendLine(new string('-', 32));
+        builder.AppendLine($"Чеков: {shift.SalesCount}");
+        builder.AppendLine($"Операций: {shift.PaymentCount}");
+        if (!string.IsNullOrWhiteSpace(shift.Note))
+        {
+            builder.AppendLine($"Примечание: {shift.Note}");
+        }
+
+        return builder.ToString();
+    }
+
     private string GetCustomerName(int peopleId)
     {
         try
@@ -1440,25 +1910,22 @@ public class SalesViewModel : INotifyPropertyChanged
             : articleId > 0 ? $"Статья №{articleId}" : "-";
     }
 
+    private static string GetUserName(int userId, IReadOnlyDictionary<int, string> users)
+    {
+        return userId > 0 && users.TryGetValue(userId, out var name) && !string.IsNullOrWhiteSpace(name)
+            ? name
+            : userId > 0 ? $"Пользователь №{userId}" : "-";
+    }
+
     private static string? GetReceiptPrinterName()
     {
         var userSettingsJson = App.CurrentUser?.Settings;
         if (!string.IsNullOrWhiteSpace(userSettingsJson))
         {
-            try
+            var userSettings = UserSettings.Parse(userSettingsJson);
+            if (!string.IsNullOrWhiteSpace(userSettings.PrinterNameDefault))
             {
-                var userSettings = JsonSerializer.Deserialize<UserSettings>(userSettingsJson, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                if (!string.IsNullOrWhiteSpace(userSettings?.PrinterNameDefault))
-                {
-                    return userSettings.PrinterNameDefault;
-                }
-            }
-            catch
-            {
+                return userSettings.PrinterNameDefault;
             }
         }
 
@@ -1499,7 +1966,7 @@ public class SalesViewModel : INotifyPropertyChanged
     private void RefreshProductQuantities()
     {
         var selectedQuantities = CurrentOrder?.Items
-            .GroupBy(item => item.Product.Id)
+            .GroupBy(item => item.ProductId)
             .ToDictionary(group => group.Key, group => group.Sum(item => item.Quantity)) ?? new Dictionary<int, int>();
 
         foreach (var product in _allProducts)
@@ -1534,6 +2001,7 @@ public class SalesViewModel : INotifyPropertyChanged
         {
             CurrentTime = DateTime.Now.ToString("HH:mm");
             CurrentDate = DateTime.Now.ToString("dd.MM.yyyy");
+            RefreshShiftState();
         };
         timer.Start();
     }
@@ -1596,7 +2064,7 @@ public class OrderListItem : INotifyPropertyChanged
         CustomerName = customerName;
         Order.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName is nameof(Order.Subtotal) or nameof(Order.Total) or nameof(Order.Status) or nameof(Order.SyncStatus) or nameof(Order.OrderType) or nameof(Order.Note) or nameof(Order.Date))
+            if (e.PropertyName is nameof(Order.Subtotal) or nameof(Order.Total) or nameof(Order.Status) or nameof(Order.SyncStatus) or nameof(Order.OrderType) or nameof(Order.SaleType) or nameof(Order.Note) or nameof(Order.Date))
             {
                 OnPropertyChanged(nameof(ItemsCount));
                 OnPropertyChanged(nameof(Subtotal));
@@ -1609,6 +2077,7 @@ public class OrderListItem : INotifyPropertyChanged
                 OnPropertyChanged(nameof(SyncBrush));
                 OnPropertyChanged(nameof(SyncBackground));
                 OnPropertyChanged(nameof(OrderType));
+                OnPropertyChanged(nameof(SaleTypeText));
                 OnPropertyChanged(nameof(Note));
                 OnPropertyChanged(nameof(DateText));
             }
@@ -1617,11 +2086,12 @@ public class OrderListItem : INotifyPropertyChanged
 
     public Order Order { get; }
     public int Number => Order.Number;
-    public string NumberText => Order.DisplayName;
+    public string NumberText => Order.Number.ToString(CultureInfo.InvariantCulture);
     public DateTime Date => Order.Date;
     public string DateText => Order.Date.ToString("dd.MM.yyyy HH:mm");
     public string CustomerName { get; }
     public string OrderType => Order.OrderType;
+    public string SaleTypeText => Order.SaleTypeText;
     public string Note => Order.Note ?? string.Empty;
     public int ItemsCount => Order.Items.Sum(item => item.Quantity);
     public decimal Subtotal => Order.Subtotal;

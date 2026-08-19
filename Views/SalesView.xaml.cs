@@ -56,6 +56,11 @@ public partial class SalesView : UserControl
             return;
         }
 
+        if (!viewModel.IsTouchScreen)
+        {
+            return;
+        }
+
         switch (cell.Tag as string)
         {
             case "Quantity":
@@ -71,6 +76,65 @@ public partial class SalesView : UserControl
                 e.Handled = true;
                 break;
         }
+    }
+
+    private void CurrentOrderInlineValue_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is not TextBox textBox ||
+            textBox.DataContext is not OrderItem item ||
+            DataContext is not SalesViewModel viewModel ||
+            textBox.Tag is not string field)
+        {
+            return;
+        }
+
+        viewModel.ApplyCurrentOrderInlineEdit(item, field, textBox.Text);
+    }
+
+    private void SelectedOrderInlineValue_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is not TextBox textBox ||
+            textBox.DataContext is not OrderItem item ||
+            DataContext is not SalesViewModel viewModel ||
+            textBox.Tag is not string field)
+        {
+            return;
+        }
+
+        viewModel.ApplySelectedOrderInlineEdit(item, field, textBox.Text);
+    }
+
+    private void SelectedOrderInlineValue_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not TextBox textBox ||
+            textBox.DataContext is not OrderItem item ||
+            DataContext is not SalesViewModel viewModel ||
+            textBox.Tag is not string field ||
+            !viewModel.IsTouchScreen)
+        {
+            return;
+        }
+
+        switch (field)
+        {
+            case "Quantity":
+                viewModel.EditSelectedOrderQuantityCommand.Execute(item);
+                e.Handled = true;
+                break;
+            case "Price":
+                viewModel.EditSelectedOrderPriceCommand.Execute(item);
+                e.Handled = true;
+                break;
+            case "Total":
+                viewModel.EditSelectedOrderTotalCommand.Execute(item);
+                e.Handled = true;
+                break;
+        }
+    }
+
+    private void InlineValue_PreviewTextInput(object sender, TextCompositionEventArgs e)
+    {
+        e.Handled = e.Text.Any(ch => !char.IsDigit(ch) && ch != ',' && ch != '.');
     }
 
     private void ProfileButton_OnClick(object sender, System.Windows.RoutedEventArgs e)
