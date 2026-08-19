@@ -2,8 +2,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Threading;
-using FFPOS.Controls;
 using FFPOS.Models;
 using FFPOS.ViewModels;
 
@@ -26,14 +26,15 @@ public partial class SalesView : UserControl
 
     private void ScrollToOrderItem(OrderItem item)
     {
-        ReceiptItemsControl.UpdateLayout();
+        ReceiptItemsGrid.ScrollIntoView(item);
+        ReceiptItemsGrid.UpdateLayout();
 
-        var container = ReceiptItemsControl.ItemContainerGenerator.ContainerFromItem(item) as DependencyObject;
+        var container = ReceiptItemsGrid.ItemContainerGenerator.ContainerFromItem(item) as DataGridRow;
         if (container is null)
         {
-            ReceiptItemsScrollViewer.ScrollToEnd();
-            ReceiptItemsControl.UpdateLayout();
-            container = ReceiptItemsControl.ItemContainerGenerator.ContainerFromItem(item) as DependencyObject;
+            ReceiptItemsGrid.ScrollIntoView(item);
+            ReceiptItemsGrid.UpdateLayout();
+            container = ReceiptItemsGrid.ItemContainerGenerator.ContainerFromItem(item) as DataGridRow;
         }
 
         if (container is null)
@@ -43,14 +44,33 @@ public partial class SalesView : UserControl
 
         container.Dispatcher.BeginInvoke(() =>
         {
-            if (FindVisualChild<OrderItemRow>(container) is not { } row)
-            {
-                return;
-            }
-
-            row.BringIntoView();
-            row.FlashHighlight();
+            container.BringIntoView();
+            FlashHighlight(container);
         }, DispatcherPriority.Loaded);
+    }
+
+    private void ReceiptItemCell_OnPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not DataGridCell cell || cell.DataContext is not OrderItem item || DataContext is not SalesViewModel viewModel)
+        {
+            return;
+        }
+
+        switch (cell.Tag as string)
+        {
+            case "Quantity":
+                viewModel.EditCurrentOrderQuantityCommand.Execute(item);
+                e.Handled = true;
+                break;
+            case "Price":
+                viewModel.EditCurrentOrderPriceCommand.Execute(item);
+                e.Handled = true;
+                break;
+            case "Total":
+                viewModel.EditCurrentOrderTotalCommand.Execute(item);
+                e.Handled = true;
+                break;
+        }
     }
 
     private void ProfileButton_OnClick(object sender, System.Windows.RoutedEventArgs e)
@@ -104,24 +124,19 @@ public partial class SalesView : UserControl
         return false;
     }
 
-    private static T? FindVisualChild<T>(DependencyObject source)
-        where T : DependencyObject
+    private static void FlashHighlight(DataGridRow row)
     {
-        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(source); i++)
+        var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF0EF"));
+        row.Background = brush;
+
+        var animation = new ColorAnimation
         {
-            var child = VisualTreeHelper.GetChild(source, i);
-            if (child is T result)
-            {
-                return result;
-            }
+            From = (Color)ColorConverter.ConvertFromString("#FFF0EF"),
+            To = Colors.White,
+            Duration = TimeSpan.FromMilliseconds(900),
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+        };
 
-            var nested = FindVisualChild<T>(child);
-            if (nested is not null)
-            {
-                return nested;
-            }
-        }
-
-        return null;
+        brush.BeginAnimation(SolidColorBrush.ColorProperty, animation);
     }
 }

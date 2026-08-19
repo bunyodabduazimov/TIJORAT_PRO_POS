@@ -61,7 +61,7 @@
                        ImageFailed="ProductImage_OnImageFailed" />
 
                 <TextBlock Text="{Binding Product.Name, ElementName=Root}"
-                           FontSize="13"
+                           FontSize="14"
                            FontWeight="SemiBold"
                            Foreground="#101828"
                            TextTrimming="CharacterEllipsis"
@@ -69,7 +69,7 @@
                            Panel.ZIndex="2" />
 
                 <TextBlock Text="{Binding Product.Price, ElementName=Root, StringFormat={}{0:0} c}"
-                           FontSize="15"
+                           FontSize="16"
                            FontWeight="Bold"
                            Foreground="#030712"
                            HorizontalAlignment="Left"
@@ -81,7 +81,7 @@
                       Margin="0,0,0,-1"
                       Panel.ZIndex="3">
                     <TextBlock Text="+"
-                               FontSize="20"
+                               FontSize="21"
                                FontWeight="SemiBold"
                                Foreground="#C5CCD6"
                                HorizontalAlignment="Right"
@@ -106,7 +106,7 @@
                             Visibility="{Binding Product.HasSelectedQuantity, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <TextBlock Text="{Binding Product.SelectedQuantity, ElementName=Root}"
                                    Foreground="White"
-                                   FontSize="13"
+                                   FontSize="14"
                                    FontWeight="Black"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"

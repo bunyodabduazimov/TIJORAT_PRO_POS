@@ -38,7 +38,7 @@
         </Grid.RowDefinitions>
 
         <TextBlock Text="{Binding Header, ElementName=Root}"
-                   FontSize="13"
+                   FontSize="14"
                    FontWeight="SemiBold"
                    Foreground="#667085" />
 
@@ -60,7 +60,7 @@
                         Click="LeftClicked">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <materialDesign:PackIcon x:Name="LeftIcon" Kind="Target" Width="17" Height="17" Margin="0,0,8,0" />
-                        <TextBlock x:Name="LeftLabel" Text="{Binding LeftText, ElementName=Root}" FontSize="14" FontWeight="Bold" />
+                        <TextBlock x:Name="LeftLabel" Text="{Binding LeftText, ElementName=Root}" FontSize="15" FontWeight="Bold" />
                     </StackPanel>
                 </Button>
 
@@ -70,7 +70,7 @@
                         Click="RightClicked">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <materialDesign:PackIcon x:Name="RightIcon" Kind="PackageVariantClosed" Width="17" Height="17" Margin="0,0,8,0" />
-                        <TextBlock x:Name="RightLabel" Text="{Binding RightText, ElementName=Root}" FontSize="14" FontWeight="Bold" />
+                        <TextBlock x:Name="RightLabel" Text="{Binding RightText, ElementName=Root}" FontSize="15" FontWeight="Bold" />
                     </StackPanel>
                 </Button>
             </Grid>

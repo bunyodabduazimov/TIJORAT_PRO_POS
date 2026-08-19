@@ -4,7 +4,7 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:controls="clr-namespace:FFPOS.Controls"
-        Title="Выбор клиента"
+        Title="Р’С‹Р±РѕСЂ РєР»РёРµРЅС‚Р°"
         Width="980"
         Height="720"
         MinWidth="980"
@@ -247,7 +247,7 @@
                 <Grid>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <materialDesign:PackIcon Kind="AccountSearchOutline" Width="24" Height="24" Foreground="#111827" Margin="0,0,10,0" />
-                        <TextBlock Text="Выбор клиента" FontSize="20" FontWeight="Bold" Foreground="#111827" />
+                        <TextBlock Text="Р’С‹Р±РѕСЂ РєР»РёРµРЅС‚Р°" FontSize="21" FontWeight="Bold" Foreground="#111827" />
                     </StackPanel>
                     <controls:WindowControlButtons HorizontalAlignment="Right" VerticalAlignment="Center" />
                 </Grid>
@@ -308,8 +308,8 @@
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <TextBlock Text="Поиск клиента"
-                                   FontSize="15"
+                        <TextBlock Text="РџРѕРёСЃРє РєР»РёРµРЅС‚Р°"
+                                   FontSize="16"
                                    FontWeight="Medium"
                                    Foreground="#98A2B3"
                                    Margin="40,0,0,0"
@@ -331,7 +331,7 @@
                     <Button Grid.Column="2" Style="{StaticResource PrimaryButtonStyle}" Click="AddCustomerClicked">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="Plus" Width="20" Height="20" Margin="0,0,8,0" />
-                            <TextBlock Text="Добавить" VerticalAlignment="Center" />
+                            <TextBlock Text="Р”РѕР±Р°РІРёС‚СЊ" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
                 </Grid>
@@ -343,11 +343,11 @@
                               ScrollViewer.VerticalScrollBarVisibility="Auto"
                               ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="№" Binding="{Binding Id}" Width="62" ElementStyle="{StaticResource CustomerGridCellTextStyle}" />
-                            <DataGridTextColumn Header="Название" Binding="{Binding Name}" Width="*" ElementStyle="{StaticResource CustomerGridCellTextStyle}" />
-                            <DataGridTextColumn Header="Телефон" Binding="{Binding Phone}" Width="150" ElementStyle="{StaticResource CustomerGridCellTextStyle}" />
-                            <DataGridTextColumn Header="Адрес" Binding="{Binding Address}" Width="*" ElementStyle="{StaticResource CustomerGridCellTextStyle}" />
-                            <DataGridTextColumn Header="Баланс" Binding="{Binding Balance, StringFormat={}{0:N2}}" Width="112" ElementStyle="{StaticResource CustomerGridRightCellTextStyle}" />
+                            <DataGridTextColumn Header="в„–" Binding="{Binding Id}" Width="62" ElementStyle="{StaticResource CustomerGridCellTextStyle}" />
+                            <DataGridTextColumn Header="РќР°Р·РІР°РЅРёРµ" Binding="{Binding Name}" Width="*" ElementStyle="{StaticResource CustomerGridCellTextStyle}" />
+                            <DataGridTextColumn Header="РўРµР»РµС„РѕРЅ" Binding="{Binding Phone}" Width="150" ElementStyle="{StaticResource CustomerGridCellTextStyle}" />
+                            <DataGridTextColumn Header="РђРґСЂРµСЃ" Binding="{Binding Address}" Width="*" ElementStyle="{StaticResource CustomerGridCellTextStyle}" />
+                            <DataGridTextColumn Header="Р‘Р°Р»Р°РЅСЃ" Binding="{Binding Balance, StringFormat={}{0:N2}}" Width="112" ElementStyle="{StaticResource CustomerGridRightCellTextStyle}" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Border>
@@ -361,7 +361,7 @@
                     <Button x:Name="PreviousPageButton" Click="PreviousPageClicked" Style="{StaticResource FlatButtonStyle}" Width="34" Height="26">
                         <materialDesign:PackIcon Kind="ChevronLeft" Width="18" Height="18" />
                     </Button>
-                    <TextBlock x:Name="CustomerPageText" Grid.Column="1" FontSize="13" FontWeight="SemiBold" Foreground="#667085" VerticalAlignment="Center" Margin="12,0" />
+                    <TextBlock x:Name="CustomerPageText" Grid.Column="1" FontSize="14" FontWeight="SemiBold" Foreground="#667085" VerticalAlignment="Center" Margin="12,0" />
                     <Button x:Name="NextPageButton" Grid.Column="2" Click="NextPageClicked" Style="{StaticResource FlatButtonStyle}" Width="34" Height="26">
                         <materialDesign:PackIcon Kind="ChevronRight" Width="18" Height="18" />
                     </Button>
@@ -370,10 +370,10 @@
 
             <Border Grid.Row="2" BorderBrush="#E8EDF3" BorderThickness="1,0,0,0" Padding="20,0">
                 <Grid>
-                    <TextBlock x:Name="ErrorText" Foreground="#FF2B22" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,320,0" />
+                    <TextBlock x:Name="ErrorText" Foreground="#FF2B22" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,320,0" />
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Button Style="{StaticResource FlatButtonStyle}" Width="130" Margin="0,0,10,0" Content="Отмена" Click="CancelClicked" />
-                        <Button Style="{StaticResource PrimaryButtonStyle}" Width="170" Content="Выбрать" Click="SelectClicked" />
+                        <Button Style="{StaticResource FlatButtonStyle}" Width="130" Margin="0,0,10,0" Content="РћС‚РјРµРЅР°" Click="CancelClicked" />
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Width="170" Content="Р’С‹Р±СЂР°С‚СЊ" Click="SelectClicked" />
                     </StackPanel>
                 </Grid>
             </Border>

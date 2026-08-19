@@ -91,7 +91,7 @@
                             <materialDesign:PackIcon Kind="Sync" Width="24" Height="24" Foreground="#F91F25" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <TextBlock Text="Синхронизация"
-                                   FontSize="22"
+                                   FontSize="23"
                                    FontWeight="Bold"
                                    Foreground="#111827"
                                    Margin="14,0,0,0"
@@ -115,14 +115,14 @@
 
                 <TextBlock x:Name="StatusTitle"
                            Text="Готово к синхронизации"
-                           FontSize="18"
+                           FontSize="19"
                            FontWeight="Bold"
                            Foreground="#111827" />
 
                 <StackPanel Grid.Row="2">
                     <TextBlock x:Name="StatusMessage"
                                Text="Нажмите кнопку, чтобы получить данные с сервера."
-                               FontSize="15"
+                               FontSize="16"
                                FontWeight="Medium"
                                Foreground="#667085"
                                TextWrapping="Wrap" />
@@ -169,7 +169,7 @@
                         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
                             <TextBlock x:Name="LogText"
                                        Text="Ожидание..."
-                                       FontSize="14"
+                                       FontSize="15"
                                        FontWeight="Medium"
                                        Foreground="#344054"
                                        TextWrapping="Wrap" />

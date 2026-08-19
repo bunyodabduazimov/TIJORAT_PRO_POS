@@ -28,7 +28,7 @@
             <Setter Property="BorderBrush" Value="#E1E7EF" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="13,0" />
+            <Setter Property="Padding" Value="9,0" />
             <Setter Property="Height" Value="50" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Style.Triggers>
@@ -61,12 +61,12 @@
         <Border Style="{StaticResource CategoryCardStyle}">
             <Grid VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="27" />
+                    <ColumnDefinition Width="36" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <materialDesign:PackIcon Kind="ViewGrid"
-                                         Width="20"
-                                         Height="20"
+                                         Width="26"
+                                         Height="26"
                                          Foreground="#FF2B22"
                                          HorizontalAlignment="Left"
                                          VerticalAlignment="Center">
@@ -81,8 +81,8 @@
                         </Style>
                     </materialDesign:PackIcon.Style>
                 </materialDesign:PackIcon>
-                <Image Width="21"
-                       Height="21"
+                <Image Width="30"
+                       Height="30"
                        HorizontalAlignment="Left"
                        VerticalAlignment="Center"
                        Stretch="Uniform"
@@ -100,7 +100,7 @@
                 </Image>
                 <TextBlock Grid.Column="1"
                            Text="{Binding Category.Name, ElementName=Root}"
-                           Margin="9,0,0,0"
+                           Margin="6,0,0,0"
                            VerticalAlignment="Center"
                            Style="{StaticResource CategoryTextStyle}" />
             </Grid>

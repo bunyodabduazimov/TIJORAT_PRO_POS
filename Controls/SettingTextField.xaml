@@ -38,7 +38,7 @@
 
         <TextBlock x:Name="HeaderText"
                    Text="{Binding Header, ElementName=Root}"
-                   FontSize="13"
+                   FontSize="14"
                    FontWeight="SemiBold"
                    Foreground="#667085" />
 
@@ -86,7 +86,7 @@
                 VerticalAlignment="Top"
                 Visibility="Collapsed">
             <TextBlock Text="{Binding Header, ElementName=Root}"
-                       FontSize="13"
+                       FontSize="14"
                        FontWeight="SemiBold"
                        Foreground="#667085" />
         </Border>

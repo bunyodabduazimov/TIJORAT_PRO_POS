@@ -61,7 +61,7 @@
 
             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                 <TextBlock Text="{Binding Item.Product.Name, ElementName=Root}"
-                           FontSize="14"
+                           FontSize="15"
                            FontWeight="Medium"
                            Foreground="#111827"
                            TextTrimming="CharacterEllipsis" />
@@ -79,7 +79,7 @@
                         Style="{StaticResource QtyButtonStyle}" />
                 <TextBlock Grid.Column="1"
                            Text="{Binding Item.Quantity, ElementName=Root}"
-                           FontSize="15"
+                           FontSize="16"
                            FontWeight="SemiBold"
                            Foreground="#111827"
                            HorizontalAlignment="Center"
@@ -93,7 +93,7 @@
 
             <TextBlock Grid.Column="3"
                        Text="{Binding Item.Price, ElementName=Root, StringFormat={}{0:0} c}"
-                       FontSize="13"
+                       FontSize="14"
                        FontWeight="Medium"
                        Foreground="#111827"
                        HorizontalAlignment="Right"
@@ -101,7 +101,7 @@
 
             <TextBlock Grid.Column="4"
                        Text="{Binding Item.Total, ElementName=Root, StringFormat={}{0:0} c}"
-                       FontSize="14"
+                       FontSize="15"
                        FontWeight="SemiBold"
                        Foreground="#030712"
                        HorizontalAlignment="Right"

@@ -274,8 +274,8 @@
                             <materialDesign:PackIcon Kind="AccountCogOutline" Width="24" Height="24" Foreground="#F91F25" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="Настройки пользователя" FontSize="21" FontWeight="Bold" Foreground="#111827" />
-                            <TextBlock x:Name="HeaderSubtitle" Text="Личные параметры кассира" FontSize="13" Foreground="#667085" />
+                            <TextBlock Text="Настройки пользователя" FontSize="22" FontWeight="Bold" Foreground="#111827" />
+                            <TextBlock x:Name="HeaderSubtitle" Text="Личные параметры кассира" FontSize="14" Foreground="#667085" />
                         </StackPanel>
                     </StackPanel>
                     <controls:WindowControlButtons HorizontalAlignment="Right" VerticalAlignment="Center" />
@@ -287,7 +287,7 @@
                     <StackPanel>
                         <Border Style="{StaticResource CardStyle}" Margin="0,0,0,14">
                             <StackPanel>
-                                <TextBlock Text="Рабочее место" FontSize="18" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,14" />
+                                <TextBlock Text="Рабочее место" FontSize="19" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,14" />
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -301,7 +301,7 @@
                                     </Grid.RowDefinitions>
 
                                     <StackPanel>
-                                        <TextBlock Text="Склад по умолчанию" FontSize="13" FontWeight="SemiBold" Foreground="#667085" />
+                                        <TextBlock Text="Склад по умолчанию" FontSize="14" FontWeight="SemiBold" Foreground="#667085" />
                                         <ComboBox x:Name="StockBox"
                                                   Margin="0,6,0,0"
                                                   Style="{StaticResource ComboBoxStyle}"
@@ -316,7 +316,7 @@
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="2">
-                                        <TextBlock Text="Счёт зачисления по умолчанию" FontSize="13" FontWeight="SemiBold" Foreground="#667085" />
+                                        <TextBlock Text="Счёт зачисления по умолчанию" FontSize="14" FontWeight="SemiBold" Foreground="#667085" />
                                         <ComboBox x:Name="CashBox"
                                                   Margin="0,6,0,0"
                                                   Style="{StaticResource ComboBoxStyle}"
@@ -347,7 +347,7 @@
 
                         <Border Style="{StaticResource CardStyle}" Margin="0,0,0,14">
                             <StackPanel>
-                                <TextBlock Text="Печать" FontSize="18" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,14" />
+                                <TextBlock Text="Печать" FontSize="19" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,14" />
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -356,7 +356,7 @@
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel>
-                                        <TextBlock Text="Принтер пользователя" FontSize="13" FontWeight="SemiBold" Foreground="#667085" />
+                                        <TextBlock Text="Принтер пользователя" FontSize="14" FontWeight="SemiBold" Foreground="#667085" />
                                         <ComboBox x:Name="PrinterBox"
                                                   Margin="0,6,0,0"
                                                   Style="{StaticResource ComboBoxStyle}" />
@@ -369,7 +369,7 @@
 
                         <Border Style="{StaticResource CardStyle}" Margin="0,0,0,14">
                             <StackPanel>
-                                <TextBlock Text="Таблица товаров" FontSize="18" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,14" />
+                                <TextBlock Text="Таблица товаров" FontSize="19" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,14" />
                                 <WrapPanel>
                                     <controls:SettingToggleField x:Name="ShowProductImageBox" Header="Фото товара" Margin="0,0,20,8" />
                                     <controls:SettingToggleField x:Name="ShowSkuBox" Header="Артикул" Margin="0,0,20,8" />
@@ -382,7 +382,7 @@
 
                         <Border Style="{StaticResource CardStyle}" Margin="0,0,0,14">
                             <StackPanel>
-                                <TextBlock Text="Синхронизация" FontSize="18" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,14" />
+                                <TextBlock Text="Синхронизация" FontSize="19" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,14" />
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -411,7 +411,7 @@
 
                         <Border Style="{StaticResource CardStyle}">
                             <StackPanel>
-                                <TextBlock Text="Другое" FontSize="18" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,14" />
+                                <TextBlock Text="Другое" FontSize="19" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,14" />
                                 <WrapPanel Margin="0,0,0,12">
                                     <controls:SettingToggleField x:Name="ConfirmBeforeLogoutBox" Header="Подтверждать выход" Margin="0,0,20,8" />
                                 </WrapPanel>
@@ -430,7 +430,7 @@
                 <Grid>
                     <TextBlock x:Name="ErrorText"
                                Foreground="#F91F25"
-                               FontSize="13"
+                               FontSize="14"
                                FontWeight="SemiBold"
                                VerticalAlignment="Center"
                                TextWrapping="Wrap"

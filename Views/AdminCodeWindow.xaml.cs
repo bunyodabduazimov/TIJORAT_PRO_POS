@@ -2,12 +2,14 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using FFPOS.Services;
 
 namespace FFPOS.Views;
 
 public partial class AdminCodeWindow : Window
 {
     private readonly string _adminCode;
+    private int _codeLength;
 
     public AdminCodeWindow(string adminCode)
     {
@@ -39,6 +41,7 @@ public partial class AdminCodeWindow : Window
     {
         if (sender is Button { Tag: not null } button)
         {
+            UiSoundPlayer.PlayPinClick();
             CodeBox.Password += button.Tag.ToString();
             ErrorText.Text = string.Empty;
         }
@@ -48,6 +51,7 @@ public partial class AdminCodeWindow : Window
     {
         CodeBox.Clear();
         ErrorText.Text = string.Empty;
+        _codeLength = 0;
         CodeBox.Focus();
     }
 
@@ -59,11 +63,18 @@ public partial class AdminCodeWindow : Window
         }
 
         ErrorText.Text = string.Empty;
+        _codeLength = CodeBox.Password.Length;
         CodeBox.Focus();
     }
 
     private void CodeChanged(object sender, RoutedEventArgs e)
     {
+        if (CodeBox.Password.Length > _codeLength)
+        {
+            UiSoundPlayer.PlayPinClick();
+        }
+
+        _codeLength = CodeBox.Password.Length;
         ErrorText.Text = string.Empty;
     }
 
@@ -102,4 +113,5 @@ public partial class AdminCodeWindow : Window
 
         return false;
     }
+
 }

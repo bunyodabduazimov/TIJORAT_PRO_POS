@@ -1,4 +1,4 @@
-<Window x:Class="FFPOS.Views.AdminCodeWindow"
+﻿<Window x:Class="FFPOS.Views.AdminCodeWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
@@ -111,7 +111,7 @@
                         <Border Width="42" Height="42" CornerRadius="21" Background="#FFF0EF">
                             <materialDesign:PackIcon Kind="ShieldKeyOutline" Width="24" Height="24" Foreground="#FF2B22" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
-                        <TextBlock Text="Код администратора" FontSize="21" FontWeight="Bold" Foreground="#111827" Margin="14,0,0,0" VerticalAlignment="Center" />
+                        <TextBlock Text="Код администратора" FontSize="22" FontWeight="Bold" Foreground="#111827" Margin="14,0,0,0" VerticalAlignment="Center" />
                     </StackPanel>
 
                     <controls:WindowControlButtons ShowMaximize="False" HorizontalAlignment="Right" VerticalAlignment="Center" />
@@ -131,7 +131,7 @@
 
                 <TextBlock Grid.Row="0"
                            Text="Введите код для открытия настроек"
-                           FontSize="15"
+                           FontSize="16"
                            FontWeight="SemiBold"
                            Foreground="#344054" />
 
@@ -164,7 +164,7 @@
                 <TextBlock x:Name="ErrorText"
                            Grid.Row="4"
                            Foreground="#FF2B22"
-                           FontSize="13"
+                           FontSize="14"
                            FontWeight="SemiBold"
                            MinHeight="18" />
 
@@ -197,3 +197,4 @@
         </Grid>
     </Border>
 </Window>
+

@@ -38,7 +38,7 @@
         </Grid.RowDefinitions>
 
         <TextBlock Text="{Binding Header, ElementName=Root}"
-                   FontSize="13"
+                   FontSize="14"
                    FontWeight="SemiBold"
                    Foreground="#667085" />
 
@@ -60,21 +60,21 @@
                 <Button x:Name="FirstButton" Style="{StaticResource ChoiceButtonStyle}" Click="FirstClicked">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <materialDesign:PackIcon x:Name="FirstIcon" Kind="ApplicationOutline" Width="17" Height="17" Margin="0,0,8,0" />
-                        <TextBlock x:Name="FirstLabel" Text="{Binding FirstText, ElementName=Root}" FontSize="14" FontWeight="Bold" />
+                        <TextBlock x:Name="FirstLabel" Text="{Binding FirstText, ElementName=Root}" FontSize="15" FontWeight="Bold" />
                     </StackPanel>
                 </Button>
 
                 <Button x:Name="SecondButton" Grid.Column="2" Style="{StaticResource ChoiceButtonStyle}" Click="SecondClicked">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <materialDesign:PackIcon x:Name="SecondIcon" Kind="MedicalBag" Width="17" Height="17" Margin="0,0,8,0" />
-                        <TextBlock x:Name="SecondLabel" Text="{Binding SecondText, ElementName=Root}" FontSize="14" FontWeight="Bold" />
+                        <TextBlock x:Name="SecondLabel" Text="{Binding SecondText, ElementName=Root}" FontSize="15" FontWeight="Bold" />
                     </StackPanel>
                 </Button>
 
                 <Button x:Name="ThirdButton" Grid.Column="4" Style="{StaticResource ChoiceButtonStyle}" Click="ThirdClicked">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <materialDesign:PackIcon x:Name="ThirdIcon" Kind="FoodForkDrink" Width="17" Height="17" Margin="0,0,8,0" />
-                        <TextBlock x:Name="ThirdLabel" Text="{Binding ThirdText, ElementName=Root}" FontSize="14" FontWeight="Bold" />
+                        <TextBlock x:Name="ThirdLabel" Text="{Binding ThirdText, ElementName=Root}" FontSize="15" FontWeight="Bold" />
                     </StackPanel>
                 </Button>
             </Grid>

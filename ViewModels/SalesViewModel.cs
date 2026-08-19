@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -15,6 +16,7 @@ public class SalesViewModel : INotifyPropertyChanged
 {
     private const int CardProductPageSize = 200;
     private const int TableProductPageSize = 100;
+    private const int OrderPageSize = 100;
     private const int PaymentPageSize = 100;
 
     private readonly DatabaseService _databaseService = new();
@@ -36,8 +38,12 @@ public class SalesViewModel : INotifyPropertyChanged
     private string _orderSearchText = string.Empty;
     private string _paymentSearchText = string.Empty;
     private string _orderFilter = "open";
+    private int _orderPage = 1;
+    private int _orderTotalCount;
     private int _paymentPage = 1;
     private int _paymentTotalCount;
+    private decimal _paymentIncomeTotal;
+    private decimal _paymentExpenseTotal;
     private OrderListItem? _selectedOrderListItem;
     private PaymentListItem? _selectedPaymentListItem;
     private bool _isLoading;
@@ -47,6 +53,7 @@ public class SalesViewModel : INotifyPropertyChanged
     public ObservableCollection<Order> OpenOrders { get; } = new();
     public ObservableCollection<OrderListItem> Orders { get; } = new();
     public ObservableCollection<PaymentListItem> Payments { get; } = new();
+    private List<OrderListItem> _allOrderItems = new();
     private List<PaymentListItem> _allPayments = new();
 
     public event EventHandler<OrderItem>? OrderItemTouched;
@@ -239,13 +246,19 @@ public class SalesViewModel : INotifyPropertyChanged
     public bool IsTodayOrdersFilter => OrderFilter == "today";
     public bool IsAllOrdersFilter => OrderFilter == "all";
     public bool HasSelectedOrder => SelectedOrderListItem is not null;
-    public string OrdersSummary => $"{Orders.Count} заказов";
+    public string OrdersSummary => $"{_orderTotalCount} заказов";
+    public int OrderPage => _orderPage;
+    public int OrderTotalPages => Math.Max(1, (int)Math.Ceiling(_orderTotalCount / (double)OrderPageSize));
+    public string OrderPageText => $"{OrderPage} / {OrderTotalPages} • {_orderTotalCount}";
+    public bool IsOrderPagerVisible => _orderTotalCount > OrderPageSize;
     public bool HasSelectedPayment => SelectedPaymentListItem is not null;
-    public string PaymentsSummary => $"{Payments.Count} операций";
+    public string PaymentsSummary => $"{_paymentTotalCount} операций";
     public int PaymentPage => _paymentPage;
     public int PaymentTotalPages => Math.Max(1, (int)Math.Ceiling(_paymentTotalCount / (double)PaymentPageSize));
     public string PaymentPageText => $"{PaymentPage} / {PaymentTotalPages} • {_paymentTotalCount}";
     public bool IsPaymentPagerVisible => _paymentTotalCount > PaymentPageSize;
+    public string PaymentIncomeTotalText => $"+{_paymentIncomeTotal:0.00} c";
+    public string PaymentExpenseTotalText => $"-{_paymentExpenseTotal:0.00} c";
 
     public string OrderSearchText
     {
@@ -258,6 +271,7 @@ public class SalesViewModel : INotifyPropertyChanged
             }
 
             _orderSearchText = value;
+            _orderPage = 1;
             OnPropertyChanged();
             RefreshOrders();
         }
@@ -296,6 +310,7 @@ public class SalesViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(IsPaidOrdersFilter));
             OnPropertyChanged(nameof(IsTodayOrdersFilter));
             OnPropertyChanged(nameof(IsAllOrdersFilter));
+            _orderPage = 1;
             RefreshOrders();
         }
     }
@@ -369,6 +384,9 @@ public class SalesViewModel : INotifyPropertyChanged
     public ICommand IncreaseQuantityCommand { get; }
     public ICommand DecreaseQuantityCommand { get; }
     public ICommand RemoveOrderItemCommand { get; }
+    public ICommand EditCurrentOrderQuantityCommand { get; }
+    public ICommand EditCurrentOrderPriceCommand { get; }
+    public ICommand EditCurrentOrderTotalCommand { get; }
     public ICommand ClearOrderCommand { get; }
     public ICommand HoldOrderCommand { get; }
     public ICommand PayCommand { get; }
@@ -388,13 +406,20 @@ public class SalesViewModel : INotifyPropertyChanged
     public ICommand PreviousProductPageCommand { get; }
     public ICommand NextProductPageCommand { get; }
     public ICommand RefreshOrdersCommand { get; }
+    public ICommand ClearOrderSearchCommand { get; }
     public ICommand SelectOrderListItemCommand { get; }
     public ICommand SetOrderFilterCommand { get; }
+    public ICommand PreviousOrderPageCommand { get; }
+    public ICommand NextOrderPageCommand { get; }
     public ICommand OpenSelectedOrderCommand { get; }
     public ICommand PaySelectedOrderCommand { get; }
     public ICommand PrintSelectedOrderCommand { get; }
     public ICommand DeleteSelectedOrderCommand { get; }
+    public ICommand EditSelectedOrderQuantityCommand { get; }
+    public ICommand EditSelectedOrderPriceCommand { get; }
+    public ICommand EditSelectedOrderTotalCommand { get; }
     public ICommand RefreshPaymentsCommand { get; }
+    public ICommand ClearPaymentSearchCommand { get; }
     public ICommand SelectPaymentListItemCommand { get; }
     public ICommand AddCustomerInPaymentCommand { get; }
     public ICommand AddCustomerOutPaymentCommand { get; }
@@ -412,6 +437,9 @@ public class SalesViewModel : INotifyPropertyChanged
         IncreaseQuantityCommand = new RelayCommand<OrderItem>(IncreaseQuantity);
         DecreaseQuantityCommand = new RelayCommand<OrderItem>(DecreaseQuantity);
         RemoveOrderItemCommand = new RelayCommand<OrderItem>(RemoveOrderItem);
+        EditCurrentOrderQuantityCommand = new RelayCommand<OrderItem>(EditCurrentOrderQuantity);
+        EditCurrentOrderPriceCommand = new RelayCommand<OrderItem>(EditCurrentOrderPrice);
+        EditCurrentOrderTotalCommand = new RelayCommand<OrderItem>(EditCurrentOrderTotal);
         ClearOrderCommand = new RelayCommand(ClearOrder);
         HoldOrderCommand = new RelayCommand(HoldOrder);
         PayCommand = new RelayCommand(Pay);
@@ -432,13 +460,20 @@ public class SalesViewModel : INotifyPropertyChanged
         PreviousProductPageCommand = new RelayCommand(() => ChangeProductPage(-1));
         NextProductPageCommand = new RelayCommand(() => ChangeProductPage(1));
         RefreshOrdersCommand = new RelayCommand(RefreshOrders);
+        ClearOrderSearchCommand = new RelayCommand(() => OrderSearchText = string.Empty);
         SelectOrderListItemCommand = new RelayCommand<OrderListItem>(item => SelectedOrderListItem = item);
         SetOrderFilterCommand = new RelayCommand<string>(filter => OrderFilter = string.IsNullOrWhiteSpace(filter) ? "open" : filter);
+        PreviousOrderPageCommand = new RelayCommand(() => ChangeOrderPage(-1));
+        NextOrderPageCommand = new RelayCommand(() => ChangeOrderPage(1));
         OpenSelectedOrderCommand = new RelayCommand(OpenSelectedOrderInCash);
         PaySelectedOrderCommand = new RelayCommand(PaySelectedOrder);
         PrintSelectedOrderCommand = new RelayCommand(PrintSelectedOrder);
         DeleteSelectedOrderCommand = new RelayCommand(DeleteSelectedOrder);
+        EditSelectedOrderQuantityCommand = new RelayCommand<OrderItem>(EditSelectedOrderQuantity);
+        EditSelectedOrderPriceCommand = new RelayCommand<OrderItem>(EditSelectedOrderPrice);
+        EditSelectedOrderTotalCommand = new RelayCommand<OrderItem>(EditSelectedOrderTotal);
         RefreshPaymentsCommand = new RelayCommand(RefreshPayments);
+        ClearPaymentSearchCommand = new RelayCommand(() => PaymentSearchText = string.Empty);
         SelectPaymentListItemCommand = new RelayCommand<PaymentListItem>(item => SelectedPaymentListItem = item);
         AddCustomerInPaymentCommand = new RelayCommand(() => AddDdsOperation(DdsOperationTypes.CustomerIn));
         AddCustomerOutPaymentCommand = new RelayCommand(() => AddDdsOperation(DdsOperationTypes.CustomerOut));
@@ -530,6 +565,7 @@ public class SalesViewModel : INotifyPropertyChanged
                 .ToDictionary(item => item.Id, item => item.Name);
             _allPayments = _databaseService.GetDdsOperationsAsync().GetAwaiter().GetResult()
                 .Select(item => new PaymentListItem(item, GetCustomerName(item.PeopleId, peoples), GetCashName(item.CashId, cashes), GetArticleName(item.ArticleId, articles)))
+                .OrderByDescending(item => item.Id)
                 .ToList();
 
             ApplyPaymentFilter(selectedId);
@@ -550,6 +586,12 @@ public class SalesViewModel : INotifyPropertyChanged
             .ToList();
 
         _paymentTotalCount = filtered.Count;
+        _paymentIncomeTotal = filtered
+            .Where(item => item.IsIncome)
+            .Sum(item => item.Amount);
+        _paymentExpenseTotal = filtered
+            .Where(item => !item.IsIncome)
+            .Sum(item => item.Amount);
         var totalPages = PaymentTotalPages;
         if (_paymentPage > totalPages)
         {
@@ -568,6 +610,8 @@ public class SalesViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(PaymentTotalPages));
         OnPropertyChanged(nameof(PaymentPageText));
         OnPropertyChanged(nameof(IsPaymentPagerVisible));
+        OnPropertyChanged(nameof(PaymentIncomeTotalText));
+        OnPropertyChanged(nameof(PaymentExpenseTotalText));
     }
 
     private static bool MatchesPaymentSearch(PaymentListItem item, string query)
@@ -764,6 +808,45 @@ public class SalesViewModel : INotifyPropertyChanged
         SaveCurrentOrder();
     }
 
+    private void EditCurrentOrderQuantity(OrderItem? item)
+    {
+        EditCurrentOrderItem(item, "Изменить количество", current => current.Quantity.ToString(CultureInfo.CurrentCulture), value =>
+        {
+            var quantity = (int)Math.Round(value, 0, MidpointRounding.AwayFromZero);
+            return Math.Max(1, quantity);
+        }, allowDecimal: false, applyValue: (orderItem, value) => orderItem.Quantity = Math.Max(1, (int)Math.Round(value, 0, MidpointRounding.AwayFromZero)));
+    }
+
+    private void EditCurrentOrderPrice(OrderItem? item)
+    {
+        EditCurrentOrderItem(item, "Изменить цену", current => (current.Price > 0 ? current.Price : current.Product.Price).ToString("0.##", CultureInfo.CurrentCulture), value =>
+        {
+            var price = Math.Max(0, value);
+            return price;
+        }, applyValue: (orderItem, value) => orderItem.Price = value);
+    }
+
+    private void EditCurrentOrderTotal(OrderItem? item)
+    {
+        EditCurrentOrderItem(item, "Изменить сумму", current => current.Total.ToString("0.##", CultureInfo.CurrentCulture), value =>
+        {
+            var total = Math.Max(0, value);
+            return total;
+        }, applyValue: (orderItem, value) =>
+        {
+            var unitPrice = orderItem.Price > 0 ? orderItem.Price : orderItem.Product.Price;
+            if (unitPrice <= 0)
+            {
+                orderItem.Quantity = 1;
+                orderItem.Price = value;
+                return;
+            }
+
+            var quantity = (int)Math.Round(value / unitPrice, MidpointRounding.AwayFromZero);
+            orderItem.Quantity = Math.Max(1, quantity);
+        });
+    }
+
     private void ClearOrder()
     {
         if (CurrentOrder is null || CurrentOrder.Items.Count == 0)
@@ -871,7 +954,7 @@ public class SalesViewModel : INotifyPropertyChanged
             var customers = _databaseService.GetPeoplesAsync().GetAwaiter().GetResult()
                 .ToDictionary(customer => customer.Id, customer => customer.Name ?? string.Empty);
             var query = OrderSearchText.Trim();
-            var orders = _databaseService.GetRecentOrdersAsync(_allProducts).GetAwaiter().GetResult()
+            _allOrderItems = _databaseService.GetRecentOrdersAsync(_allProducts).GetAwaiter().GetResult()
                 .Where(order => MatchesOrderFilter(order))
                 .Select(order => new OrderListItem(order, GetCustomerName(order.PeopleId, customers)))
                 .Where(item => MatchesOrderSearch(item, query))
@@ -879,19 +962,48 @@ public class SalesViewModel : INotifyPropertyChanged
                 .ThenByDescending(item => item.Number)
                 .ToList();
 
-            Orders.Clear();
-            foreach (var item in orders)
-            {
-                Orders.Add(item);
-            }
-
-            SelectedOrderListItem = Orders.FirstOrDefault(item => item.Number == selectedNumber) ?? Orders.FirstOrDefault();
-            OnPropertyChanged(nameof(OrdersSummary));
+            ApplyOrderPage(selectedNumber);
         }
         catch (Exception ex)
         {
             AppDialogWindow.ShowError($"Не удалось загрузить заказы.\n{ex.Message}");
         }
+    }
+
+    private void ApplyOrderPage(int? preferredSelectedNumber = null)
+    {
+        var selectedNumber = preferredSelectedNumber ?? SelectedOrderListItem?.Number;
+        _orderTotalCount = _allOrderItems.Count;
+        var totalPages = OrderTotalPages;
+        if (_orderPage > totalPages)
+        {
+            _orderPage = totalPages;
+        }
+
+        Orders.Clear();
+        foreach (var item in _allOrderItems.Skip((_orderPage - 1) * OrderPageSize).Take(OrderPageSize))
+        {
+            Orders.Add(item);
+        }
+
+        SelectedOrderListItem = Orders.FirstOrDefault(item => item.Number == selectedNumber) ?? Orders.FirstOrDefault();
+        OnPropertyChanged(nameof(OrdersSummary));
+        OnPropertyChanged(nameof(OrderPage));
+        OnPropertyChanged(nameof(OrderTotalPages));
+        OnPropertyChanged(nameof(OrderPageText));
+        OnPropertyChanged(nameof(IsOrderPagerVisible));
+    }
+
+    private void ChangeOrderPage(int delta)
+    {
+        var nextPage = Math.Clamp(_orderPage + delta, 1, OrderTotalPages);
+        if (nextPage == _orderPage)
+        {
+            return;
+        }
+
+        _orderPage = nextPage;
+        ApplyOrderPage();
     }
 
     private bool MatchesOrderFilter(Order order)
@@ -990,6 +1102,118 @@ public class SalesViewModel : INotifyPropertyChanged
         }
 
         _databaseService.DeleteOpenOrderAsync(order.Number).GetAwaiter().GetResult();
+        RefreshOrders();
+        RefreshProductQuantities();
+    }
+
+    private void EditSelectedOrderQuantity(OrderItem? item)
+    {
+        EditSelectedOrderItem(item, "Изменить количество", current => current.Quantity.ToString(CultureInfo.CurrentCulture), value =>
+        {
+            var quantity = (int)Math.Round(value, 0, MidpointRounding.AwayFromZero);
+            return Math.Max(1, quantity);
+        }, applyValue: (orderItem, value) => orderItem.Quantity = Math.Max(1, (int)Math.Round(value, 0, MidpointRounding.AwayFromZero)));
+    }
+
+    private void EditSelectedOrderPrice(OrderItem? item)
+    {
+        EditSelectedOrderItem(item, "Изменить цену", current => (current.Price > 0 ? current.Price : current.Product.Price).ToString("0.##", CultureInfo.CurrentCulture), value =>
+        {
+            var price = Math.Max(0, value);
+            return price;
+        }, applyValue: (orderItem, value) => orderItem.Price = value);
+    }
+
+    private void EditSelectedOrderTotal(OrderItem? item)
+    {
+        EditSelectedOrderItem(item, "Изменить сумму", current => current.Total.ToString("0.##", CultureInfo.CurrentCulture), value =>
+        {
+            var total = Math.Max(0, value);
+            return total;
+        }, applyValue: (orderItem, value) =>
+        {
+            var unitPrice = orderItem.Price > 0 ? orderItem.Price : orderItem.Product.Price;
+            if (unitPrice <= 0)
+            {
+                orderItem.Quantity = 1;
+                orderItem.Price = value;
+                return;
+            }
+
+            var quantity = (int)Math.Round(value / unitPrice, MidpointRounding.AwayFromZero);
+            orderItem.Quantity = Math.Max(1, quantity);
+        });
+    }
+
+    private void EditSelectedOrderItem(
+        OrderItem? item,
+        string title,
+        Func<OrderItem, string> initialValueFactory,
+        Func<decimal, decimal> normalizeValue,
+        Action<OrderItem, decimal> applyValue)
+    {
+        if (item is null || SelectedOrderListItem?.Order is not { } order)
+        {
+            return;
+        }
+
+        if (order.Status != "open")
+        {
+            AppDialogWindow.ShowInfo("Редактировать можно только открытый чек.");
+            return;
+        }
+
+        var window = new OrderValueInputWindow(title, initialValueFactory(item))
+        {
+            Owner = Application.Current?.MainWindow
+        };
+
+        if (window.ShowDialog() != true)
+        {
+            return;
+        }
+
+        var newValue = normalizeValue(window.Value);
+        applyValue(item, newValue);
+        order.RefreshTotals();
+        SaveCurrentOrder(order);
+        RefreshOrders();
+        RefreshProductQuantities();
+    }
+
+    private void EditCurrentOrderItem(
+        OrderItem? item,
+        string title,
+        Func<OrderItem, string> initialValueFactory,
+        Func<decimal, decimal> normalizeValue,
+        Action<OrderItem, decimal> applyValue,
+        bool allowDecimal = true)
+    {
+        if (item is null || CurrentOrder is not { } order)
+        {
+            return;
+        }
+
+        if (order.Status != "open")
+        {
+            AppDialogWindow.ShowInfo("Редактировать можно только открытый чек.");
+            return;
+        }
+
+        var window = new OrderValueInputWindow(title, initialValueFactory(item), allowDecimal)
+        {
+            Owner = Application.Current?.MainWindow
+        };
+
+        if (window.ShowDialog() != true)
+        {
+            return;
+        }
+
+        var newValue = normalizeValue(window.Value);
+        applyValue(item, newValue);
+        order.RefreshTotals();
+        SaveCurrentOrder(order);
         RefreshOrders();
         RefreshProductQuantities();
     }
@@ -1370,6 +1594,25 @@ public class OrderListItem : INotifyPropertyChanged
     {
         Order = order;
         CustomerName = customerName;
+        Order.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(Order.Subtotal) or nameof(Order.Total) or nameof(Order.Status) or nameof(Order.SyncStatus) or nameof(Order.OrderType) or nameof(Order.Note) or nameof(Order.Date))
+            {
+                OnPropertyChanged(nameof(ItemsCount));
+                OnPropertyChanged(nameof(Subtotal));
+                OnPropertyChanged(nameof(Total));
+                OnPropertyChanged(nameof(TotalText));
+                OnPropertyChanged(nameof(StatusText));
+                OnPropertyChanged(nameof(StatusBrush));
+                OnPropertyChanged(nameof(StatusBackground));
+                OnPropertyChanged(nameof(SyncText));
+                OnPropertyChanged(nameof(SyncBrush));
+                OnPropertyChanged(nameof(SyncBackground));
+                OnPropertyChanged(nameof(OrderType));
+                OnPropertyChanged(nameof(Note));
+                OnPropertyChanged(nameof(DateText));
+            }
+        };
     }
 
     public Order Order { get; }
@@ -1446,23 +1689,40 @@ public class PaymentListItem : INotifyPropertyChanged
     public Dds Payment { get; }
     public int Id => Payment.Id;
     public int DocId => Payment.DocId;
+    public decimal Amount => Math.Abs(Payment.Summa);
+    public bool IsIncome => DdsOperationTypes.IsIncome(Payment.OrderType);
     public string NumberText => $"№{Payment.Id}";
-    public string DateText => Payment.Date;
+    public string DateText => FormatDate(Payment.Date);
     public string OperationText => DdsOperationTypes.GetTitle(Payment.OrderType);
     public string CustomerName { get; }
     public string CashName { get; }
     public string ArticleName { get; }
     public string Description => Payment.Description ?? string.Empty;
-    public string DirectionText => DdsOperationTypes.IsIncome(Payment.OrderType) ? "Приход" : "Расход";
-    public string DirectionBrush => DdsOperationTypes.IsIncome(Payment.OrderType) ? "#16A34A" : "#FF2B22";
-    public string DirectionBackground => DdsOperationTypes.IsIncome(Payment.OrderType) ? "#ECFDF3" : "#FFF1F0";
-    public string AmountText => $"{(DdsOperationTypes.IsIncome(Payment.OrderType) ? "+" : "-")}{Payment.Summa:0.00} c";
+    public string DirectionText => IsIncome ? "Приход" : "Расход";
+    public string DirectionBrush => IsIncome ? "#16A34A" : "#FF2B22";
+    public string DirectionBackground => IsIncome ? "#ECFDF3" : "#FFF1F0";
+    public string AmountText => $"{(IsIncome ? "+" : "-")}{Payment.Summa:0.00} c";
     public string SyncText => Payment.SyncStatus switch
     {
         1 => "Синх.",
         2 => "Ошибка",
         _ => "Ожидает"
     };
+
+    private static string FormatDate(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var formats = new[] { "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd H:mm:ss", "dd.MM.yyyy HH:mm", "dd.MM.yyyy H:mm" };
+        return DateTime.TryParseExact(value.Trim(), formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var date) ||
+               DateTime.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.None, out date) ||
+               DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out date)
+            ? date.ToString("dd.MM.yyyy HH:mm")
+            : value;
+    }
 
     public bool IsSelected
     {

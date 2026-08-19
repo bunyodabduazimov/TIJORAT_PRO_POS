@@ -20,6 +20,7 @@ public partial class LoginWindow : Window
     private bool _isCompactLayout;
     private bool _hasAppliedResponsiveLayout;
     private bool _suppressLoginDropDownOpen;
+    private int _passwordLength;
 
     public User? AuthenticatedUser { get; private set; }
 
@@ -78,6 +79,7 @@ public partial class LoginWindow : Window
             return;
         }
 
+        UiSoundPlayer.PlayPinClick();
         SetPassword(GetPassword() + button.Content);
     }
 
@@ -126,6 +128,12 @@ public partial class LoginWindow : Window
             return;
         }
 
+        if (PasswordBox.Password.Length > _passwordLength)
+        {
+            UiSoundPlayer.PlayPinClick();
+        }
+
+        _passwordLength = PasswordBox.Password.Length;
         _isSyncingPassword = true;
         VisiblePasswordBox.Text = PasswordBox.Password;
         _isSyncingPassword = false;
@@ -139,6 +147,12 @@ public partial class LoginWindow : Window
             return;
         }
 
+        if (VisiblePasswordBox.Text.Length > _passwordLength)
+        {
+            UiSoundPlayer.PlayPinClick();
+        }
+
+        _passwordLength = VisiblePasswordBox.Text.Length;
         _isSyncingPassword = true;
         PasswordBox.Password = VisiblePasswordBox.Text;
         _isSyncingPassword = false;
@@ -158,6 +172,32 @@ public partial class LoginWindow : Window
             Dispatcher.BeginInvoke(() => LoginBox.IsDropDownOpen = false, DispatcherPriority.Input);
             Dispatcher.BeginInvoke(() => _suppressLoginDropDownOpen = false, DispatcherPriority.Background);
         }
+    }
+
+    private void LoginComboItemPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not ComboBoxItem item || item.DataContext is not LoginUserOption option)
+        {
+            return;
+        }
+
+        LoginBox.SelectedItem = option;
+        UpdatePlaceholders();
+        _suppressLoginDropDownOpen = true;
+        LoginBox.IsDropDownOpen = false;
+        Dispatcher.BeginInvoke(() => _suppressLoginDropDownOpen = false, DispatcherPriority.Background);
+
+        if (_isPasswordVisible)
+        {
+            VisiblePasswordBox.Focus();
+            VisiblePasswordBox.CaretIndex = VisiblePasswordBox.Text.Length;
+        }
+        else
+        {
+            PasswordBox.Focus();
+        }
+
+        e.Handled = true;
     }
 
     private void OpenSyncClicked(object sender, RoutedEventArgs e)
@@ -352,6 +392,7 @@ public partial class LoginWindow : Window
         PasswordBox.Password = password;
         VisiblePasswordBox.Text = password;
         _isSyncingPassword = false;
+        _passwordLength = password.Length;
 
         if (_isPasswordVisible)
         {
@@ -363,9 +404,25 @@ public partial class LoginWindow : Window
         else
         {
             PasswordBox.Focus();
+            Dispatcher.BeginInvoke(MovePasswordCaretToEnd, DispatcherPriority.Input);
         }
 
         UpdatePlaceholders();
+    }
+
+    private void MovePasswordCaretToEnd()
+    {
+        try
+        {
+            var selectMethod = typeof(PasswordBox).GetMethod(
+                "Select",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            selectMethod?.Invoke(PasswordBox, new object[] { PasswordBox.Password.Length, 0 });
+        }
+        catch
+        {
+            PasswordBox.Focus();
+        }
     }
 
     private void UpdatePlaceholders()

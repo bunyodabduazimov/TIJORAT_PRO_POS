@@ -4,7 +4,7 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:controls="clr-namespace:FFPOS.Controls"
-        Title="Новый клиент"
+        Title="РќРѕРІС‹Р№ РєР»РёРµРЅС‚"
         Width="520"
         Height="430"
         MinWidth="480"
@@ -101,39 +101,39 @@
                 <Grid>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <materialDesign:PackIcon Kind="AccountPlusOutline" Width="24" Height="24" Foreground="#111827" Margin="0,0,10,0" />
-                        <TextBlock Text="Новый клиент" FontSize="20" FontWeight="Bold" Foreground="#111827" />
+                        <TextBlock Text="РќРѕРІС‹Р№ РєР»РёРµРЅС‚" FontSize="21" FontWeight="Bold" Foreground="#111827" />
                     </StackPanel>
                     <controls:WindowControlButtons HorizontalAlignment="Right" VerticalAlignment="Center" />
                 </Grid>
             </Border>
 
             <StackPanel Grid.Row="1" Margin="24,20,24,10">
-                <TextBlock Text="Название клиента" FontSize="13" FontWeight="Bold" Foreground="#667085" Margin="0,0,0,6" />
+                <TextBlock Text="РќР°Р·РІР°РЅРёРµ РєР»РёРµРЅС‚Р°" FontSize="14" FontWeight="Bold" Foreground="#667085" Margin="0,0,0,6" />
                 <Grid>
                     <TextBox x:Name="NameBox" Style="{StaticResource InputStyle}" />
                     <materialDesign:PackIcon Kind="AccountOutline" Width="20" Height="20" Foreground="#98A2B3" Margin="14,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" />
                 </Grid>
 
-                <TextBlock Text="Телефон" FontSize="13" FontWeight="Bold" Foreground="#667085" Margin="0,14,0,6" />
+                <TextBlock Text="РўРµР»РµС„РѕРЅ" FontSize="14" FontWeight="Bold" Foreground="#667085" Margin="0,14,0,6" />
                 <Grid>
                     <TextBox x:Name="PhoneBox" Style="{StaticResource InputStyle}" />
                     <materialDesign:PackIcon Kind="PhoneOutline" Width="20" Height="20" Foreground="#98A2B3" Margin="14,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" />
                 </Grid>
 
-                <TextBlock Text="Адрес" FontSize="13" FontWeight="Bold" Foreground="#667085" Margin="0,14,0,6" />
+                <TextBlock Text="РђРґСЂРµСЃ" FontSize="14" FontWeight="Bold" Foreground="#667085" Margin="0,14,0,6" />
                 <Grid>
                     <TextBox x:Name="AddressBox" Style="{StaticResource InputStyle}" />
                     <materialDesign:PackIcon Kind="MapMarkerOutline" Width="20" Height="20" Foreground="#98A2B3" Margin="14,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" />
                 </Grid>
 
-                <TextBlock x:Name="ErrorText" Foreground="#FF2B22" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,0" />
+                <TextBlock x:Name="ErrorText" Foreground="#FF2B22" FontSize="14" FontWeight="SemiBold" Margin="0,12,0,0" />
             </StackPanel>
 
             <Border Grid.Row="2" BorderBrush="#E8EDF3" BorderThickness="1,0,0,0" Padding="20,0">
                 <Grid>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Button Style="{StaticResource FlatButtonStyle}" Width="130" Margin="0,0,10,0" Content="Отмена" Click="CancelClicked" />
-                        <Button Style="{StaticResource PrimaryButtonStyle}" Width="170" Content="Сохранить" Click="SaveClicked" />
+                        <Button Style="{StaticResource FlatButtonStyle}" Width="130" Margin="0,0,10,0" Content="РћС‚РјРµРЅР°" Click="CancelClicked" />
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Width="170" Content="РЎРѕС…СЂР°РЅРёС‚СЊ" Click="SaveClicked" />
                     </StackPanel>
                 </Grid>
             </Border>

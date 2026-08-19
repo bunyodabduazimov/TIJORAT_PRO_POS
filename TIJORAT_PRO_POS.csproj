@@ -19,12 +19,21 @@
 
   <ItemGroup>
     <Content Include="logo.ico" />
+    <Content Include="Assets\Sounds\pip.wav" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Converters\" />
     <Resource Include="Assets\Images\default.png" />
     <Resource Include="Assets\Images\logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="obj-check\**\*.cs" />
+    <Page Remove="obj-check\**\*.xaml" />
+    <ApplicationDefinition Remove="obj-check\**\*.xaml" />
+    <Resource Remove="obj-check\**\*.*" />
+    <None Remove="obj-check\**\*.*" />
   </ItemGroup>
 
   <ItemGroup>

@@ -44,7 +44,7 @@
         </Grid.ColumnDefinitions>
 
         <TextBlock Text="{Binding Header, ElementName=Root}"
-                   FontSize="13"
+                   FontSize="14"
                    FontWeight="SemiBold"
                    Foreground="#475467"
                    VerticalAlignment="Center" />
@@ -57,7 +57,7 @@
                 <Border Width="18" Height="18" CornerRadius="9" Background="#FFFFFF" Margin="0,0,8,0">
                     <materialDesign:PackIcon x:Name="StateIcon" Kind="Check" Width="12" Height="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Border>
-                <TextBlock x:Name="StateText" FontSize="13" FontWeight="Bold" VerticalAlignment="Center" />
+                <TextBlock x:Name="StateText" FontSize="14" FontWeight="Bold" VerticalAlignment="Center" />
             </StackPanel>
         </Button>
     </Grid>

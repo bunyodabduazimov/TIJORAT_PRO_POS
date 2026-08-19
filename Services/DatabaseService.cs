@@ -152,7 +152,7 @@ public sealed class DatabaseService
         await using var context = CreateContext();
         return await context.Articles
             .AsNoTracking()
-            .Where(article => article.Status == 1)
+            .Where(article => article.Check == 1)
             .OrderBy(article => article.ParentId)
             .ThenBy(article => article.Name)
             .ThenBy(article => article.Id)

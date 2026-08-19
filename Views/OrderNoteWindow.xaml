@@ -79,7 +79,7 @@
                 <Grid>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,140,0">
                         <materialDesign:PackIcon Kind="NoteEditOutline" Width="24" Height="24" Foreground="#111827" Margin="0,0,12,0" />
-                        <TextBlock Text="Примечание к чеку" FontSize="20" FontWeight="Bold" Foreground="#111827" VerticalAlignment="Center" />
+                        <TextBlock Text="Примечание к чеку" FontSize="21" FontWeight="Bold" Foreground="#111827" VerticalAlignment="Center" />
                     </StackPanel>
                     <controls:WindowControlButtons HorizontalAlignment="Right" VerticalAlignment="Center" />
                 </Grid>
@@ -91,7 +91,7 @@
                          TextWrapping="Wrap"
                          VerticalScrollBarVisibility="Auto"
                          Padding="14"
-                         FontSize="16"
+                         FontSize="17"
                          Foreground="#111827"
                          Background="#F8FAFC"
                          BorderBrush="#D9E2EC"
